@@ -24,15 +24,30 @@ public class HomeRepositoryImpl implements HomeRepository {
         this.apiService = apiService;
     }
 
+    private java.util.List<HomeContent.ComicCard> mapToCards(java.util.List<com.example.comicversev1.data.model.ComicDTO> dtos) {
+        if (dtos == null) return Collections.emptyList();
+        return dtos.stream().map(dto -> new HomeContent.ComicCard(
+                dto.getSlug() != null ? dto.getSlug() : "",
+                dto.getTitle() != null ? dto.getTitle() : "",
+                "Chương " + dto.getTotalChapters(),
+                dto.getCoverImage(),
+                0, // fallback likes
+                dto.getViewCount(),
+                0, // fallback progress
+                "" // fallback timeLabel
+        )).collect(java.util.stream.Collectors.toList());
+    }
+
     @Override
     public Single<HomeContent> loadHomeContent() {
         return apiService.getHomeContent()
             .map(response -> {
                 HomeDataResponse data = response.getData();
+                if (data == null) data = new HomeDataResponse();
                 return new HomeContent(
                         "Hi, Hàn Lập!",
                         "Chào mừng trở lại ✨",
-                        data.heroes != null ? data.heroes : Collections.emptyList(),
+                        Collections.emptyList(),
                         Arrays.asList(
                             new HomeContent.QuickAction("vip", "Trung tâm VIP", "Ưu đãi hội viên", R.drawable.ic_vip),
                             new HomeContent.QuickAction("remove_ads", "Xoá quảng cáo", "Tăng tốc đọc", R.drawable.ic_remove_ads),
@@ -42,12 +57,12 @@ public class HomeRepositoryImpl implements HomeRepository {
                             new HomeContent.QuickAction("history", "Lịch sử", "Tiếp tục đọc", R.drawable.ic_history)
                         ),
                         null,
-                        data.recent != null ? data.recent : Collections.emptyList(),
-                        data.recommendations != null ? data.recommendations : Collections.emptyList(),
-                        data.newUpdates != null ? data.newUpdates : Collections.emptyList(),
-                        data.hotComics != null ? data.hotComics : Collections.emptyList(),
-                        data.completed != null ? data.completed : Collections.emptyList(),
-                        data.newComics != null ? data.newComics : Collections.emptyList()
+                        mapToCards(data.recentlyUpdated),
+                        mapToCards(data.recommended),
+                        mapToCards(data.recentlyUpdated),
+                        mapToCards(data.topTrending),
+                        Collections.emptyList(),
+                        mapToCards(data.newComics)
                 );
             });
     }

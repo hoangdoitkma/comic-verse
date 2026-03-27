@@ -1,14 +1,18 @@
 package com.example.comicversev1.data.model;
 
-import com.example.comicversev1.domain.entity.HomeContent;
+import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 public class HomeDataResponse {
-    public List<HomeContent.Hero> heroes;
-    public List<HomeContent.ComicCard> recent;
-    public List<HomeContent.ComicCard> recommendations;
-    public List<HomeContent.ComicCard> newUpdates;
-    public List<HomeContent.ComicCard> hotComics;
-    public List<HomeContent.ComicCard> completed;
-    public List<HomeContent.ComicCard> newComics;
+    @SerializedName("topTrending")
+    public List<ComicDTO> topTrending;
+    
+    @SerializedName("recentlyUpdated")
+    public List<ComicDTO> recentlyUpdated;
+    
+    @SerializedName("newComics")
+    public List<ComicDTO> newComics;
+    
+    @SerializedName("recommended")
+    public List<ComicDTO> recommended;
 }

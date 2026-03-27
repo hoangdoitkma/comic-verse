@@ -17,13 +17,19 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 1. Kiểm tra xem nút có gọi được hàm này không, và formData có dữ liệu không?
+    console.log("👉 1. ĐÃ BẤM NÚT ĐĂNG NHẬP!", formData);
+
     setLoading(true);
     setError('');
 
     try {
+      console.log("👉 2. CHUẨN BỊ GỌI API...");
       const data = await authService.login(formData.email, formData.password);
 
-      // Redirect theo role
+      console.log("👉 3. API TRẢ VỀ THÀNH CÔNG:", data);
+
       if (data.roles?.includes('ROLE_ADMIN')) {
         navigate('/admin', { replace: true });
       } else if (data.roles?.includes('ROLE_UPLOADER')) {
@@ -32,6 +38,8 @@ const LoginPage = () => {
         navigate('/', { replace: true });
       }
     } catch (err) {
+      // 4. Bắt chính xác lỗi gì đang xảy ra
+      console.error("👉 4. LỖI RỒI:", err);
       const message =
         err.response?.data?.message ||
         'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';

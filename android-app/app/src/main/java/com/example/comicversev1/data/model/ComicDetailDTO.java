@@ -10,7 +10,7 @@ public class ComicDetailDTO {
     private String slug;
     @SerializedName("title")
     private String title;
-    @SerializedName("cover_image")
+    @SerializedName("thumbnailUrl")
     private String coverImage;
     @SerializedName("ai_summary")
     private String aiSummary;

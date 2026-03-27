@@ -87,8 +87,8 @@ public class ComicDetailFragment extends Fragment implements ChapterListAdapter.
                     // Resume from saved chapter
                     targetChapterId = savedChapterId;
                 } else {
-                    // Start from first chapter (chapters sorted DESC, last item = chapter 1)
-                    targetChapterId = state.getChapters().get(state.getChapters().size() - 1).getId();
+                    // Start from first chapter (chapters sorted ASC from API, so index 0 is chapter 1)
+                    targetChapterId = state.getChapters().get(0).getId();
                 }
 
                 // Use actual comicId from API response, not from nav args (which can be 0)

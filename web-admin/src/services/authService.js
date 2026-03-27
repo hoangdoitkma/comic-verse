@@ -7,10 +7,10 @@ const authService = {
    */
   login: async (email, password) => {
     const response = await axiosClient.post('/auth/login', { email, password });
-    
+
     if (response.data) {
       const { token, id, email: userEmail, roles } = response.data;
-      
+
       // Lưu token và thông tin user vào localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify({
@@ -68,7 +68,7 @@ const authService = {
   getPrimaryRole: () => {
     const user = authService.getCurrentUser();
     if (!user?.roles) return null;
-    
+
     if (user.roles.includes('ROLE_ADMIN')) return 'ROLE_ADMIN';
     if (user.roles.includes('ROLE_UPLOADER')) return 'ROLE_UPLOADER';
     return 'ROLE_USER';

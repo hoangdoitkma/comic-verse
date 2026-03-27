@@ -26,10 +26,10 @@ import retrofit2.http.Query;
 public interface ApiService {
 
     // Auth Module
-    @POST("auth/login")
+    @POST("auth/public/login")
     Single<BaseResponse<LoginResponse>> login(@Body LoginRequest request);
 
-    @POST("auth/refresh")
+    @POST("auth/public/refresh")
     Call<BaseResponse<TokenResponse>> refreshToken(@Body TokenResponse request);
 
     // Content Module

@@ -8,9 +8,9 @@ public class ChapterDetailDTO {
     private int id;
     @SerializedName("title")
     private String title;
-    @SerializedName("chapterNum")
+    @SerializedName("chapterNumber")
     private float chapterNum;
-    @SerializedName("images")
+    @SerializedName("pages")
     private List<String> images;
     @SerializedName("nextChapterId")
     private Integer nextChapterId;

@@ -3,17 +3,24 @@ package com.example.comicversev1.data.model;
 import com.google.gson.annotations.SerializedName;
 
 public class BaseResponse<T> {
-    @SerializedName("success")
-    private boolean success;
+    @SerializedName("status")
+    private int status;
+    
     @SerializedName("message")
     private String message;
+    
     @SerializedName("data")
     private T data;
-    @SerializedName("error_code")
-    private String errorCode;
+    
+    @SerializedName("timestamp")
+    private String timestamp;
+
+    public int getStatus() {
+        return status;
+    }
 
     public boolean isSuccess() {
-        return success;
+        return status == 200;
     }
 
     public String getMessage() {
@@ -24,8 +31,8 @@ public class BaseResponse<T> {
         return data;
     }
 
-    public String getErrorCode() {
-        return errorCode;
+    public String getTimestamp() {
+        return timestamp;
     }
 }
 

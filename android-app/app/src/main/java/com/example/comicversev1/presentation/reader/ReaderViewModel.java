@@ -103,20 +103,22 @@ public class ReaderViewModel extends ViewModel {
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(history -> {
-                            // Found saved progress
+                            // Phục hồi lịch sử
                             savedChapterId = history.chapterId;
                             Log.d(TAG, "Restored progress: chapter=" + savedChapterId + ", page=" + history.pageIndex);
 
-                            // Store pending scroll position to be consumed by Fragment
-                            if (history.pageIndex > 0) {
+                            // Nếu user chủ đích bấm thẳng vào cái chương đã lưu đó, ta mới khôi phục vị trí trang (scroll)
+                            if (savedChapterId == initialChapterId && history.pageIndex > 0) {
                                 pendingScrollToRelativePage = history.pageIndex;
                             }
 
-                            // Load the saved chapter (might be different from initialChapterId)
-                            loadChapter(savedChapterId, true);
+                            // Luôn luôn load cái chương mà màn hình ComicDetailFragment yêu cầu Truyền sang!
+                            // Không được phép tự ý nhảy sang savedChapterId (bởi vì ComicDetailFragment đã tự handle resume)
+                            Log.d(TAG, "Starting from explicit chapter requested: " + initialChapterId);
+                            loadChapter(initialChapterId, true);
                         }, throwable -> {
                             // No saved progress, start from the initial chapter
-                            Log.d(TAG, "No saved progress, starting from chapter " + initialChapterId);
+                            Log.d(TAG, "No saved progress, starting from explicit chapter " + initialChapterId);
                             loadChapter(initialChapterId, true);
                         })
         );

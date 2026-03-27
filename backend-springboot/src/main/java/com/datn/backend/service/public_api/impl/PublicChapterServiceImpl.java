@@ -43,12 +43,28 @@ public class PublicChapterServiceImpl implements PublicChapterService {
                 .map(ChapterPage::getImageUrl)
                 .collect(Collectors.toList());
 
+        Comic comic = chapter.getComic();
+        List<Chapter> allChapters = chapterRepository.findByComicIdOrderBySortOrderAsc(comic.getId());
+        
+        Integer nextChapterId = null;
+        Integer prevChapterId = null;
+        
+        for (int i = 0; i < allChapters.size(); i++) {
+            if (allChapters.get(i).getId().equals(chapterId)) {
+                if (i > 0) prevChapterId = allChapters.get(i - 1).getId();
+                if (i < allChapters.size() - 1) nextChapterId = allChapters.get(i + 1).getId();
+                break;
+            }
+        }
+
         return ChapterDetailDTO.builder()
                 .id(chapter.getId())
                 .chapterNumber(chapter.getChapterNumber())
                 .title(chapter.getTitle())
                 .pages(pages)
                 .content(chapter.getContent())
+                .nextChapterId(nextChapterId)
+                .prevChapterId(prevChapterId)
                 .build();
     }
 

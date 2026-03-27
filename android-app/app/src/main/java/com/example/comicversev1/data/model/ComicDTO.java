@@ -9,13 +9,18 @@ public class ComicDTO {
     private String slug;
     @SerializedName("title")
     private String title;
-    @SerializedName("cover_image")
+    @SerializedName("thumbnailUrl")
     private String coverImage;
-    // TODO: add other fields as needed
+    @SerializedName("viewCount")
+    private long viewCount;
+    @SerializedName("totalChapters")
+    private int totalChapters;
 
     public int getId() { return id; }
     public String getSlug() { return slug; }
     public String getTitle() { return title; }
     public String getCoverImage() { return coverImage; }
+    public long getViewCount() { return viewCount; }
+    public int getTotalChapters() { return totalChapters; }
 }
 

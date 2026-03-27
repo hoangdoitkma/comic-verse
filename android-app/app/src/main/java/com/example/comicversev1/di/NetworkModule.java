@@ -58,10 +58,16 @@ public class NetworkModule {
     @Singleton
     Interceptor provideAuthInterceptor(SharedPreferences prefs) {
         return chain -> {
+            okhttp3.Request request = chain.request();
+            boolean isPublicPath = request.url().encodedPath().contains("/public/");
+
+            if (isPublicPath) {
+                return chain.proceed(request);
+            }
+
             String token = prefs.getString(Constants.KEY_ACCESS_TOKEN, "");
             return chain.proceed(
-                    chain.request()
-                            .newBuilder()
+                    request.newBuilder()
                             .header(Constants.HEADER_AUTH, token.isEmpty() ? "" : "Bearer " + token)
                             .header("ngrok-skip-browser-warning", "69420")
                             .build()
@@ -97,11 +103,28 @@ public class NetworkModule {
 
     @Provides
     @Singleton
+    @Named("ErrorInterceptor")
+    Interceptor provideErrorInterceptor() {
+        return chain -> {
+            okhttp3.Response response = chain.proceed(chain.request());
+            if (response.code() == 401) {
+                throw new com.example.comicversev1.data.model.NetworkException(401, "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
+            } else if (response.code() >= 500) {
+                throw new com.example.comicversev1.data.model.NetworkException(response.code(), "Lỗi máy chủ (" + response.code() + ").");
+            }
+            return response;
+        };
+    }
+
+    @Provides
+    @Singleton
     OkHttpClient provideOkHttpClient(HttpLoggingInterceptor loggingInterceptor,
                                      Interceptor authInterceptor,
+                                     @Named("ErrorInterceptor") Interceptor errorInterceptor,
                                      Authenticator authenticator) {
         return new OkHttpClient.Builder()
                 .addInterceptor(authInterceptor)
+                .addInterceptor(errorInterceptor)
                 .authenticator(authenticator)
                 .addInterceptor(loggingInterceptor)
                 .connectTimeout(30, TimeUnit.SECONDS)
@@ -120,7 +143,7 @@ public class NetworkModule {
     @Singleton
     @Named("baseUrl")
     String provideBaseUrl() {
-        return BuildConfig.BASE_URL;
+        return Constants.BASE_URL;
     }
 
     @Provides

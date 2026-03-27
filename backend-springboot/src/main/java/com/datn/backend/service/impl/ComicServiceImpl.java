@@ -84,6 +84,7 @@ public class ComicServiceImpl implements ComicService {
         String thumbnailUrl = s3Service.uploadFile(thumbnail, "comics/" + folderName + "/cover");
         Comic comic = Comic.builder()
                 .title(request.getTitle())
+                .slug(folderName)
                 .synopsis(request.getSynopsis())
                 .thumbnailUrl(thumbnailUrl)
                 .author(request.getAuthorId() != null

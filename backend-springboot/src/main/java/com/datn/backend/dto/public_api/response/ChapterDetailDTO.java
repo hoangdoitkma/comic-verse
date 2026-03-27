@@ -18,4 +18,6 @@ public class ChapterDetailDTO {
     private String title;
     private List<String> pages; // URLs for comic, or paragraphs for novel
     private String content; // For novel
+    private Integer nextChapterId;
+    private Integer prevChapterId;
 }

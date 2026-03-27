@@ -1,9 +1,7 @@
 package com.datn.backend.security.config;
 
-import com.datn.backend.security.jwt.AuthEntryPointJwt;
-import com.datn.backend.security.jwt.AuthTokenFilter;
-import com.datn.backend.security.services.UserDetailsServiceImpl;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -21,7 +19,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import com.datn.backend.security.jwt.AuthEntryPointJwt;
+import com.datn.backend.security.jwt.AuthTokenFilter;
+import com.datn.backend.security.services.UserDetailsServiceImpl;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableMethodSecurity
@@ -73,19 +75,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> 
-                auth.requestMatchers("/api/auth/**").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/comics/**", "/api/chapters/**").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/comics/reading-history-info").permitAll()
-                    .requestMatchers("/api/reading-history/**").authenticated()
-                    .requestMatchers(HttpMethod.GET, "/api/data/**").authenticated()
-                    .requestMatchers("/api/uploader/**").hasAnyRole("UPLOADER", "ADMIN")
-                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                    .anyRequest().authenticated()
-            );
+                .csrf(csrf -> csrf.disable())
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/comics/**", "/api/chapters/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/comics/reading-history-info").permitAll()
+                        .requestMatchers("/api/reading-history/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/data/**").authenticated()
+                        .requestMatchers("/api/uploader/**").hasAnyRole("UPLOADER", "ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated());
 
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
@@ -93,4 +94,3 @@ public class SecurityConfig {
         return http.build();
     }
 }
-

@@ -7,7 +7,7 @@ public class ChapterItemDTO {
     private int id;
     @SerializedName("title")
     private String title;
-    @SerializedName("access_type")
+    @SerializedName("accessType")
     private String accessType;
 
     public int getId() { return id; }
