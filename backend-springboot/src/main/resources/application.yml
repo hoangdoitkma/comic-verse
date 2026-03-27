@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: comic-novel-platform
+  datasource:
+    url: ${DB_URL:jdbc:mysql://comic-verse-db.cniko6wq6psw.ap-southeast-1.rds.amazonaws.com:3306/comicverse}
+    username: admin
+    password: ${DB_PASSWORD:Duchoang003}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+aws:
+  s3:
+    region: ${AWS_REGION:ap-southeast-1}
+    bucket-name: ${AWS_S3_BUCKET:comicverse-storage}
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID:AKIA6F6ONXPVDOTS275Z}
+      secret-key: ${AWS_SECRET_ACCESS_KEY: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}

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.comicversev1.presentation.home.HomeFragment"
+        android:label="">
+        <action
+            android:id="@+id/action_home_to_detail"
+            app:destination="@id/comicDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.comicversev1.presentation.auth.LoginFragment"
+        android:label="Login">
+        <action
+            android:id="@+id/action_login_to_home"
+            app:destination="@id/homeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/discoverFragment"
+        android:name="com.example.comicversev1.presentation.discover.DiscoverFragment"
+        android:label="Discover">
+        <action
+            android:id="@+id/action_discover_to_detail"
+            app:destination="@id/comicDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/comicDetailFragment"
+        android:name="com.example.comicversev1.presentation.detail.ComicDetailFragment"
+        android:label="Comic Detail">
+        <argument
+            android:name="slug"
+            app:argType="string" />
+        <argument
+            android:name="comicId"
+            app:argType="integer" />
+        <action
+            android:id="@+id/action_detail_to_reader"
+            app:destination="@id/readerFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/readerFragment"
+        android:name="com.example.comicversev1.presentation.reader.ReaderFragment"
+        android:label="Reader">
+        <argument
+            android:name="chapterId"
+            app:argType="integer" />
+        <argument
+            android:name="comicId"
+            app:argType="integer" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/novelFragment"
+        android:name="com.example.comicversev1.presentation.novel.NovelFragment"
+        android:label="" />
+
+</navigation>

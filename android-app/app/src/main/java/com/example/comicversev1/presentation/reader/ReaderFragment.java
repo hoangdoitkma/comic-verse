@@ -1,0 +1,247 @@
+package com.example.comicversev1.presentation.reader;
+
+import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.comicversev1.databinding.FragmentReaderBinding;
+import com.example.comicversev1.domain.entity.ChapterEntity;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
+public class ReaderFragment extends Fragment {
+
+    private FragmentReaderBinding binding;
+    private ReaderViewModel viewModel;
+    private ReaderPagesAdapter adapter;
+    private LinearLayoutManager layoutManager;
+
+    // Track current visible chapter for progress saving
+    private int currentVisibleChapterId = -1;
+    private String currentVisibleChapterTitle = "";
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        binding = FragmentReaderBinding.inflate(inflater, container, false);
+        return binding.getRoot();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        viewModel = new ViewModelProvider(this).get(ReaderViewModel.class);
+        adapter = new ReaderPagesAdapter();
+        layoutManager = new LinearLayoutManager(requireContext());
+
+        binding.recyclerView.setLayoutManager(layoutManager);
+        binding.recyclerView.setAdapter(adapter);
+
+        setupBackButton();
+        setupScrollListener();
+        observeState();
+    }
+
+    private void setupBackButton() {
+        binding.btnBack.setOnClickListener(v -> {
+            // Lưu tiến trình bị bất đồng bộ ngay trước khi thoát reader
+            if (layoutManager != null && viewModel != null && adapter != null) {
+                int firstVisible = layoutManager.findFirstVisibleItemPosition();
+                if (firstVisible >= 0) {
+                    int chapterId = adapter.getChapterIdAtPosition(firstVisible);
+                    int relativePage = adapter.getRelativePageIndex(firstVisible);
+                    if (chapterId > 0) {
+                        viewModel.saveProgressImmediately(chapterId, relativePage);
+                    }
+                }
+            }
+            NavHostFragment.findNavController(this).navigateUp();
+        });
+    }
+
+    /**
+     * Detect when user scrolls near the bottom → load next chapter
+     * Also update the header with current chapter info
+     * Save reading progress when scroll FULLY STOPS (SCROLL_STATE_IDLE)
+     */
+    private void setupScrollListener() {
+        binding.recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                // Lưu progress khi scroll dừng hẳn (bao gồm cả sau fling)
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    Log.d("ReaderFragment", ">>> SCROLL_STATE_IDLE detected. Triggering saveCurrentProgress()");
+                    saveCurrentProgress();
+                }
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                int totalItemCount = layoutManager.getItemCount();
+                int lastVisiblePosition = layoutManager.findLastVisibleItemPosition();
+                int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
+
+                // Update chapter title based on first visible item
+                if (firstVisiblePosition >= 0) {
+                    int chapterId = adapter.getChapterIdAtPosition(firstVisiblePosition);
+                    if (chapterId > 0 && chapterId != currentVisibleChapterId) {
+                        currentVisibleChapterId = chapterId;
+                        ChapterEntity ch = viewModel.getChapterById(chapterId);
+                        if (ch != null) {
+                            currentVisibleChapterTitle = ch.getTitle();
+                            binding.txtChapterTitle.post(() -> binding.txtChapterTitle.setText(ch.getTitle()));
+                        }
+                    }
+
+                    // Update page progress (post to run queue to prevent requestLayout() loop during scroll)
+                    binding.txtPageProgress.post(() -> 
+                        binding.txtPageProgress.setText(String.format("Trang %d / %d", firstVisiblePosition + 1, totalItemCount))
+                    );
+                }
+
+                // Trigger load next chapter when near the end (5 items from bottom)
+                if (lastVisiblePosition >= totalItemCount - 5 && totalItemCount > 0) {
+                    viewModel.loadNextChapterIfNeeded();
+                }
+            }
+        });
+    }
+
+    /**
+     * Lưu vị trí đọc hiện tại vào Room DB
+     */
+    private void saveCurrentProgress() {
+        if (layoutManager == null || viewModel == null || adapter == null) return;
+        int firstVisible = layoutManager.findFirstVisibleItemPosition();
+        if (firstVisible >= 0) {
+            int chapterId = adapter.getChapterIdAtPosition(firstVisible);
+            int relativePage = adapter.getRelativePageIndex(firstVisible);
+            if (chapterId > 0) {
+                viewModel.saveReadingProgress(chapterId, relativePage);
+            }
+        }
+    }
+
+    private void observeState() {
+        // Initial chapter load
+        viewModel.uiState().observe(getViewLifecycleOwner(), state -> {
+            binding.progressBar.setVisibility(state.isLoading() ? View.VISIBLE : View.GONE);
+            binding.progressBarMore.setVisibility(state.isLoadingMore() ? View.VISIBLE : View.GONE);
+
+            if (state.getChapter() != null && adapter.getItemCount() == 0) {
+                ChapterEntity ch = state.getChapter();
+                adapter.submitChapter(ch.getId(), ch.getTitle(), ch.getImages());
+                currentVisibleChapterId = ch.getId();
+                currentVisibleChapterTitle = ch.getTitle();
+                binding.txtChapterTitle.setText(ch.getTitle());
+                binding.txtPageProgress.setText(
+                        String.format("Trang 1 / %d", ch.getImages() != null ? ch.getImages().size() : 0)
+                );
+                
+                Log.d("ReaderFragment", ">>> Initial chapter loaded. ItemCount is now: " + adapter.getItemCount() + ". Scheduling scroll check.");
+                // Móc lệnh cuộn ngay trước khi giao diện bắt đầu render pixel đầu tiên
+                scheduleScrollToSavedPosition();
+            }
+
+            if (state.getError() != null && adapter.getItemCount() == 0) {
+                binding.txtChapterTitle.setText("Lỗi: " + state.getError());
+            }
+        });
+
+        // Append new chapters as they load
+        viewModel.appendChapterEvent().observe(getViewLifecycleOwner(), chapter -> {
+            if (chapter != null) {
+                adapter.appendChapter(chapter.getId(), chapter.getTitle(), chapter.getImages());
+            }
+        });
+    }
+
+    private void scheduleScrollToSavedPosition() {
+        binding.recyclerView.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                // Hủy đăng ký ngay lập tức để chỉ chạy 1 lần
+                binding.recyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
+                
+                Integer pendingRelativePage = viewModel.consumePendingScrollPosition();
+                Log.d("ReaderFragment", ">>> OnPreDraw fired. pendingRelativePage from ViewModel: " + pendingRelativePage);
+                if (pendingRelativePage != null && pendingRelativePage >= 0) {
+                    int restoredChapterId = viewModel.getRestoredChapterId();
+                    Log.d("ReaderFragment", ">>> Restored Chapter Id: " + restoredChapterId);
+                    int absolutePos = adapter.getAbsolutePosition(restoredChapterId, pendingRelativePage);
+                    Log.d("ReaderFragment", ">>> Converted to Absolute Pos: " + absolutePos);
+
+                    if (absolutePos >= 0 && absolutePos < adapter.getItemCount()) {
+                        Log.d("ReaderFragment", ">>> EXECUTING layoutManager.scrollToPositionWithOffset(" + absolutePos + ", 0)");
+                        // Chốt cứng Layout Manager
+                        layoutManager.scrollToPositionWithOffset(absolutePos, 0);
+
+                        // Cập nhật text Header ngay
+                        int chapterId = adapter.getChapterIdAtPosition(absolutePos);
+                        if (chapterId > 0) {
+                            currentVisibleChapterId = chapterId;
+                            ChapterEntity ch = viewModel.getChapterById(chapterId);
+                            if (ch != null) {
+                                currentVisibleChapterTitle = ch.getTitle();
+                                binding.txtChapterTitle.setText(ch.getTitle());
+                            }
+                        }
+                        binding.txtPageProgress.setText(
+                                String.format("Trang %d / %d", absolutePos + 1, adapter.getItemCount())
+                        );
+                    }
+                }
+                return true; // Cho phép vẽ tiếp
+            }
+        });
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        // Bảo vệ tiến trình đọc nếu người dùng bấm nút Home (chạy ngầm) hoặc vuốt tắt ứng dụng
+        // OS sẽ gọi onStop thay vì onDestroyView.
+        if (layoutManager != null && viewModel != null && adapter != null) {
+            int firstVisible = layoutManager.findFirstVisibleItemPosition();
+            if (firstVisible >= 0) {
+                int chapterId = adapter.getChapterIdAtPosition(firstVisible);
+                int relativePage = adapter.getRelativePageIndex(firstVisible);
+                if (chapterId > 0) {
+                    viewModel.saveProgressImmediately(chapterId, relativePage);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        // Đảm bảo lưu progress bằng tiến trình chạy ngầm KHÔNG chặn luồng trước khi ViewModel bị destroy
+        // (tránh race condition với disposables.clear() trong onCleared)
+        if (layoutManager != null && viewModel != null && adapter != null) {
+            int firstVisible = layoutManager.findFirstVisibleItemPosition();
+            if (firstVisible >= 0) {
+                int chapterId = adapter.getChapterIdAtPosition(firstVisible);
+                int relativePage = adapter.getRelativePageIndex(firstVisible);
+                if (chapterId > 0) {
+                    viewModel.saveProgressImmediately(chapterId, relativePage);
+                }
+            }
+        }
+        super.onDestroyView();
+        binding = null;
+    }
+}

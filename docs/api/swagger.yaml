@@ -1,0 +1,457 @@
+openapi: 3.0.3
+info:
+  title: Comic & Novel Digital Platform API
+  description: Hệ thống API cung cấp dịch vụ đọc truyện tranh (Comic) và tiểu thuyết (Novel), tích hợp thanh toán VIP và gợi ý nội dung bằng AI.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Phiên bản API v1
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+        message:
+          type: string
+          example: Request processed successfully
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: AGE_RESTRICTED
+            message:
+              type: string
+              example: Bạn chưa đủ 18 tuổi để xem nội dung này
+  responses:
+    Success:
+      description: Thành công
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SuccessResponse'
+    Error:
+      description: Lỗi từ phía client hoặc nghiệp vụ
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ==========================================
+  # 1. MODULE: AUTHENTICATION & USER
+  # ==========================================
+  /auth/register:
+    post:
+      tags:
+        - Authentication & User
+      summary: Đăng ký tài khoản mới
+      security: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/Error'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication & User
+      summary: Đăng nhập và nhận JWT Token
+      security: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Error'
+
+  /user/profile:
+    get:
+      tags:
+        - Authentication & User
+      summary: Lấy thông tin cá nhân & ngày sinh
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+    put:
+      tags:
+        - Authentication & User
+      summary: Cập nhật hồ sơ (Display name, Avatar)
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /admin/users:
+    get:
+      tags:
+        - Authentication & User
+      summary: Liệt kê & Quản lý người dùng
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /admin/users/{id}/status:
+    patch:
+      tags:
+        - Authentication & User
+      summary: Khóa/Mở tài khoản (ACTIVE/BANNED)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  # ==========================================
+  # 2. MODULE: CONTENT DELIVERY
+  # ==========================================
+  /comics:
+    get:
+      tags:
+        - Content Delivery
+      summary: Danh sách truyện
+      description: Hỗ trợ Filter genre, tag, type
+      security: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /comics/search:
+    get:
+      tags:
+        - Content Delivery
+      summary: Tìm kiếm truyện theo từ khóa
+      security: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /comics/{slug_or_id}:
+    get:
+      tags:
+        - Content Delivery
+      summary: Chi tiết truyện, Tác giả, Age Rating
+      security: []
+      parameters:
+        - in: path
+          name: slug_or_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /comics/{id}/chapters:
+    get:
+      tags:
+        - Content Delivery
+      summary: Danh sách chương (Sắp xếp theo sort_order)
+      security: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /chapters/{id}:
+    get:
+      tags:
+        - Content Delivery
+      summary: Nội dung chương (Text cho Novel hoặc Metadata cho Comic)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /chapters/{id}/pages:
+    get:
+      tags:
+        - Content Delivery
+      summary: Danh sách URL hình ảnh truyện tranh
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  # ==========================================
+  # 3. MODULE: SOCIAL & INTERACTION
+  # ==========================================
+  /comics/{id}/follow:
+    post:
+      tags:
+        - Social & Interaction
+      summary: Theo dõi/Bỏ theo dõi truyện
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /comics/{id}/rate:
+    post:
+      tags:
+        - Social & Interaction
+      summary: Gửi đánh giá sao (1-5)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /chapters/{id}/comments:
+    get:
+      tags:
+        - Social & Interaction
+      summary: Lấy bình luận tầng sâu (Nested)
+      security: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+    post:
+      tags:
+        - Social & Interaction
+      summary: Gửi bình luận mới hoặc Reply
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /comments/{id}/like:
+    post:
+      tags:
+        - Social & Interaction
+      summary: Like/Unlike bình luận (Cập nhật like_count)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /reports:
+    post:
+      tags:
+        - Social & Interaction
+      summary: Báo cáo vi phạm bình luận/nội dung
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  # ==========================================
+  # 4. MODULE: VIP & TRANSACTION
+  # ==========================================
+  /vip/packages:
+    get:
+      tags:
+        - VIP & Transaction
+      summary: Lấy danh sách các gói VIP hiện có
+      security: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /vip/subscribe:
+    post:
+      tags:
+        - VIP & Transaction
+      summary: Khởi tạo thanh toán mua gói (Momo/ZaloPay)
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /vip/transactions:
+    get:
+      tags:
+        - VIP & Transaction
+      summary: Xem lịch sử nạp tiền
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /user/subscriptions:
+    get:
+      tags:
+        - VIP & Transaction
+      summary: Kiểm tra trạng thái VIP hiện tại
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  # ==========================================
+  # 5. MODULE: READING & AI
+  # ==========================================
+  /reading/history:
+    get:
+      tags:
+        - Reading & AI
+      summary: Lấy lịch sử truyện đã đọc
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+    post:
+      tags:
+        - Reading & AI
+      summary: Cập nhật tiến trình đọc (last_page, chapter_id)
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /reading/bookmarks:
+    get:
+      tags:
+        - Reading & AI
+      summary: Lấy danh sách các trang đã đánh dấu
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /ai/summaries/comic/{id}:
+    get:
+      tags:
+        - Reading & AI
+      summary: Lấy bản tóm tắt truyện do AI tạo
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /ai/recommendations:
+    get:
+      tags:
+        - Reading & AI
+      summary: Lấy danh sách truyện gợi ý theo sở thích
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  # ==========================================
+  # 6. MODULE: CMS & ADMINISTRATION
+  # ==========================================
+  /cms/comics:
+    post:
+      tags:
+        - CMS & Administration
+      summary: Tạo hồ sơ truyện mới
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /cms/chapters:
+    post:
+      tags:
+        - CMS & Administration
+      summary: Đăng chương mới (PENDING)
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /admin/upload-logs:
+    get:
+      tags:
+        - CMS & Administration
+      summary: Danh sách chương chờ duyệt
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /admin/chapters/{id}/status:
+    patch:
+      tags:
+        - CMS & Administration
+      summary: Duyệt/Từ chối chương (APPROVED/REJECTED)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /analytics/daily-stats:
+    get:
+      tags:
+        - CMS & Administration
+      summary: Lấy thống kê lượt xem, doanh thu
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /admin/configs:
+    put:
+      tags:
+        - CMS & Administration
+      summary: Cập nhật cấu hình hệ thống
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
