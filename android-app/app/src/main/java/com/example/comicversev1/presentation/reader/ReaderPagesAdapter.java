@@ -28,6 +28,17 @@ import com.github.chrisbanes.photoview.PhotoView;
 
 public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
+    public interface OnImageLoadStateListener {
+        void onImageLoading();
+        void onImageLoadedOrError();
+    }
+
+    private OnImageLoadStateListener imageLoadStateListener;
+
+    public void setOnImageLoadStateListener(OnImageLoadStateListener listener) {
+        this.imageLoadStateListener = listener;
+    }
+
     private static final int TYPE_PAGE = 0;
     private static final int TYPE_SEPARATOR = 1;
 
@@ -181,16 +192,27 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                         @Override
                         public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
                             pageHolder.imageView.setMinimumHeight(0); // Trả lại tự do cho View
+                            if (ReaderPagesAdapter.this.imageLoadStateListener != null) {
+                                ReaderPagesAdapter.this.imageLoadStateListener.onImageLoadedOrError();
+                            }
                             return false;
                         }
 
                         @Override
                         public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
                             pageHolder.imageView.setMinimumHeight(0); // Trả lại tự do để adjustViewBounds hoạt động
+                            if (ReaderPagesAdapter.this.imageLoadStateListener != null) {
+                                ReaderPagesAdapter.this.imageLoadStateListener.onImageLoadedOrError();
+                            }
                             return false;
                         }
                     })
                     .into(pageHolder.imageView);
+
+            // Báo cho UI biết ảnh này bắt đầu load (có thể dùng để pause AutoScroll)
+            if (this.imageLoadStateListener != null) {
+                this.imageLoadStateListener.onImageLoading();
+            }
 
             // Tải trước (Preload) 2 trang tiếp theo để lướt mượt không chờ mạng
             for (int i = 1; i <= 2; i++) {

@@ -93,4 +93,98 @@
             android:text="Tối" />
     </LinearLayout>
 
+    <!-- Auto Scroll Settings -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp">
+        
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Tự động cuộn"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:textStyle="bold" />
+            
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchAutoScroll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutAutoScrollSettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- Speed -->
+        <TextView
+            android:id="@+id/tvScrollSpeedLbl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tốc độ cuộn"
+            android:textSize="14sp"
+            android:textColor="#666666" />
+            
+        <SeekBar
+            android:id="@+id/seekBarSpeed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:max="10"
+            android:progress="2" />
+
+        <!-- Conflict Mode -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Thao tác khi chạm tay vào màn hình"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginBottom="8dp" />
+            
+        <RadioGroup
+            android:id="@+id/rgConflictMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+            
+            <RadioButton
+                android:id="@+id/rbStop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                android:text="Hủy tính năng" />
+                
+            <RadioButton
+                android:id="@+id/rbPause"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                android:text="Tạm dừng chờ" />
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/tvAutoScrollHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textStyle="italic"
+            android:textColor="#999999"
+            android:layout_marginBottom="8dp"
+            android:text="" />
+    </LinearLayout>
+
 </LinearLayout>

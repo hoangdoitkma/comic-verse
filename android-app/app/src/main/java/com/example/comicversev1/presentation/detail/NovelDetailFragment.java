@@ -84,9 +84,6 @@ public class NovelDetailFragment extends Fragment {
             Toast.makeText(requireContext(), "Đã đăng ký truyện!", Toast.LENGTH_SHORT).show();
         });
 
-        binding.btnDownload.setOnClickListener(v -> {
-            Toast.makeText(requireContext(), "Tính năng tải xuống đang phát triển", Toast.LENGTH_SHORT).show();
-        });
 
         binding.btnReport.setOnClickListener(v -> {
             Toast.makeText(requireContext(), "Đã mở form báo cáo", Toast.LENGTH_SHORT).show();
@@ -115,6 +112,8 @@ public class NovelDetailFragment extends Fragment {
                 
                 com.example.comicversev1.NavGraphDirections.ActionGlobalTextNovelReader action =
                         com.example.comicversev1.NavGraphDirections.actionGlobalTextNovelReader(targetChapterId, actualComicId);
+                String title = state.getComic() != null ? state.getComic().getTitle() : null;
+                action.setComicTitle(title);
                 NavHostFragment.findNavController(this).navigate(action);
             } else {
                 Toast.makeText(requireContext(), "Chưa có chương nào để đọc!", Toast.LENGTH_SHORT).show();
@@ -144,7 +143,8 @@ public class NovelDetailFragment extends Fragment {
                 bindComicData(state.getComic());
             }
             if (state.getChapters() != null && !state.getChapters().isEmpty()) {
-                bindChapters(state.getChapters(), state.getComic() != null ? state.getComic().getId() : args.getComicId());
+                String title = state.getComic() != null ? state.getComic().getTitle() : null;
+                bindChapters(state.getChapters(), state.getComic() != null ? state.getComic().getId() : args.getComicId(), title);
             }
 
             if (state.getError() != null) {
@@ -232,7 +232,7 @@ public class NovelDetailFragment extends Fragment {
         binding.layoutTags.addView(tv);
     }
 
-    private void bindChapters(List<ChapterItem> chapters, int comicId) {
+    private void bindChapters(List<ChapterItem> chapters, int comicId, String comicTitle) {
         binding.layoutChapters.removeAllViews();
         
         // Default chapters order is ASC (1, 2, 3 ...), we want latest 3 so we reverse or iterate from back
@@ -256,6 +256,7 @@ public class NovelDetailFragment extends Fragment {
             row.setOnClickListener(v -> {
                 com.example.comicversev1.NavGraphDirections.ActionGlobalTextNovelReader action =
                         com.example.comicversev1.NavGraphDirections.actionGlobalTextNovelReader(chapter.getId(), comicId);
+                action.setComicTitle(comicTitle);
                 NavHostFragment.findNavController(this).navigate(action);
             });
             

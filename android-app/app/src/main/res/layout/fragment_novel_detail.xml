@@ -79,18 +79,6 @@
                 android:layout_marginTop="16dp"
                 android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/txtLanguage"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:drawablePadding="12dp"
-                    android:textColor="#A0B0C0"
-                    android:textSize="15sp"
-                    android:fontFamily="sans-serif"
-                    app:drawableStartCompat="@android:drawable/ic_menu_sort_alphabetically"
-                    app:drawableTint="#A0B0C0"
-                    tools:text="Tiếng Việt" />
 
                 <TextView
                     android:id="@+id/txtAuthor"
@@ -139,21 +127,6 @@
                     app:drawableStartCompat="@android:drawable/ic_media_play"
                     app:drawableTint="#64B5F6"
                     tools:text="Đã hoàn thành" />
-
-                <TextView
-                    android:id="@+id/btnDownload"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:drawablePadding="12dp"
-                    android:textColor="#81C784"
-                    android:textSize="15sp"
-                    android:text="Tải xuống"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackground"
-                    app:drawableStartCompat="@android:drawable/stat_sys_download_done"
-                    app:drawableTint="#81C784" />
 
                 <TextView
                     android:id="@+id/btnReport"

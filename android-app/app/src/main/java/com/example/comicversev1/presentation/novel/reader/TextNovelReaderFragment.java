@@ -32,6 +32,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 import kotlin.Unit;
 
 import com.example.comicversev1.presentation.reader.ViewTrackingTimer; // Kế thừa timer có sẵn
+import com.example.comicversev1.utils.AutoScrollManager; // Import AutoScrollManager
 
 @AndroidEntryPoint
 public class TextNovelReaderFragment extends Fragment {
@@ -47,7 +48,7 @@ public class TextNovelReaderFragment extends Fragment {
     private BottomSheetDialog settingsBottomSheet;
     private BottomSheetDialog chapterListSheet;
     private BottomSheetChapterAdapter chapterListAdapter;
-    private boolean isUiVisible = false; // Toggle bars
+    private boolean isUiVisible = true; // Navbar & Bottombar hiển thị theo mặc định XML
 
     // Settings memory
     private SharedPreferences prefs;
@@ -57,6 +58,9 @@ public class TextNovelReaderFragment extends Fragment {
 
     private ViewTrackingTimer viewTrackingTimer;
     private int currentlyTrackedChapterId = -1;
+    
+    // Auto Scroll
+    private AutoScrollManager autoScrollManager;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -84,7 +88,10 @@ public class TextNovelReaderFragment extends Fragment {
 
         TextView tvTitle = view.findViewById(R.id.tv_novel_title);
         TextView tvChapter = view.findViewById(R.id.tv_chapter_title);
-        tvTitle.setText("Đang tải...");
+        
+        TextNovelReaderFragmentArgs args = TextNovelReaderFragmentArgs.fromBundle(requireArguments());
+        String comicTitle = args.getComicTitle();
+        tvTitle.setText(comicTitle != null ? comicTitle : "Đang tải...");
         tvChapter.setText("");
 
         LinearLayout btnSettings = view.findViewById(R.id.btnSettings);
@@ -122,6 +129,12 @@ public class TextNovelReaderFragment extends Fragment {
         adapter = new TextNovelAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(adapter);
+
+        // Init AutoScroll
+        autoScrollManager = new AutoScrollManager(requireContext(), recyclerView);
+        autoScrollManager.setListener(isScrolling -> {
+            // Callback when auto-scroll state changes (e.g. paused by touch in Mode A)
+        });
 
         applyTheme(); // Áp dụng theme ban đầu (Background của FrameLayout)
 
@@ -184,6 +197,7 @@ public class TextNovelReaderFragment extends Fragment {
     private void trackViewForChapter(int chapterId) {
         if (chapterId != currentlyTrackedChapterId) {
             currentlyTrackedChapterId = chapterId;
+            updateChapterTitleUi(chapterId);
             viewTrackingTimer.startTimer(viewModel.getComicId(), chapterId, new ViewTrackingTimer.OnTimerCompletedListener() {
                 @Override
                 public void onTimerCompleted(int cId, int chId) {
@@ -193,9 +207,32 @@ public class TextNovelReaderFragment extends Fragment {
         }
     }
 
+    private void updateChapterTitleUi(int chapterId) {
+        String chapTitle = viewModel.getChapterTitleCache(chapterId);
+        if (chapTitle != null) {
+            View root = getView();
+            if (root != null) {
+                TextView tvChapter = root.findViewById(R.id.tv_chapter_title);
+                if (tvChapter != null) {
+                    if (!chapTitle.toLowerCase().contains("chương") && !chapTitle.toLowerCase().contains("chap")) {
+                        chapTitle = "Chương " + chapTitle;
+                    }
+                    tvChapter.setText(chapTitle);
+                }
+            }
+        }
+    }
+
     private void observeViewModel() {
         viewModel.isLoading().observe(getViewLifecycleOwner(), isLoading -> {
             loadingOverlay.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+            if (autoScrollManager != null) {
+                if (isLoading) {
+                    autoScrollManager.pauseForNetwork();
+                } else {
+                    autoScrollManager.resumeFromNetwork();
+                }
+            }
         });
 
         viewModel.errorEvent().observe(getViewLifecycleOwner(), msg -> {
@@ -237,7 +274,11 @@ public class TextNovelReaderFragment extends Fragment {
                     TextView tvTitle = root.findViewById(R.id.tv_novel_title);
                     TextView tvChapter = root.findViewById(R.id.tv_chapter_title);
                     
-                    if (tvTitle != null) tvTitle.setText("Đọc truyện");
+                    if (tvTitle != null) {
+                        TextNovelReaderFragmentArgs args = TextNovelReaderFragmentArgs.fromBundle(requireArguments());
+                        String cTitle = args.getComicTitle();
+                        tvTitle.setText(cTitle != null ? cTitle : "Đọc truyện");
+                    }
                     if (tvChapter != null) {
                         String chapTitle = chapter.getTitle();
                         if (chapTitle != null && !chapTitle.toLowerCase().contains("chương") && !chapTitle.toLowerCase().contains("chap")) {
@@ -338,6 +379,67 @@ public class TextNovelReaderFragment extends Fragment {
         btnSepia.setOnClickListener(v -> { currentTheme = 1; saveSettings(); });
         btnDark.setOnClickListener(v -> { currentTheme = 2; saveSettings(); });
 
+        // --- Auto Scroll Settings ---
+        androidx.appcompat.widget.SwitchCompat switchAutoScroll = view.findViewById(R.id.switchAutoScroll);
+        View layoutAutoScrollSettings = view.findViewById(R.id.layoutAutoScrollSettings);
+        android.widget.SeekBar seekBarSpeed = view.findViewById(R.id.seekBarSpeed);
+        TextView tvScrollSpeedLbl = view.findViewById(R.id.tvScrollSpeedLbl);
+        android.widget.RadioGroup rgConflictMode = view.findViewById(R.id.rgConflictMode);
+        TextView tvAutoScrollHint = view.findViewById(R.id.tvAutoScrollHint);
+
+        if (switchAutoScroll != null && autoScrollManager != null) {
+            switchAutoScroll.setChecked(autoScrollManager.isAutoScrolling());
+            layoutAutoScrollSettings.setVisibility(switchAutoScroll.isChecked() ? View.VISIBLE : View.GONE);
+            
+            int currentSpeed = prefs.getInt("scroll_speed", 2);
+            seekBarSpeed.setProgress(currentSpeed);
+            tvScrollSpeedLbl.setText("Tốc độ cuộn: " + currentSpeed);
+
+            int conflictMode = prefs.getInt("scroll_conflict_mode", 1);
+            if (conflictMode == 0) {
+                rgConflictMode.check(R.id.rbStop);
+                if (tvAutoScrollHint != null) tvAutoScrollHint.setText("Lưu ý: Bất kỳ thao tác chạm nào trên trang đọc cũng sẽ tắt hẳn chức năng tự động cuộn.");
+            } else {
+                rgConflictMode.check(R.id.rbPause);
+                if (tvAutoScrollHint != null) tvAutoScrollHint.setText("Lưu ý: Tính năng cuộn sẽ dừng lại khi bạn giữ tay để đọc, và tự động cuộn tiếp sau 2 giây khi bạn thả tay.");
+            }
+
+            switchAutoScroll.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                layoutAutoScrollSettings.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+                autoScrollManager.toggle(isChecked);
+                // Ẩn thanh công cụ và Settings Dialog để đọc luôn với Auto-scroll
+                if (isChecked && isUiVisible) {
+                    toggleSystemUI();
+                    dialog.dismiss();
+                }
+            });
+
+            seekBarSpeed.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+                    int speed = Math.max(1, progress); // Tốc độ tối thiểu là 1
+                    tvScrollSpeedLbl.setText("Tốc độ cuộn: " + speed);
+                    autoScrollManager.applySettings(speed, prefs.getInt("scroll_conflict_mode", 1));
+                }
+                @Override
+                public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
+                @Override
+                public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
+            });
+
+            rgConflictMode.setOnCheckedChangeListener((group, checkedId) -> {
+                int mode = checkedId == R.id.rbStop ? 0 : 1;
+                autoScrollManager.applySettings(prefs.getInt("scroll_speed", 2), mode);
+                if (tvAutoScrollHint != null) {
+                    if (mode == 0) {
+                        tvAutoScrollHint.setText("Lưu ý: Bất kỳ thao tác chạm nào trên trang đọc cũng sẽ tắt hẳn chức năng tự động cuộn.");
+                    } else {
+                        tvAutoScrollHint.setText("Lưu ý: Tính năng cuộn sẽ dừng lại khi bạn giữ tay để đọc, và tự động cuộn tiếp sau 2 giây khi bạn thả tay.");
+                    }
+                }
+            });
+        }
+
         dialog.show();
     }
 
@@ -387,6 +489,10 @@ public class TextNovelReaderFragment extends Fragment {
         super.onDestroyView();
         if (viewTrackingTimer != null) {
             viewTrackingTimer.cancelTimer();
+        }
+        if (autoScrollManager != null) {
+            autoScrollManager.destroy();
+            autoScrollManager = null;
         }
     }
 }

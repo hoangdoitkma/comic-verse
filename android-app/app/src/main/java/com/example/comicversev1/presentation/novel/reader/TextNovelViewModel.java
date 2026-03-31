@@ -72,6 +72,7 @@ public class TextNovelViewModel extends ViewModel {
     private boolean isChapterListLoaded = false;
 
     private final Set<Integer> loadedChapterIds = new HashSet<>();
+    private final java.util.Map<Integer, String> chapterTitleCache = new java.util.concurrent.ConcurrentHashMap<>();
     private Integer pendingNextChapterId = null;
     private Integer activePrevChapterId = null;
     private boolean isLoadingMore = false;
@@ -200,6 +201,8 @@ public class TextNovelViewModel extends ViewModel {
 
     private Single<List<TextNovelItem>> parseContent(ChapterEntity chapter) {
         return Single.fromCallable(() -> {
+            chapterTitleCache.put(chapter.getId(), chapter.getTitle());
+            
             List<TextNovelItem> items = new ArrayList<>();
             if (loadedChapterIds.size() > 1) {
                 items.add(new TextNovelItem.DividerItem());
@@ -249,7 +252,9 @@ public class TextNovelViewModel extends ViewModel {
                 }
                 
                 // Tiêu đề
-                items.add(new TextNovelItem.TitleItem(data.getChapterTitle() != null ? data.getChapterTitle() : chapter.getTitle()));
+                String fetchedTitle = data.getChapterTitle() != null ? data.getChapterTitle() : chapter.getTitle();
+                chapterTitleCache.put(chapter.getId(), fetchedTitle);
+                items.add(new TextNovelItem.TitleItem(fetchedTitle));
                 
                 // Danh sách paragraphs
                 List<String> paragraphs = data.getContent();
@@ -336,6 +341,10 @@ public class TextNovelViewModel extends ViewModel {
 
     public Integer getPendingNextChapterId() {
         return pendingNextChapterId;
+    }
+
+    public String getChapterTitleCache(int chapterId) {
+        return chapterTitleCache.get(chapterId);
     }
 
     public void trackChapterView(int chapterId) {
