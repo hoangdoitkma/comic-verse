@@ -64,6 +64,14 @@ public class ReaderFragment extends Fragment {
         binding.recyclerView.setLayoutManager(layoutManager);
         binding.recyclerView.setAdapter(adapter);
 
+        adapter.setOnPageLongClickListener(chapterId -> {
+            com.example.comicversev1.presentation.shared.ReportChapterBottomSheet sheet = new com.example.comicversev1.presentation.shared.ReportChapterBottomSheet();
+            sheet.setOnReportSubmitListener(request -> {
+                viewModel.reportChapter(chapterId, request);
+            });
+            sheet.show(getChildFragmentManager(), "ReportChapterBottomSheet");
+        });
+
         setupToolbar();
         setupBackButton();
         setupCommentsButton();
@@ -341,6 +349,18 @@ public class ReaderFragment extends Fragment {
                 if (rv != null) {
                     rv.setAdapter(chapterListAdapter);
                 }
+            }
+        });
+
+        viewModel.reportSuccessEvent().observe(getViewLifecycleOwner(), success -> {
+            if (Boolean.TRUE.equals(success)) {
+                android.widget.Toast.makeText(requireContext(), "Báo cáo thành công! Cảm ơn bạn.", android.widget.Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        viewModel.errorEvent().observe(getViewLifecycleOwner(), error -> {
+            if (error != null) {
+                android.widget.Toast.makeText(requireContext(), error, android.widget.Toast.LENGTH_SHORT).show();
             }
         });
     }

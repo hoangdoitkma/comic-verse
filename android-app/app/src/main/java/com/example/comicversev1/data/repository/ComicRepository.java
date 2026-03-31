@@ -16,4 +16,5 @@ public interface ComicRepository {
     Single<ChapterEntity> getChapterDetail(int chapterId);
     Single<List<ChapterItem>> getChapters(String slug);
     Flowable<List<ComicEntity>> observeCachedComics();
+    Single<com.example.comicversev1.data.model.ChapterReportResponse> reportChapter(int chapterId, com.example.comicversev1.data.model.ChapterReportRequest request);
 }

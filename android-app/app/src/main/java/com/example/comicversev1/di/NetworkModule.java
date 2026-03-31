@@ -59,19 +59,16 @@ public class NetworkModule {
     Interceptor provideAuthInterceptor(SharedPreferences prefs) {
         return chain -> {
             okhttp3.Request request = chain.request();
-            boolean isPublicPath = request.url().encodedPath().contains("/public/");
+            String token = prefs.getString(Constants.KEY_ACCESS_TOKEN, "");
+            
+            okhttp3.Request.Builder builder = request.newBuilder()
+                    .header("ngrok-skip-browser-warning", "69420");
 
-            if (isPublicPath) {
-                return chain.proceed(request);
+            if (!token.isEmpty()) {
+                builder.header(Constants.HEADER_AUTH, "Bearer " + token);
             }
 
-            String token = prefs.getString(Constants.KEY_ACCESS_TOKEN, "");
-            return chain.proceed(
-                    request.newBuilder()
-                            .header(Constants.HEADER_AUTH, token.isEmpty() ? "" : "Bearer " + token)
-                            .header("ngrok-skip-browser-warning", "69420")
-                            .build()
-            );
+            return chain.proceed(builder.build());
         };
     }
 

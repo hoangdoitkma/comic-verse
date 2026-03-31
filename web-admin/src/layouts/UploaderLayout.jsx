@@ -10,6 +10,7 @@ import {
   User,
   Lock,
   ChevronDown,
+  AlertOctagon
 } from 'lucide-react';
 import authService from '../services/authService';
 import ProfileModal from '../components/ProfileModal';
@@ -27,6 +28,11 @@ const menuItems = [
     label: 'Quản lý Truyện',
     path: '/uploader/comics',
     icon: BookOpen,
+  },
+  {
+    label: 'Báo cáo lỗi',
+    path: '/uploader/reports',
+    icon: AlertOctagon,
   },
 ];
 
@@ -271,7 +277,7 @@ export default function UploaderLayout() {
 
         {/* Content */}
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
-          <Outlet />
+          <Outlet context={{ addToast }} />
         </main>
       </div>
     </div>

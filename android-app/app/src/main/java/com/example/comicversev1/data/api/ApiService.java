@@ -102,4 +102,11 @@ public interface ApiService {
             @Path("comicId") int comicId,
             @Body com.example.comicversev1.data.model.CommentRequest request
     );
+
+    // Reports
+    @POST("public/chapters/{chapterId}/reports")
+    Single<BaseResponse<com.example.comicversev1.data.model.ChapterReportResponse>> reportChapter(
+            @Path("chapterId") int chapterId,
+            @Body com.example.comicversev1.data.model.ChapterReportRequest request
+    );
 }

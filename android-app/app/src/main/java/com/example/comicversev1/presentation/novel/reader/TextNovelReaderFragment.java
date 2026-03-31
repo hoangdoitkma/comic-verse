@@ -162,6 +162,14 @@ public class TextNovelReaderFragment extends Fragment {
             Toast.makeText(requireContext(), "Cần tích hợp IAP hoặc coin để mở khóa!", Toast.LENGTH_SHORT).show();
         });
 
+        adapter.setOnParagraphLongClickListener(chapterId -> {
+            com.example.comicversev1.presentation.shared.ReportChapterBottomSheet sheet = new com.example.comicversev1.presentation.shared.ReportChapterBottomSheet();
+            sheet.setOnReportSubmitListener(request -> {
+                viewModel.reportChapter(chapterId, request);
+            });
+            sheet.show(getChildFragmentManager(), "ReportChapterBottomSheet");
+        });
+
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -319,6 +327,18 @@ public class TextNovelReaderFragment extends Fragment {
                 if (rv != null) {
                     rv.setAdapter(chapterListAdapter);
                 }
+            }
+        });
+
+        viewModel.reportSuccessEvent().observe(getViewLifecycleOwner(), success -> {
+            if (Boolean.TRUE.equals(success)) {
+                Toast.makeText(requireContext(), "Báo cáo thành công! Cảm ơn bạn.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        viewModel.errorEvent().observe(getViewLifecycleOwner(), error -> {
+            if (error != null) {
+                Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
             }
         });
     }

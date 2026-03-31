@@ -25,13 +25,22 @@ public class TextNovelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     private final List<TextNovelItem> mItems = new ArrayList<>();
     private OnPaywallUnlockClickListener mUnlockClickListener;
+    private OnParagraphLongClickListener mParagraphLongClickListener;
 
     public interface OnPaywallUnlockClickListener {
         void onUnlockClicked(int chapterId);
     }
 
+    public interface OnParagraphLongClickListener {
+        void onLongClick(int chapterId);
+    }
+
     public void setOnPaywallUnlockClickListener(OnPaywallUnlockClickListener listener) {
         this.mUnlockClickListener = listener;
+    }
+
+    public void setOnParagraphLongClickListener(OnParagraphLongClickListener listener) {
+        this.mParagraphLongClickListener = listener;
     }
 
     public void submitList(List<TextNovelItem> newItems) {
@@ -131,7 +140,7 @@ public class TextNovelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         if (holder instanceof TitleViewHolder && item instanceof TextNovelItem.TitleItem) {
             ((TitleViewHolder) holder).bind((TextNovelItem.TitleItem) item, mTextSizeSp, mTextColor);
         } else if (holder instanceof ParagraphViewHolder && item instanceof TextNovelItem.ParagraphItem) {
-            ((ParagraphViewHolder) holder).bind((TextNovelItem.ParagraphItem) item, mTextSizeSp, mTextColor);
+            ((ParagraphViewHolder) holder).bind((TextNovelItem.ParagraphItem) item, mTextSizeSp, mTextColor, mParagraphLongClickListener);
         } else if (holder instanceof PaywallViewHolder && item instanceof TextNovelItem.PaywallItem) {
             ((PaywallViewHolder) holder).bind((TextNovelItem.PaywallItem) item, mUnlockClickListener);
         }
@@ -166,11 +175,19 @@ public class TextNovelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             tvParagraph = itemView.findViewById(R.id.tvParagraph);
         }
 
-        public void bind(TextNovelItem.ParagraphItem item, float textSize, int textColor) {
+        public void bind(TextNovelItem.ParagraphItem item, float textSize, int textColor, OnParagraphLongClickListener listener) {
             // Hiển thị dạng HTML để lỡ nội dung S3 có thẻ <b>, <i>, <br>
             tvParagraph.setText(Html.fromHtml(item.getContent(), Html.FROM_HTML_MODE_COMPACT));
             tvParagraph.setTextSize(TypedValue.COMPLEX_UNIT_SP, textSize);
             tvParagraph.setTextColor(textColor);
+            
+            tvParagraph.setOnLongClickListener(v -> {
+                if (listener != null) {
+                    listener.onLongClick(item.getChapterId());
+                    return true;
+                }
+                return false;
+            });
         }
     }
 

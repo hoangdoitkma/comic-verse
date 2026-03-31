@@ -69,6 +69,13 @@ public class ReaderViewModel extends ViewModel {
     private final MutableLiveData<Boolean> _clearItemsEvent = new MutableLiveData<>();
     public LiveData<Boolean> clearItemsEvent() { return _clearItemsEvent; }
 
+    // Report success/error events
+    private final MutableLiveData<Boolean> _reportSuccessEvent = new MutableLiveData<>();
+    public LiveData<Boolean> reportSuccessEvent() { return _reportSuccessEvent; }
+
+    private final MutableLiveData<String> _errorEvent = new MutableLiveData<>();
+    public LiveData<String> errorEvent() { return _errorEvent; }
+
     // Saved reading progress (loaded from Room DB)
     private int savedChapterId = -1;
     
@@ -333,6 +340,23 @@ public class ReaderViewModel extends ViewModel {
                         .subscribe(
                                 () -> Log.d(TAG, ">>> View tracking API SUCCESS for chapter: " + chapterId),
                                 throwable -> Log.e(TAG, ">>> View tracking API FAILED: " + throwable.getMessage())
+                        )
+        );
+    }
+
+    public void reportChapter(int chapterId, com.example.comicversev1.data.model.ChapterReportRequest request) {
+        disposables.add(
+                apiService.reportChapter(chapterId, request)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                response -> {
+                                    _reportSuccessEvent.setValue(true);
+                                },
+                                throwable -> {
+                                    Log.e(TAG, "Lỗi report chapter: " + throwable.getMessage());
+                                    _errorEvent.setValue("Gửi báo cáo thất bại");
+                                }
                         )
         );
     }

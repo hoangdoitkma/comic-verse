@@ -16,6 +16,7 @@ import {
   BookOpen,
   LayoutDashboard,
   Bell,
+  AlertOctagon
 } from 'lucide-react';
 import authService from '../services/authService';
 import ProfileModal from '../components/ProfileModal';
@@ -57,6 +58,11 @@ const menuItems = [
     label: 'Thông báo',
     path: '/admin/notifications',
     icon: Bell,
+  },
+  {
+    label: 'Báo cáo lỗi',
+    path: '/admin/reports',
+    icon: AlertOctagon,
   },
 ];
 

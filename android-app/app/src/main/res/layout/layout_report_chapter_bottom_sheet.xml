@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_report_sheet"
+    android:paddingHorizontal="24dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="28dp">
+
+    <!-- ═══ Handle bar ═══ -->
+    <View
+        android:layout_width="42dp"
+        android:layout_height="5dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/bg_report_handle"
+        android:layout_marginBottom="20dp" />
+
+    <!-- ═══ Header: Icon + Title + Subtitle ═══ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="24dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🛡️  Báo cáo lỗi chương"
+            android:textColor="#FFFFFF"
+            android:textSize="21sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.01" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chọn loại lỗi bạn gặp phải để chúng tôi xử lý nhanh hơn"
+            android:textColor="#80FFFFFF"
+            android:textSize="13sp"
+            android:layout_marginTop="6dp" />
+    </LinearLayout>
+
+    <!-- ═══ Report type label ═══ -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Loại lỗi"
+        android:textColor="#B3FFFFFF"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.05"
+        android:layout_marginBottom="10dp" />
+
+    <!-- ═══ Report type options (each is a clickable card) ═══ -->
+
+    <!-- Row 1: Image + Wrong Content -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <LinearLayout
+            android:id="@+id/reportTypeImage"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_report_type_item"
+            android:padding="14dp"
+            android:layout_marginEnd="6dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_report_image"
+                android:layout_marginEnd="10dp"
+                android:contentDescription="Lỗi tải ảnh" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lỗi tải ảnh"
+                android:textColor="#E0E0E0"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/reportTypeWrongContent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_report_type_item"
+            android:padding="14dp"
+            android:layout_marginStart="6dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_report_wrong_content"
+                android:layout_marginEnd="10dp"
+                android:contentDescription="Sai nội dung" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sai nội dung"
+                android:textColor="#E0E0E0"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Row 2: Typo + Duplicate -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <LinearLayout
+            android:id="@+id/reportTypeTypo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_report_type_item"
+            android:padding="14dp"
+            android:layout_marginEnd="6dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_report_typo"
+                android:layout_marginEnd="10dp"
+                android:contentDescription="Lỗi chính tả" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lỗi chính tả"
+                android:textColor="#E0E0E0"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/reportTypeDuplicate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_report_type_item"
+            android:padding="14dp"
+            android:layout_marginStart="6dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_report_duplicate"
+                android:layout_marginEnd="10dp"
+                android:contentDescription="Trùng chương" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Trùng chương"
+                android:textColor="#E0E0E0"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Row 3: Other (centred, half-width) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="20dp">
+
+        <LinearLayout
+            android:id="@+id/reportTypeOther"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_report_type_item"
+            android:padding="14dp"
+            android:layout_marginEnd="6dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_report_other"
+                android:layout_marginEnd="10dp"
+                android:contentDescription="Khác" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Khác"
+                android:textColor="#E0E0E0"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Invisible spacer to keep grid alignment -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp" />
+    </LinearLayout>
+
+    <!-- ═══ Reason text input ═══ -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Chi tiết lỗi (không bắt buộc)"
+        android:textColor="#B3FFFFFF"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.05"
+        android:layout_marginBottom="10dp" />
+
+    <EditText
+        android:id="@+id/etReportReason"
+        android:layout_width="match_parent"
+        android:layout_height="110dp"
+        android:gravity="top|start"
+        android:background="@drawable/bg_report_text_input"
+        android:padding="16dp"
+        android:hint="Mô tả lỗi bạn gặp phải để chúng tôi sửa nhanh hơn..."
+        android:textColor="#FFFFFF"
+        android:textColorHint="#50FFFFFF"
+        android:textSize="14sp"
+        android:inputType="textMultiLine"
+        android:layout_marginBottom="24dp" />
+
+    <!-- ═══ Submit button ═══ -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:background="@drawable/bg_report_submit_button"
+        android:clickable="true"
+        android:focusable="true"
+        android:id="@+id/btnSubmitReport">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Gửi Báo Cáo"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.03"
+            android:drawableStart="@drawable/ic_send"
+            android:drawablePadding="10dp"
+            android:drawableTint="#FFFFFF" />
+    </FrameLayout>
+
+</LinearLayout>

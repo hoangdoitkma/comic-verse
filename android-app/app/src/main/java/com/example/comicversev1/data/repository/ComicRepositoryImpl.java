@@ -60,6 +60,11 @@ public class ComicRepositoryImpl implements ComicRepository {
     }
 
     @Override
+    public Single<com.example.comicversev1.data.model.ChapterReportResponse> reportChapter(int chapterId, com.example.comicversev1.data.model.ChapterReportRequest request) {
+        return apiService.reportChapter(chapterId, request).map(BaseResponse::getData);
+    }
+
+    @Override
     public Flowable<List<ComicEntity>> observeCachedComics() {
         return cacheDao.observeAll().map(this::mapComicCacheEntities);
     }

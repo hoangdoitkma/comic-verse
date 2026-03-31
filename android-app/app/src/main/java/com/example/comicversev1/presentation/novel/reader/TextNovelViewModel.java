@@ -64,6 +64,9 @@ public class TextNovelViewModel extends ViewModel {
     private final MutableLiveData<Boolean> _clearItemsEvent = new MutableLiveData<>();
     public LiveData<Boolean> clearItemsEvent() { return _clearItemsEvent; }
 
+    private final MutableLiveData<Boolean> _reportSuccessEvent = new MutableLiveData<>();
+    public LiveData<Boolean> reportSuccessEvent() { return _reportSuccessEvent; }
+
     private final MutableLiveData<ChapterEntity> _currentChapterEvent = new MutableLiveData<>();
     public LiveData<ChapterEntity> currentChapterEvent() { return _currentChapterEvent; }
 
@@ -364,6 +367,23 @@ public class TextNovelViewModel extends ViewModel {
         Integer val = pendingScrollToRelativeParagraph;
         pendingScrollToRelativeParagraph = null;
         return val;
+    }
+
+    public void reportChapter(int chapterId, com.example.comicversev1.data.model.ChapterReportRequest request) {
+        disposables.add(
+                apiService.reportChapter(chapterId, request)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                response -> {
+                                    _reportSuccessEvent.setValue(true);
+                                },
+                                throwable -> {
+                                    Log.e(TAG, "Lỗi report chapter: " + throwable.getMessage());
+                                    _errorEvent.setValue("Gửi báo cáo thất bại");
+                                }
+                        )
+        );
     }
 
     @Override

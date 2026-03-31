@@ -20,6 +20,9 @@ import VipPackagesPage from './pages/admin/VipPackagesPage';
 import AdminComicApprovalPage from './pages/admin/AdminComicApprovalPage';
 import NotificationsPage from './pages/admin/NotificationsPage';
 
+// Shared
+import ChapterReportsPage from './pages/shared/ChapterReportsPage';
+
 function App() {
   return (
     <BrowserRouter>
@@ -41,6 +44,7 @@ function App() {
             <Route path="authors" element={<AuthorsPage />} />
             <Route path="vip-packages" element={<VipPackagesPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="reports" element={<ChapterReportsPage />} />
           </Route>
         </Route>
 
@@ -56,6 +60,7 @@ function App() {
             <Route path="comics/:comicId" element={<ComicDetailPage />} />
             <Route path="comics/:comicId/bulk-upload" element={<BulkUploadChaptersPage />} />
             <Route path="comics/:comicId/bulk-upload-novel" element={<BulkUploadNovelPage />} />
+            <Route path="reports" element={<ChapterReportsPage />} />
           </Route>
         </Route>
 

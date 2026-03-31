@@ -33,10 +33,20 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         void onImageLoadedOrError();
     }
 
+    public interface 
+    OnPageLongClickListener {
+        void onLongClick(int chapterId);
+    }
+
     private OnImageLoadStateListener imageLoadStateListener;
+    private OnPageLongClickListener onPageLongClickListener;
 
     public void setOnImageLoadStateListener(OnImageLoadStateListener listener) {
         this.imageLoadStateListener = listener;
+    }
+
+    public void setOnPageLongClickListener(OnPageLongClickListener listener) {
+        this.onPageLongClickListener = listener;
     }
 
     private static final int TYPE_PAGE = 0;
@@ -234,6 +244,15 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             pageHolder.imageView.setOnTouchListener((v, event) -> {
                 if (pageHolder.imageView.getScale() > 1.0f) {
                     v.getParent().requestDisallowInterceptTouchEvent(true);
+                }
+                return false;
+            });
+
+            // Long click to report
+            pageHolder.imageView.setOnLongClickListener(v -> {
+                if (onPageLongClickListener != null) {
+                    onPageLongClickListener.onLongClick(item.chapterId);
+                    return true;
                 }
                 return false;
             });
