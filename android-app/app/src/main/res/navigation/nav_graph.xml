@@ -64,6 +64,11 @@
         <argument
             android:name="comicId"
             app:argType="integer" />
+        <argument
+            android:name="comicTitle"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
     </fragment>
 
     <fragment
@@ -79,6 +84,7 @@
     </fragment>
     
     <action android:id="@+id/action_global_novelDetail" app:destination="@id/novelDetailFragment" />
+    <action android:id="@+id/action_global_comicDetail" app:destination="@id/comicDetailFragment" />
     <action android:id="@+id/action_global_reader" app:destination="@id/readerFragment" />
     <action android:id="@+id/action_global_textNovelReader" app:destination="@id/textNovelReaderFragment" />
 

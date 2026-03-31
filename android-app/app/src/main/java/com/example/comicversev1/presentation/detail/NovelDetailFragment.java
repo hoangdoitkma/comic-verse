@@ -32,14 +32,25 @@ import java.util.List;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
+import android.view.inputmethod.InputMethodManager;
+import android.content.Context;
+import com.example.comicversev1.data.model.CommentDTO;
+import com.example.comicversev1.presentation.comments.CommentAdapter;
+import com.example.comicversev1.presentation.comments.CommentViewModel;
+
 @AndroidEntryPoint
-public class NovelDetailFragment extends Fragment {
+public class NovelDetailFragment extends Fragment implements CommentAdapter.OnCommentInteractionListener {
 
     private FragmentNovelDetailBinding binding;
     private ComicDetailViewModel viewModel;
     
     private NovelDetailFragmentArgs args;
     private int savedChapterId = -1;
+
+    private CommentViewModel commentViewModel;
+    private CommentAdapter commentAdapter;
+    private Integer replyingToCommentId = null;
+    private boolean isCommentsLoaded = false;
 
     private ShelfAdapter similarAdapter;
     private boolean isSynopsisExpanded = false;
@@ -60,9 +71,11 @@ public class NovelDetailFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         args = NovelDetailFragmentArgs.fromBundle(requireArguments());
         viewModel = new ViewModelProvider(this).get(ComicDetailViewModel.class);
+        commentViewModel = new ViewModelProvider(this).get(CommentViewModel.class);
         
         setupViews();
         setupSimilarNovels();
+        setupComments();
         observeState();
     }
 
@@ -89,8 +102,10 @@ public class NovelDetailFragment extends Fragment {
             Toast.makeText(requireContext(), "Đã mở form báo cáo", Toast.LENGTH_SHORT).show();
         });
 
-        binding.btnComment.setOnClickListener(v -> {
-            Toast.makeText(requireContext(), "Tính năng bình luận đang phát triển", Toast.LENGTH_SHORT).show();
+        // Di chuyển tới khung bình luận khi người dùng muốn bình luận ngay
+        binding.icComments.setOnClickListener(v -> {
+            binding.scrollViewMain.smoothScrollTo(0, binding.layoutCommentInput.getTop());
+            binding.etComicComment.requestFocus();
         });
 
         binding.btnExpandSynopsis.setOnClickListener(v -> {
@@ -125,6 +140,46 @@ public class NovelDetailFragment extends Fragment {
         });
     }
 
+    private void setupComments() {
+        Context darkContext = new androidx.appcompat.view.ContextThemeWrapper(requireContext(), androidx.appcompat.R.style.ThemeOverlay_AppCompat_Dark);
+        commentAdapter = new CommentAdapter(darkContext, this);
+        binding.rvComicComments.setLayoutManager(new LinearLayoutManager(requireContext()));
+        binding.rvComicComments.setAdapter(commentAdapter);
+        binding.rvComicComments.setNestedScrollingEnabled(false);
+
+        binding.btnSendComicComment.setOnClickListener(v -> {
+            String content = binding.etComicComment.getText().toString().trim();
+            ComicDetailUiState state = viewModel.uiState().getValue();
+            if (!content.isEmpty() && state != null && state.getComic() != null) {
+                int actualComicId = state.getComic().getId();
+                commentViewModel.postComicComment(actualComicId, content, replyingToCommentId);
+                binding.etComicComment.setText("");
+                binding.etComicComment.setHint("Viết bình luận...");
+                replyingToCommentId = null;
+                // Hide keyboard
+                InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+            } else if (state == null || state.getComic() == null) {
+                Toast.makeText(requireContext(), "Chưa tải xong dữ liệu truyện", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        binding.btnPrevPage.setOnClickListener(v -> {
+            Integer current = commentViewModel.getCurrentPage().getValue();
+            if (current != null && current > 1) {
+                commentViewModel.loadPage(current - 2); // 0-indexed API, current is 1-indexed
+            }
+        });
+
+        binding.btnNextPage.setOnClickListener(v -> {
+            Integer current = commentViewModel.getCurrentPage().getValue();
+            Integer total = commentViewModel.getTotalPages().getValue();
+            if (current != null && total != null && current < total) {
+                commentViewModel.loadPage(current); // 0-indexed API, current is equivalent to next page index
+            }
+        });
+    }
+
     private void setupSimilarNovels() {
         similarAdapter = new ShelfAdapter(item -> {
             // Re-navigate to NovelDetailFragment for the clicked item
@@ -141,6 +196,10 @@ public class NovelDetailFragment extends Fragment {
         viewModel.uiState().observe(getViewLifecycleOwner(), state -> {
             if (state.getComic() != null) {
                 bindComicData(state.getComic());
+                if (!isCommentsLoaded) {
+                    commentViewModel.loadComicComments(state.getComic().getId(), 0, 5);
+                    isCommentsLoaded = true;
+                }
             }
             if (state.getChapters() != null && !state.getChapters().isEmpty()) {
                 String title = state.getComic() != null ? state.getComic().getTitle() : null;
@@ -178,6 +237,41 @@ public class NovelDetailFragment extends Fragment {
                 binding.txtStartReadingSubtitle.setText("Chương 1");
             }
         });
+
+        commentViewModel.getComments().observe(getViewLifecycleOwner(), comments -> {
+            commentAdapter.setComments(comments);
+            if (comments.isEmpty()) {
+                binding.tvEmptyComicComments.setVisibility(View.VISIBLE);
+                binding.layoutCommentPagination.setVisibility(View.GONE);
+            } else {
+                binding.tvEmptyComicComments.setVisibility(View.GONE);
+                binding.layoutCommentPagination.setVisibility(View.VISIBLE);
+            }
+        });
+
+        commentViewModel.getCurrentPage().observe(getViewLifecycleOwner(), page -> {
+            Integer total = commentViewModel.getTotalPages().getValue();
+            updatePaginationUI(page, total == null ? 1 : total);
+        });
+
+        commentViewModel.getTotalPages().observe(getViewLifecycleOwner(), total -> {
+            Integer current = commentViewModel.getCurrentPage().getValue();
+            updatePaginationUI(current == null ? 1 : current, total);
+        });
+
+        commentViewModel.getError().observe(getViewLifecycleOwner(), error -> {
+            if (error != null) {
+                Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        commentViewModel.getCommentPosted().observe(getViewLifecycleOwner(), comment -> {
+            if (comment != null) {
+                commentAdapter.addComment(comment);
+                binding.tvEmptyComicComments.setVisibility(View.GONE);
+                Toast.makeText(requireContext(), "Đã đăng bình luận", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void bindComicData(ComicDetailEntity comic) {
@@ -212,6 +306,14 @@ public class NovelDetailFragment extends Fragment {
         String contentText = (comic.getSynopsis() != null && !comic.getSynopsis().isEmpty()) 
                 ? comic.getSynopsis() : comic.getAiSummary();
         binding.txtSynopsis.setText(contentText != null ? contentText : "Đang cập nhật nội dung...");
+    }
+
+    private void updatePaginationUI(int current, int total) {
+        binding.tvCurrentPage.setText("Trang " + current + " / " + total);
+        binding.btnPrevPage.setEnabled(current > 1);
+        binding.btnPrevPage.setAlpha(current > 1 ? 1.0f : 0.5f);
+        binding.btnNextPage.setEnabled(current < total);
+        binding.btnNextPage.setAlpha(current < total ? 1.0f : 0.5f);
     }
 
     private void addTag(String text) {
@@ -262,6 +364,31 @@ public class NovelDetailFragment extends Fragment {
             
             binding.layoutChapters.addView(row);
         }
+    }
+
+    @Override
+    public void onReplyClick(CommentDTO comment) {
+        replyingToCommentId = comment.getId();
+        binding.etComicComment.setHint("Trả lời " + comment.getUserDisplayName() + "...");
+        binding.etComicComment.requestFocus();
+        binding.scrollViewMain.smoothScrollTo(0, binding.layoutCommentInput.getBottom());
+        InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) imm.showSoftInput(binding.etComicComment, InputMethodManager.SHOW_IMPLICIT);
+    }
+
+    @Override
+    public void onLoadRepliesClick(CommentDTO comment, int position) {
+        commentViewModel.loadReplies(comment.getId(), 0, 50, new CommentViewModel.ReplyCallback() {
+            @Override
+            public void onRepliesLoaded(List<CommentDTO> replies) {
+                commentAdapter.updateReplies(position, replies);
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override

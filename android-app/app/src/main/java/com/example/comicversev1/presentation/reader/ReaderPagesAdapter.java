@@ -90,6 +90,11 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         notifyDataSetChanged();
     }
 
+    public void clearItems() {
+        items.clear();
+        notifyDataSetChanged();
+    }
+
     /**
      * Append a new chapter's images with a separator header
      */

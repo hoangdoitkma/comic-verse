@@ -28,6 +28,10 @@ public class Comment {
     private Chapter chapter;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comic_id")
+    private Comic comic;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Comment parent;
 

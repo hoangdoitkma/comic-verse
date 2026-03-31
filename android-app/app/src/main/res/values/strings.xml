@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">ComicVerseV1</string>
+    <string name="action_subscribe">Đăng ký</string>
+    <string name="action_report">Báo cáo</string>
+    <string name="action_start_reading">Tiếp tục đọc</string>
+    <string name="action_comment_now">Bình luận ngay</string>
+    <string name="title_synopsis">Nội dung:</string>
+    <string name="title_latest_chapters">Chương mới nhất:</string>
+    <string name="title_comments">Bình luận:</string>
+    <string name="empty_comments">Không có bình luận nào cả</string>
+    <string name="title_similar_novels">Cùng thể loại:</string>
 </resources>

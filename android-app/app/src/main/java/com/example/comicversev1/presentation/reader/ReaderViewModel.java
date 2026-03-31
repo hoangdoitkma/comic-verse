@@ -50,6 +50,7 @@ public class ReaderViewModel extends ViewModel {
 
     // The next chapter ID to load when user scrolls to bottom
     private Integer pendingNextChapterId = null;
+    private Integer activePrevChapterId = null;
     private boolean isLoadingMore = false;
 
     private final MutableLiveData<ReaderUiState> _uiState = new MutableLiveData<>(ReaderUiState.loading());
@@ -58,6 +59,15 @@ public class ReaderViewModel extends ViewModel {
     // Event for appending new chapter pages
     private final MutableLiveData<ChapterEntity> _appendChapterEvent = new MutableLiveData<>();
     public LiveData<ChapterEntity> appendChapterEvent() { return _appendChapterEvent; }
+
+    // Event for chapter list
+    private final MutableLiveData<List<com.example.comicversev1.domain.entity.ChapterItem>> _chapterListEvent = new MutableLiveData<>();
+    public LiveData<List<com.example.comicversev1.domain.entity.ChapterItem>> chapterListEvent() { return _chapterListEvent; }
+    private boolean isChapterListLoaded = false;
+
+    // Event to clear view when skipping chapters
+    private final MutableLiveData<Boolean> _clearItemsEvent = new MutableLiveData<>();
+    public LiveData<Boolean> clearItemsEvent() { return _clearItemsEvent; }
 
     // Saved reading progress (loaded from Room DB)
     private int savedChapterId = -1;
@@ -156,6 +166,7 @@ public class ReaderViewModel extends ViewModel {
                             isLoadingMore = false;
 
                             if (isInitial) {
+                                activePrevChapterId = chapter.getPrevChapterId();
                                 _uiState.setValue(ReaderUiState.success(chapter));
 
                                 // If we have a saved page position for THIS chapter, scroll to it
@@ -185,8 +196,46 @@ public class ReaderViewModel extends ViewModel {
      * Loads the next chapter if available.
      */
     public void loadNextChapterIfNeeded() {
-        if (isLoadingMore || pendingNextChapterId == null) return;
+        if (isLoadingMore || pendingNextChapterId == null || pendingNextChapterId <= 0) return;
         loadChapter(pendingNextChapterId, false);
+    }
+
+    /**
+     * Called by Fragment when user wants to explicitly jump to a chapter (Next/Prev buttons or List target)
+     * Clears endless scroll memory and opens a fresh one.
+     */
+    public void loadSpecificChapter(int chapterId) {
+        if (chapterId <= 0) return;
+        loadedChapterIds.clear();
+        loadedChapters.clear();
+        pendingNextChapterId = null;
+        activePrevChapterId = null;
+        _clearItemsEvent.setValue(true);
+        _uiState.setValue(ReaderUiState.loading());
+        loadChapter(chapterId, true);
+    }
+
+    public void fetchChapterList() {
+        if (isChapterListLoaded) return;
+        
+        disposables.add(
+            apiService.getChaptersById(comicId)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(response -> {
+                    if (response != null && response.getData() != null) {
+                        List<com.example.comicversev1.domain.entity.ChapterItem> list = new ArrayList<>();
+                        for (com.example.comicversev1.data.model.ChapterItemDTO dto : response.getData()) {
+                            list.add(new com.example.comicversev1.domain.entity.ChapterItem(dto.getId(), dto.getTitle(), dto.getAccessType()));
+                        }
+                        _chapterListEvent.setValue(list);
+                        isChapterListLoaded = true;
+                    }
+                }, throwable -> {
+                    // Xử lý lỗi lấy danh sách chương nếu cần thiết
+                    Log.e(TAG, "Lỗi fetch chapter list: " + throwable.getMessage());
+                })
+        );
     }
 
     /**
@@ -224,8 +273,11 @@ public class ReaderViewModel extends ViewModel {
     }
 
     public boolean hasNextChapter() {
-        return pendingNextChapterId != null;
+        return pendingNextChapterId != null && pendingNextChapterId > 0;
     }
+
+    public Integer getActivePrevChapterId() { return activePrevChapterId; }
+    public Integer getPendingNextChapterId() { return pendingNextChapterId; }
 
     public Integer consumePendingScrollPosition() {
         Integer value = pendingScrollToRelativePage;

@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -115,6 +116,24 @@ public class TextNovelReaderFragment extends Fragment {
             showChapterListBottomSheet();
             viewModel.fetchChapterList();
         });
+        
+        ImageButton btnComments = view.findViewById(R.id.btn_comments);
+        if (btnComments != null) {
+            btnComments.setOnClickListener(v -> {
+                int chapterId = currentlyTrackedChapterId;
+                if (chapterId <= 0) {
+                    com.example.comicversev1.domain.entity.ChapterEntity current = viewModel.currentChapterEvent().getValue();
+                    if (current != null) chapterId = current.getId();
+                }
+                if (chapterId > 0) {
+                    com.example.comicversev1.presentation.comments.CommentsBottomSheetDialogFragment.newInstance(chapterId)
+                            .show(getChildFragmentManager(), "CommentsBottomSheet");
+                } else {
+                    Toast.makeText(requireContext(), "Đang tải chương...", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
         
         btnNext.setOnClickListener(v -> {
             Integer nextId = viewModel.getPendingNextChapterId();

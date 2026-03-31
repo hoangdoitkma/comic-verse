@@ -5,14 +5,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0F1115">
+    android:background="@color/bg_dark_primary">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#0F1115"
-        app:elevation="0dp">
+        app:elevation="0dp"
+        android:background="@color/bg_dark_primary">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbarDetail"
@@ -27,11 +27,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
-                android:layout_marginEnd="16dp"
-                android:text="Đăng ký"
-                android:textColor="@android:color/white"
-                app:strokeColor="@android:color/white" 
-                app:cornerRadius="8dp" />
+                android:layout_marginEnd="@dimen/margin_medium"
+                app:cornerRadius="@dimen/margin_small"
+                app:strokeColor="@android:color/white"
+                android:text="@string/action_subscribe"
+                android:textColor="@android:color/white" />
         </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -39,117 +39,127 @@
         android:id="@+id/scrollViewMain"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
         android:clipToPadding="false"
-        android:paddingBottom="90dp"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:paddingBottom="@dimen/scroll_padding_bottom">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="20dp"
-            android:paddingTop="20dp">
+            android:paddingHorizontal="@dimen/margin_large"
+            android:paddingTop="@dimen/margin_large">
 
             <!-- Cover Image -->
             <ImageView
                 android:id="@+id/imgCover"
-                android:layout_width="200dp"
-                android:layout_height="280dp"
-                android:layout_gravity="center_horizontal"
-                android:scaleType="centerCrop"
+                android:layout_width="@dimen/cover_width"
+                android:layout_height="@dimen/cover_height"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
                 android:background="@drawable/bg_icon_rounded"
                 android:clipToOutline="true"
+                android:scaleType="centerCrop"
                 tools:src="@tools:sample/backgrounds/scenic" />
 
             <!-- Title -->
             <TextView
                 android:id="@+id/txtTitle"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="@dimen/margin_xlarge"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/imgCover"
                 android:textColor="@android:color/white"
-                android:textSize="26sp"
+                android:textSize="@dimen/text_size_title"
                 android:textStyle="bold"
                 tools:text="Tiên Nghịch" />
 
             <!-- Metadata Info Rows -->
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/txtAuthor"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:orientation="vertical">
+                android:layout_marginTop="@dimen/margin_medium"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/txtTitle"
+                android:drawablePadding="@dimen/margin_medium_small"
+                app:drawableStartCompat="@android:drawable/ic_menu_edit"
+                app:drawableTint="@color/icon_yellow"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_normal"
+                tools:text="Nhĩ Căn" />
 
+            <TextView
+                android:id="@+id/txtUpdateDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_medium_small"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/txtAuthor"
+                android:drawablePadding="@dimen/margin_medium_small"
+                app:drawableStartCompat="@android:drawable/ic_menu_today"
+                app:drawableTint="@color/icon_cyan"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_normal"
+                tools:text="22/10/2025 03:47" />
 
-                <TextView
-                    android:id="@+id/txtAuthor"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:drawablePadding="12dp"
-                    android:textColor="@android:color/white"
-                    android:textSize="15sp"
-                    app:drawableStartCompat="@android:drawable/ic_menu_edit"
-                    app:drawableTint="#FFD54F"
-                    tools:text="Nhĩ Căn" />
+            <TextView
+                android:id="@+id/txtSource"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_medium_small"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/txtUpdateDate"
+                android:drawablePadding="@dimen/margin_medium_small"
+                app:drawableStartCompat="@android:drawable/ic_menu_info_details"
+                app:drawableTint="@color/icon_light_blue"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_normal"
+                tools:text="NovelVN" />
 
-                <TextView
-                    android:id="@+id/txtUpdateDate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:drawablePadding="12dp"
-                    android:textColor="@android:color/white"
-                    android:textSize="15sp"
-                    app:drawableStartCompat="@android:drawable/ic_menu_today"
-                    app:drawableTint="#4DD0E1"
-                    tools:text="22/10/2025 03:47" />
+            <TextView
+                android:id="@+id/txtStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_medium_small"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/txtSource"
+                android:drawablePadding="@dimen/margin_medium_small"
+                app:drawableStartCompat="@android:drawable/ic_media_play"
+                app:drawableTint="@color/status_completed"
+                android:textColor="@color/status_completed"
+                android:textSize="@dimen/text_size_normal"
+                tools:text="Đã hoàn thành" />
 
-                <TextView
-                    android:id="@+id/txtSource"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:drawablePadding="12dp"
-                    android:textColor="@android:color/white"
-                    android:textSize="15sp"
-                    app:drawableStartCompat="@android:drawable/ic_menu_info_details"
-                    app:drawableTint="#4FC3F7"
-                    tools:text="NovelVN" />
-
-                <TextView
-                    android:id="@+id/txtStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:drawablePadding="12dp"
-                    android:textColor="#64B5F6"
-                    android:textSize="15sp"
-                    app:drawableStartCompat="@android:drawable/ic_media_play"
-                    app:drawableTint="#64B5F6"
-                    tools:text="Đã hoàn thành" />
-
-                <TextView
-                    android:id="@+id/btnReport"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:drawablePadding="12dp"
-                    android:textColor="#E57373"
-                    android:textSize="15sp"
-                    android:text="Báo cáo"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackground"
-                    app:drawableStartCompat="@android:drawable/ic_dialog_alert"
-                    app:drawableTint="#E57373" />
-            </LinearLayout>
+            <TextView
+                android:id="@+id/btnReport"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_medium_small"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/txtStatus"
+                android:drawablePadding="@dimen/margin_medium_small"
+                android:background="?attr/selectableItemBackground"
+                app:drawableStartCompat="@android:drawable/ic_dialog_alert"
+                app:drawableTint="@color/btn_report_text"
+                android:textColor="@color/btn_report_text"
+                android:textSize="@dimen/text_size_normal"
+                android:text="@string/action_report"
+                android:clickable="true"
+                android:focusable="true" />
 
             <!-- Tags (Genres) -->
             <HorizontalScrollView
-                android:layout_width="match_parent"
+                android:id="@+id/scrollTags"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:scrollbars="none"
-                android:layout_marginBottom="24dp">
+                android:layout_marginTop="@dimen/margin_xlarge"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btnReport"
+                android:scrollbars="none">
                 
                 <LinearLayout
                     android:id="@+id/layoutTags"
@@ -159,228 +169,307 @@
             </HorizontalScrollView>
 
             <!-- Synopsis Section -->
-            <LinearLayout
-                android:layout_width="match_parent"
+            <ImageView
+                android:id="@+id/icSynopsisStar"
+                android:layout_width="@dimen/margin_xlarge"
+                android:layout_height="@dimen/margin_xlarge"
+                android:layout_marginTop="@dimen/margin_xxlarge"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/scrollTags"
+                android:src="@android:drawable/star_on"
+                app:tint="@color/icon_yellow" />
+
+            <TextView
+                android:id="@+id/txtSynopsisTitle"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="32dp">
+                android:layout_marginStart="@dimen/margin_small"
+                app:layout_constraintBottom_toBottomOf="@id/icSynopsisStar"
+                app:layout_constraintEnd_toStartOf="@id/icSynopsisExpand"
+                app:layout_constraintStart_toEndOf="@id/icSynopsisStar"
+                app:layout_constraintTop_toTopOf="@id/icSynopsisStar"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_large"
+                android:text="@string/title_synopsis"
+                android:textStyle="bold" />
 
-                <LinearLayout
-                    android:id="@+id/btnExpandSynopsis"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:paddingVertical="8dp">
+            <ImageView
+                android:id="@+id/icSynopsisExpand"
+                android:layout_width="@dimen/margin_xlarge"
+                android:layout_height="@dimen/margin_xlarge"
+                app:layout_constraintBottom_toBottomOf="@id/icSynopsisStar"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/icSynopsisStar"
+                android:src="@android:drawable/arrow_down_float"
+                app:tint="@android:color/white" />
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@android:drawable/star_on"
-                        app:tint="#FFD54F" />
+            <!-- Invisible View to handle clicks for Synopsis Expand cleanly without wrapping LinearLayout -->
+            <View
+                android:id="@+id/btnExpandSynopsis"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintBottom_toBottomOf="@id/icSynopsisStar"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@id/icSynopsisStar"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"/>
 
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="8dp"
-                        android:text="Nội dung:"
-                        android:textColor="@android:color/white"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <ImageView
-                        android:id="@+id/icSynopsisExpand"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@android:drawable/arrow_down_float"
-                        app:tint="@android:color/white" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/txtSynopsis"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textColor="#B0BEC5"
-                    android:textSize="15sp"
-                    android:lineSpacingExtra="6dp"
-                    android:ellipsize="end"
-                    android:maxLines="3"
-                    tools:text="Bạn đang đọc truyện Tiên Nghịch full (đã hoàn thành) của tác giả Nhĩ Căn. Vương Lâm, một thiếu niên bình thường, sống trong một gia đình bình dân..." />
-            </LinearLayout>
+            <TextView
+                android:id="@+id/txtSynopsis"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_small"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/icSynopsisStar"
+                android:textColor="@color/text_synopsis"
+                android:textSize="@dimen/text_size_normal"
+                android:ellipsize="end"
+                android:lineSpacingExtra="6dp"
+                android:maxLines="3"
+                tools:text="Bạn đang đọc truyện Tiên Nghịch full (đã hoàn thành) của tác giả Nhĩ Căn. Vương Lâm, một thiếu niên..." />
 
             <!-- Latest Chapters -->
-            <LinearLayout
-                android:layout_width="match_parent"
+            <ImageView
+                android:id="@+id/icChaptersLatest"
+                android:layout_width="@dimen/margin_xlarge"
+                android:layout_height="@dimen/margin_xlarge"
+                android:layout_marginTop="@dimen/margin_xxlarge"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/txtSynopsis"
+                android:src="@android:drawable/ic_menu_agenda"
+                app:tint="@color/icon_red" />
+
+            <TextView
+                android:id="@+id/txtChaptersTitle"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="32dp">
+                android:layout_marginStart="@dimen/margin_small"
+                app:layout_constraintBottom_toBottomOf="@id/icChaptersLatest"
+                app:layout_constraintEnd_toStartOf="@id/icChaptersNext"
+                app:layout_constraintStart_toEndOf="@id/icChaptersLatest"
+                app:layout_constraintTop_toTopOf="@id/icChaptersLatest"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_large"
+                android:text="@string/title_latest_chapters"
+                android:textStyle="bold" />
 
-                <LinearLayout
-                    android:id="@+id/btnViewAllChapters"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:paddingVertical="8dp">
+            <ImageView
+                android:id="@+id/icChaptersNext"
+                android:layout_width="@dimen/margin_xlarge"
+                android:layout_height="@dimen/margin_xlarge"
+                app:layout_constraintBottom_toBottomOf="@id/icChaptersLatest"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/icChaptersLatest"
+                android:src="@android:drawable/ic_media_next"
+                app:tint="@android:color/white" />
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@android:drawable/ic_menu_agenda"
-                        app:tint="#E53935" />
+            <!-- Invisible View to handle clicks for Chapters Expand -->
+            <View
+                android:id="@+id/btnViewAllChapters"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintBottom_toBottomOf="@id/icChaptersLatest"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@id/icChaptersLatest"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true" />
 
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="8dp"
-                        android:text="Chương mới nhất:"
-                        android:textColor="@android:color/white"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@android:drawable/ic_media_next"
-                        app:tint="@android:color/white" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/layoutChapters"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginTop="12dp" />
-            </LinearLayout>
+            <!-- The list of chapters, must remain a Vertical View as it gets dynamically inflated -->
+            <LinearLayout
+                android:id="@+id/layoutChapters"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_medium_small"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/icChaptersLatest"
+                android:orientation="vertical" />
 
             <!-- Comments -->
-            <LinearLayout
-                android:layout_width="match_parent"
+            <ImageView
+                android:id="@+id/icComments"
+                android:layout_width="@dimen/margin_xlarge"
+                android:layout_height="@dimen/margin_xlarge"
+                android:layout_marginTop="@dimen/margin_xxlarge"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/layoutChapters"
+                android:src="@android:drawable/stat_notify_chat"
+                app:tint="@color/icon_cyan" />
+
+            <TextView
+                android:id="@+id/txtCommentsTitle"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="32dp">
+                android:layout_marginStart="@dimen/margin_small"
+                app:layout_constraintBottom_toBottomOf="@id/icComments"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/icComments"
+                app:layout_constraintTop_toTopOf="@id/icComments"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_large"
+                android:text="@string/title_comments"
+                android:textStyle="bold" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+            <!-- Actual Comments List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvComicComments"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_medium"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/icComments"
+                android:nestedScrollingEnabled="false"
+                android:clipToPadding="false"
+                tools:itemCount="3"
+                tools:listitem="@layout/item_comment" />
+
+            <!-- Empty State for Comments List -->
+            <TextView
+                android:id="@+id/tvEmptyComicComments"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_medium"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/rvComicComments"
+                android:gravity="center"
+                android:visibility="gone"
+                android:textColor="@color/text_hint_gray"
+                android:textSize="@dimen/text_size_normal"
+                android:text="Chưa có bình luận nào. Hãy là người đầu tiên!" />
+
+            <!-- Comment Pagination Control -->
+            <LinearLayout
+                android:id="@+id/layoutCommentPagination"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_medium"
+                android:orientation="horizontal"
+                android:gravity="center"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvEmptyComicComments">
+
+                <ImageButton
+                    android:id="@+id/btnPrevPage"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_media_previous"
+                    app:tint="@android:color/white"
+                    android:contentDescription="Previous Page" />
+
+                <TextView
+                    android:id="@+id/tvCurrentPage"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingVertical="8dp">
+                    android:layout_marginHorizontal="16dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    tools:text="Trang 1 / 1" />
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@android:drawable/stat_notify_chat"
-                        app:tint="#4DD0E1" />
+                <ImageButton
+                    android:id="@+id/btnNextPage"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_media_next"
+                    app:tint="@android:color/white"
+                    android:contentDescription="Next Page" />
+            </LinearLayout>
 
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="8dp"
-                        android:text="Bình luận:"
-                        android:textColor="@android:color/white"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+            <!-- Comment Input Section -->
+            <LinearLayout
+                android:id="@+id/layoutCommentInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_medium"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/layoutCommentPagination">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <EditText
+                    android:id="@+id/etComicComment"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:paddingTop="32dp"
-                    android:paddingBottom="24dp">
+                    android:layout_weight="1"
+                    android:hint="Viết bình luận..."
+                    android:background="@drawable/bg_search_box"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp"
+                    android:textColorHint="@color/text_hint_gray"
+                    android:textColor="@color/black"
+                    android:textSize="14sp"
+                    android:maxLines="4"
+                    android:inputType="textMultiLine" />
 
-                    <ImageView
-                        android:layout_width="200dp"
-                        android:layout_height="120dp"
-                        android:src="@drawable/ic_launcher_background"
-                        android:alpha="0.3"
-                        android:scaleType="fitCenter"/>
-                        
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Không có bình luận nào cả"
-                        android:textColor="#B0BEC5"
-                        android:textSize="16sp"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginBottom="24dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnComment"
-                        android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:text="Bình luận ngay"
-                        android:textColor="@android:color/white"
-                        android:backgroundTint="#1A1D24"
-                        app:cornerRadius="12dp"
-                        app:strokeColor="#2A2D3A"
-                        app:strokeWidth="1dp" 
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                <ImageButton
+                    android:id="@+id/btnSendComicComment"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_send"
+                    app:tint="@color/icon_light_blue"
+                    android:contentDescription="Send comment" />
             </LinearLayout>
 
             <!-- Similar Novels -->
-            <LinearLayout
-                android:layout_width="match_parent"
+            <ImageView
+                android:id="@+id/icSimilar"
+                android:layout_width="@dimen/margin_xlarge"
+                android:layout_height="@dimen/margin_xlarge"
+                android:layout_marginTop="@dimen/margin_xxlarge"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/layoutCommentInput"
+                android:src="@android:drawable/ic_menu_sort_by_size"
+                app:tint="@color/icon_orange" />
+
+            <TextView
+                android:id="@+id/txtSimilarTitle"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="32dp">
+                android:layout_marginStart="@dimen/margin_small"
+                app:layout_constraintBottom_toBottomOf="@id/icSimilar"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/icSimilar"
+                app:layout_constraintTop_toTopOf="@id/icSimilar"
+                android:textColor="@android:color/white"
+                android:textSize="@dimen/text_size_large"
+                android:text="@string/title_similar_novels"
+                android:textStyle="bold" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingVertical="8dp"
-                    android:layout_marginBottom="16dp">
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerSimilar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_medium"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/icSimilar"
+                android:clipToPadding="false" />
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@android:drawable/ic_menu_sort_by_size"
-                        app:tint="#FF7043" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="8dp"
-                        android:text="Cùng thể loại:"
-                        android:textColor="@android:color/white"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerSimilar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" 
-                    android:clipToPadding="false" />
-            </LinearLayout>
-
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
 
     <!-- Bottom Read Action -->
     <LinearLayout
         android:id="@+id/btnStartReading"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
+        android:layout_height="@dimen/bottom_bar_height"
         android:layout_gravity="bottom"
-        android:background="#8CBEF4"
         android:gravity="center"
         android:orientation="vertical"
+        android:background="@color/bg_start_reading"
         android:clickable="true"
         android:focusable="true">
 
@@ -388,9 +477,9 @@
             android:id="@+id/txtStartReadingTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tiếp tục đọc"
             android:textColor="@android:color/white"
-            android:textSize="20sp"
+            android:textSize="@dimen/text_size_xlarge"
+            android:text="@string/action_start_reading"
             android:textStyle="bold" />
 
         <TextView
@@ -398,9 +487,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="Chương 1"
-            android:textColor="#E0F0FF"
-            android:textSize="13sp" />
+            android:textColor="@color/text_subtitle_light"
+            android:textSize="@dimen/text_size_small"
+            tools:text="Chương 1" />
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

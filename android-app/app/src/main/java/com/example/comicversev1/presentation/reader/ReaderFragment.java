@@ -16,6 +16,16 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.comicversev1.databinding.FragmentReaderBinding;
 import com.example.comicversev1.domain.entity.ChapterEntity;
+import com.example.comicversev1.domain.entity.ChapterItem;
+import com.example.comicversev1.presentation.novel.reader.BottomSheetChapterAdapter;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.widget.EditText;
+
+import java.util.ArrayList;
+
+import com.example.comicversev1.R;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -32,6 +42,9 @@ public class ReaderFragment extends Fragment {
     private String currentVisibleChapterTitle = "";
 
     private ViewTrackingTimer viewTrackingTimer;
+
+    private BottomSheetDialog chapterListSheet;
+    private BottomSheetChapterAdapter chapterListAdapter;
 
     @Nullable
     @Override
@@ -51,10 +64,99 @@ public class ReaderFragment extends Fragment {
         binding.recyclerView.setLayoutManager(layoutManager);
         binding.recyclerView.setAdapter(adapter);
 
+        setupToolbar();
         setupBackButton();
+        setupCommentsButton();
+        setupNavigationButtons();
         setupScrollListener();
         setupTouchZones();
         observeState();
+    }
+
+    private void setupToolbar() {
+        ReaderFragmentArgs args = ReaderFragmentArgs.fromBundle(requireArguments());
+        if (args.getComicTitle() != null) {
+            binding.txtNovelTitle.setText(args.getComicTitle());
+        } else {
+            binding.txtNovelTitle.setText("Đang tải...");
+        }
+    }
+
+    private void setupNavigationButtons() {
+        binding.btnChapterList.setOnClickListener(v -> {
+            showChapterListBottomSheet();
+            viewModel.fetchChapterList();
+        });
+        
+        binding.btnPreviousChapter.setOnClickListener(v -> {
+            Integer prevId = viewModel.getActivePrevChapterId();
+            if (prevId != null && prevId > 0) {
+                viewModel.loadSpecificChapter(prevId);
+            } else {
+                android.widget.Toast.makeText(requireContext(), "Đây là chương đầu tiên!", android.widget.Toast.LENGTH_SHORT).show();
+            }
+        });
+        
+        binding.btnNextChapter.setOnClickListener(v -> {
+            Integer nextId = viewModel.getPendingNextChapterId();
+            if (nextId != null && nextId > 0) {
+                viewModel.loadSpecificChapter(nextId);
+            } else {
+                android.widget.Toast.makeText(requireContext(), "Đây là chương mới nhất!", android.widget.Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void showChapterListBottomSheet() {
+        if (chapterListSheet == null) {
+            chapterListSheet = new BottomSheetDialog(requireContext());
+            View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_chapter_list, null);
+            chapterListSheet.setContentView(sheetView);
+
+            chapterListSheet.getBehavior().setPeekHeight(getResources().getDisplayMetrics().heightPixels);
+
+            RecyclerView rvChapters = sheetView.findViewById(R.id.rv_chapter_list);
+            rvChapters.setLayoutManager(new LinearLayoutManager(requireContext()));
+            
+            chapterListAdapter = new BottomSheetChapterAdapter(new ArrayList<>(), chapterId -> {
+                chapterListSheet.dismiss();
+                viewModel.loadSpecificChapter(chapterId);
+            });
+            rvChapters.setAdapter(chapterListAdapter);
+
+            View btnClose = sheetView.findViewById(R.id.btn_close_sheet);
+            if (btnClose != null) {
+                btnClose.setOnClickListener(btnV -> chapterListSheet.dismiss());
+            }
+
+            EditText etSearch = sheetView.findViewById(R.id.et_search_chapter);
+            if (etSearch != null) {
+                etSearch.addTextChangedListener(new TextWatcher() {
+                    @Override
+                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                    @Override
+                    public void onTextChanged(CharSequence s, int start, int before, int count) {
+                        if (chapterListAdapter != null) {
+                            chapterListAdapter.getFilter().filter(s);
+                        }
+                    }
+                    @Override
+                    public void afterTextChanged(Editable s) {}
+                });
+            }
+        }
+        chapterListSheet.show();
+    }
+
+    private void setupCommentsButton() {
+        binding.btnComments.setOnClickListener(v -> {
+            if (currentVisibleChapterId > 0) {
+                com.example.comicversev1.presentation.comments.CommentsBottomSheetDialogFragment.newInstance(currentVisibleChapterId)
+                        .show(getChildFragmentManager(), "CommentsBottomSheet");
+            } else {
+                android.widget.Toast.makeText(requireContext(), "Đang tải chương...", android.widget.Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void setupTouchZones() {
@@ -70,9 +172,10 @@ public class ReaderFragment extends Fragment {
                     // Bottom zone: scroll down 1 page
                     binding.recyclerView.smoothScrollBy(0, screenHeight);
                 } else {
-                    // Middle zone: toggle topBar visibility
-                    boolean isVisible = binding.topBar.getVisibility() == View.VISIBLE;
-                    binding.topBar.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+                    // Middle zone: toggle topBar and bottomBar visibility
+                    boolean isVisible = binding.appBarLayout.getVisibility() == View.VISIBLE;
+                    binding.appBarLayout.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+                    binding.bottomBar.setVisibility(isVisible ? View.GONE : View.VISIBLE);
                 }
                 return true;
             }
@@ -219,6 +322,25 @@ public class ReaderFragment extends Fragment {
         viewModel.appendChapterEvent().observe(getViewLifecycleOwner(), chapter -> {
             if (chapter != null) {
                 adapter.appendChapter(chapter.getId(), chapter.getTitle(), chapter.getImages());
+            }
+        });
+
+        viewModel.clearItemsEvent().observe(getViewLifecycleOwner(), clear -> {
+            if (Boolean.TRUE.equals(clear)) {
+                adapter.clearItems();
+            }
+        });
+
+        viewModel.chapterListEvent().observe(getViewLifecycleOwner(), chapters -> {
+            if (chapters != null && chapterListSheet != null) {
+                chapterListAdapter = new BottomSheetChapterAdapter(chapters, chapterId -> {
+                    chapterListSheet.dismiss();
+                    viewModel.loadSpecificChapter(chapterId);
+                });
+                RecyclerView rv = chapterListSheet.findViewById(R.id.rv_chapter_list);
+                if (rv != null) {
+                    rv.setAdapter(chapterListAdapter);
+                }
             }
         });
     }

@@ -68,4 +68,38 @@ public interface ApiService {
 
     @POST("tracking/view")
     Completable trackView(@Body ViewTrackingRequest request);
+
+    // Comments
+    @GET("chapters/{chapterId}/comments")
+    Single<BaseResponse<com.example.comicversev1.data.model.PageResponse<com.example.comicversev1.data.model.CommentDTO>>> getComments(
+            @Path("chapterId") int chapterId,
+            @Query("page") int page,
+            @Query("size") int size
+    );
+
+    @GET("comments/{commentId}/replies")
+    Single<BaseResponse<com.example.comicversev1.data.model.PageResponse<com.example.comicversev1.data.model.CommentDTO>>> getReplies(
+            @Path("commentId") int commentId,
+            @Query("page") int page,
+            @Query("size") int size
+    );
+
+    @POST("chapters/{chapterId}/comments")
+    Single<BaseResponse<com.example.comicversev1.data.model.CommentDTO>> addComment(
+            @Path("chapterId") int chapterId,
+            @Body com.example.comicversev1.data.model.CommentRequest request
+    );
+
+    @GET("comics/{comicId}/comments")
+    Single<BaseResponse<com.example.comicversev1.data.model.PageResponse<com.example.comicversev1.data.model.CommentDTO>>> getComicComments(
+            @Path("comicId") int comicId,
+            @Query("page") int page,
+            @Query("size") int size
+    );
+
+    @POST("comics/{comicId}/comments")
+    Single<BaseResponse<com.example.comicversev1.data.model.CommentDTO>> addComicComment(
+            @Path("comicId") int comicId,
+            @Body com.example.comicversev1.data.model.CommentRequest request
+    );
 }
