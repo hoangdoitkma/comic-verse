@@ -9,12 +9,14 @@ import {
   FileText,
   Palette,
   Check,
+  CheckCheck,
   XCircle,
   RefreshCw
 } from 'lucide-react';
 import adminService from '../../services/adminService';
 import ChapterViewer from '../uploader/ChapterViewer';
 import ActionModal from '../../components/ActionModal';
+import Pagination from '../../components/Pagination';
 
 // Status badge
 const statusConfig = {
@@ -46,6 +48,8 @@ function ChapterSkeletonRow() {
   );
 }
 
+const ITEMS_PER_PAGE = 20;
+
 export default function AdminComicApprovalPage() {
   const { comicId } = useParams();
   const navigate = useNavigate();
@@ -54,12 +58,18 @@ export default function AdminComicApprovalPage() {
   const [comic, setComic] = useState(null);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
 
   // Modals state
   const [selectedChapterViewer, setSelectedChapterViewer] = useState(null);
   const [rejectModal, setRejectModal] = useState({ open: false, log: null });
   const [rejectReason, setRejectReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Approve All state
+  const [approveAllModal, setApproveAllModal] = useState(false);
+  const [isApprovingAll, setIsApprovingAll] = useState(false);
+  const [approveAllProgress, setApproveAllProgress] = useState({ done: 0, total: 0 });
 
   const fetchData = async () => {
     setLoading(true);
@@ -127,6 +137,36 @@ export default function AdminComicApprovalPage() {
     }
   };
 
+  // Approve all pending chapters
+  const handleApproveAll = async () => {
+    if (logs.length === 0) return;
+    setIsApprovingAll(true);
+    setApproveAllProgress({ done: 0, total: logs.length });
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < logs.length; i++) {
+      try {
+        await adminService.reviewLog(logs[i].id, { status: 'APPROVED' });
+        successCount++;
+      } catch (err) {
+        console.error(`Approve error for log ${logs[i].id}:`, err);
+        failCount++;
+      }
+      setApproveAllProgress({ done: i + 1, total: logs.length });
+    }
+
+    setIsApprovingAll(false);
+    setApproveAllModal(false);
+
+    if (failCount === 0) {
+      addToast(`Đã duyệt thành công toàn bộ ${successCount} chương!`, 'success');
+    } else {
+      addToast(`Duyệt xong: ${successCount} thành công, ${failCount} thất bại.`, 'warning');
+    }
+    fetchData();
+  };
+
   const formatDate = (dateStr) => {
     if (!dateStr) return '—';
     return new Date(dateStr).toLocaleDateString('vi-VN', {
@@ -182,6 +222,41 @@ export default function AdminComicApprovalPage() {
                 transition-all resize-none z-50 relative"
             />
           </div>
+        </div>
+      </ActionModal>
+
+      {/* Approve All Confirmation Modal */}
+      <ActionModal
+        isOpen={approveAllModal}
+        onClose={() => !isApprovingAll && setApproveAllModal(false)}
+        title="Duyệt toàn bộ chương"
+        onConfirm={handleApproveAll}
+        confirmText={isApprovingAll ? `Đang duyệt (${approveAllProgress.done}/${approveAllProgress.total})...` : `Duyệt tất cả ${logs.length} chương`}
+        confirmVariant="primary"
+        isLoading={isApprovingAll}
+      >
+        <div className="space-y-4">
+          <div className="bg-dark-800/50 rounded-lg p-4 border border-dark-700/30">
+            <p className="text-sm text-dark-300">
+              Bạn sắp duyệt <span className="text-white font-bold">{logs.length}</span> chương
+              của truyện <span className="text-white font-bold">{comic?.title}</span>.
+            </p>
+            <p className="text-xs text-dark-500 mt-2">Thao tác này không thể hoàn tác.</p>
+          </div>
+          {isApprovingAll && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-dark-400">
+                <span>Tiến độ</span>
+                <span>{approveAllProgress.done}/{approveAllProgress.total}</span>
+              </div>
+              <div className="w-full bg-dark-800 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(approveAllProgress.done / approveAllProgress.total) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </ActionModal>
 
@@ -285,6 +360,19 @@ export default function AdminComicApprovalPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Danh sách chương chờ duyệt ({logs.length})</h2>
+            {logs.length > 0 && (
+              <button
+                onClick={() => setApproveAllModal(true)}
+                disabled={isApprovingAll}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
+                  bg-emerald-600/15 text-emerald-400 border border-emerald-500/30
+                  hover:bg-emerald-600/25 hover:border-emerald-500/50
+                  transition-all cursor-pointer disabled:opacity-50"
+              >
+                <CheckCheck size={16} />
+                Duyệt toàn bộ ({logs.length})
+              </button>
+            )}
           </div>
 
           <div className="bg-dark-900/60 border border-dark-700/40 rounded-2xl overflow-hidden">
@@ -322,6 +410,13 @@ export default function AdminComicApprovalPage() {
                 </button>
               </div>
             ) : (
+              <>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(logs.length / ITEMS_PER_PAGE)}
+                totalItems={logs.length}
+                onPageChange={setCurrentPage}
+              />
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -333,9 +428,12 @@ export default function AdminComicApprovalPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {logs
-                      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-                      .map((log) => (
+                    {(() => {
+                      const sorted = [...logs].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                      const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE);
+                      const safePage = Math.min(currentPage, totalPages - 1);
+                      const paged = sorted.slice(safePage * ITEMS_PER_PAGE, (safePage + 1) * ITEMS_PER_PAGE);
+                      return paged.map((log) => (
                         <tr
                           key={log.id}
                           className="border-b border-dark-700/20 hover:bg-dark-800/50 transition-colors duration-150"
@@ -387,10 +485,18 @@ export default function AdminComicApprovalPage() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      ));
+                    })()}
                   </tbody>
                 </table>
               </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(logs.length / ITEMS_PER_PAGE)}
+                totalItems={logs.length}
+                onPageChange={setCurrentPage}
+              />
+              </>
             )}
           </div>
         </div>

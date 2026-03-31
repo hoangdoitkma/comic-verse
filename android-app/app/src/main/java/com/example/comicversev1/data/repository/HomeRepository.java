@@ -6,5 +6,6 @@ import io.reactivex.rxjava3.core.Single;
 
 public interface HomeRepository {
     Single<HomeContent> loadHomeContent();
+    Single<HomeContent> loadNovelContent();
 }
 

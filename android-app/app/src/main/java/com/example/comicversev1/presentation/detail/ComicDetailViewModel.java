@@ -77,7 +77,7 @@ public class ComicDetailViewModel extends ViewModel {
     /**
      * Load saved reading history for this comic from Room DB
      */
-    private void loadSavedProgress(int comicId) {
+    public void loadSavedProgress(int comicId) {
         disposables.add(
                 readingHistoryDao.getHistoryForComic(comicId)
                         .subscribeOn(Schedulers.io())

@@ -44,13 +44,17 @@ public class AuthRepositoryImpl implements AuthRepository {
     public Completable saveTokens(String accessToken, String refreshToken) {
         return Completable.fromAction(() -> prefs.edit()
                 .putString(Constants.KEY_ACCESS_TOKEN, accessToken)
-                .putString(Constants.KEY_REFRESH_TOKEN, refreshToken)
+                .putString(Constants.KEY_REFRESH_TOKEN, refreshToken) // can be null if unsupported
                 .apply());
     }
 
     private Completable saveTokensInternal(LoginResponse data) {
         if (data == null) return Completable.complete();
-        return saveTokens(data.getAccessToken(), data.getRefreshToken());
+        return Completable.fromAction(() -> prefs.edit()
+                .putString(Constants.KEY_ACCESS_TOKEN, data.getToken())
+                .putString(Constants.KEY_DISPLAY_NAME, data.getDisplayName())
+                .putString(Constants.KEY_EMAIL, data.getEmail())
+                .apply());
     }
 
     private Completable saveTokensInternal(String accessToken, String refreshToken) {

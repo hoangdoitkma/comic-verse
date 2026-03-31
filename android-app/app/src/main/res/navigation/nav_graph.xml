@@ -20,7 +20,15 @@
         <action
             android:id="@+id/action_login_to_home"
             app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_login_to_register"
+            app:destination="@id/registerFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.example.comicversev1.presentation.auth.RegisterFragment"
+        android:label="Register" />
 
     <fragment
         android:id="@+id/discoverFragment"
@@ -59,8 +67,41 @@
     </fragment>
 
     <fragment
+        android:id="@+id/novelDetailFragment"
+        android:name="com.example.comicversev1.presentation.detail.NovelDetailFragment"
+        android:label="Novel Detail">
+        <argument
+            android:name="comicId"
+            app:argType="integer" />
+        <argument
+            android:name="slug"
+            app:argType="string" />
+    </fragment>
+    
+    <action android:id="@+id/action_global_novelDetail" app:destination="@id/novelDetailFragment" />
+    <action android:id="@+id/action_global_reader" app:destination="@id/readerFragment" />
+    <action android:id="@+id/action_global_textNovelReader" app:destination="@id/textNovelReaderFragment" />
+
+    <fragment
+        android:id="@+id/textNovelReaderFragment"
+        android:name="com.example.comicversev1.presentation.novel.reader.TextNovelReaderFragment"
+        android:label="Text Novel Reader">
+        <argument
+            android:name="chapterId"
+            app:argType="integer" />
+        <argument
+            android:name="comicId"
+            app:argType="integer" />
+    </fragment>
+
+    <fragment
         android:id="@+id/novelFragment"
         android:name="com.example.comicversev1.presentation.novel.NovelFragment"
         android:label="" />
 
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.comicversev1.presentation.profile.ProfileFragment"
+        android:label="Profile" />
+        
 </navigation>

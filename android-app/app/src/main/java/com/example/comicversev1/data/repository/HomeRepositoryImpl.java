@@ -1,7 +1,10 @@
 package com.example.comicversev1.data.repository;
 
+import android.content.SharedPreferences;
+
 import com.example.comicversev1.R;
 import com.example.comicversev1.domain.entity.HomeContent;
+import com.example.comicversev1.utils.Constants;
 
 import java.util.Arrays;
 
@@ -18,10 +21,12 @@ import java.util.Collections;
 public class HomeRepositoryImpl implements HomeRepository {
 
     private final ApiService apiService;
+    private final SharedPreferences prefs;
 
     @Inject
-    public HomeRepositoryImpl(ApiService apiService) {
+    public HomeRepositoryImpl(ApiService apiService, SharedPreferences prefs) {
         this.apiService = apiService;
+        this.prefs = prefs;
     }
 
     private java.util.List<HomeContent.ComicCard> mapToCards(java.util.List<com.example.comicversev1.data.model.ComicDTO> dtos) {
@@ -40,12 +45,25 @@ public class HomeRepositoryImpl implements HomeRepository {
 
     @Override
     public Single<HomeContent> loadHomeContent() {
-        return apiService.getHomeContent()
+        return fetchContent("COMIC");
+    }
+
+    @Override
+    public Single<HomeContent> loadNovelContent() {
+        return fetchContent("NOVEL");
+    }
+
+    private Single<HomeContent> fetchContent(String type) {
+        return apiService.getHomeContent(type)
             .map(response -> {
                 HomeDataResponse data = response.getData();
                 if (data == null) data = new HomeDataResponse();
+                
+                String name = prefs.getString(Constants.KEY_DISPLAY_NAME, "");
+                String greeting = name.isEmpty() ? "Hi, Khách!" : "Hi, " + name + "!";
+
                 return new HomeContent(
-                        "Hi, Hàn Lập!",
+                        greeting,
                         "Chào mừng trở lại ✨",
                         Collections.emptyList(),
                         Arrays.asList(

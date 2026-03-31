@@ -1,62 +1,433 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#0F1115">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="#0F1115"
+        app:elevation="0dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbarDetail"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="@android:drawable/ic_menu_revert"
+            app:navigationIconTint="@android:color/white">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSubscribe"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginEnd="16dp"
+                android:text="Đăng ký"
+                android:textColor="@android:color/white"
+                app:strokeColor="@android:color/white" 
+                app:cornerRadius="8dp" />
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollViewMain"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="90dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="20dp">
+
+            <!-- Cover Image -->
+            <ImageView
+                android:id="@+id/imgCover"
+                android:layout_width="200dp"
+                android:layout_height="280dp"
+                android:layout_gravity="center_horizontal"
+                android:scaleType="centerCrop"
+                android:background="@drawable/bg_icon_rounded"
+                android:clipToOutline="true"
+                tools:src="@tools:sample/backgrounds/scenic" />
+
+            <!-- Title -->
+            <TextView
+                android:id="@+id/txtTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:textColor="@android:color/white"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                tools:text="Tiên Nghịch" />
+
+            <!-- Metadata Info Rows -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/txtLanguage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:drawablePadding="12dp"
+                    android:textColor="#A0B0C0"
+                    android:textSize="15sp"
+                    android:fontFamily="sans-serif"
+                    app:drawableStartCompat="@android:drawable/ic_menu_sort_alphabetically"
+                    app:drawableTint="#A0B0C0"
+                    tools:text="Tiếng Việt" />
+
+                <TextView
+                    android:id="@+id/txtAuthor"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:drawablePadding="12dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="15sp"
+                    app:drawableStartCompat="@android:drawable/ic_menu_edit"
+                    app:drawableTint="#FFD54F"
+                    tools:text="Nhĩ Căn" />
+
+                <TextView
+                    android:id="@+id/txtUpdateDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:drawablePadding="12dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="15sp"
+                    app:drawableStartCompat="@android:drawable/ic_menu_today"
+                    app:drawableTint="#4DD0E1"
+                    tools:text="22/10/2025 03:47" />
+
+                <TextView
+                    android:id="@+id/txtSource"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:drawablePadding="12dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="15sp"
+                    app:drawableStartCompat="@android:drawable/ic_menu_info_details"
+                    app:drawableTint="#4FC3F7"
+                    tools:text="NovelVN" />
+
+                <TextView
+                    android:id="@+id/txtStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:drawablePadding="12dp"
+                    android:textColor="#64B5F6"
+                    android:textSize="15sp"
+                    app:drawableStartCompat="@android:drawable/ic_media_play"
+                    app:drawableTint="#64B5F6"
+                    tools:text="Đã hoàn thành" />
+
+                <TextView
+                    android:id="@+id/btnDownload"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:drawablePadding="12dp"
+                    android:textColor="#81C784"
+                    android:textSize="15sp"
+                    android:text="Tải xuống"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    app:drawableStartCompat="@android:drawable/stat_sys_download_done"
+                    app:drawableTint="#81C784" />
+
+                <TextView
+                    android:id="@+id/btnReport"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:drawablePadding="12dp"
+                    android:textColor="#E57373"
+                    android:textSize="15sp"
+                    android:text="Báo cáo"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    app:drawableStartCompat="@android:drawable/ic_dialog_alert"
+                    app:drawableTint="#E57373" />
+            </LinearLayout>
+
+            <!-- Tags (Genres) -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:layout_marginBottom="24dp">
+                
+                <LinearLayout
+                    android:id="@+id/layoutTags"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
+            <!-- Synopsis Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="32dp">
+
+                <LinearLayout
+                    android:id="@+id/btnExpandSynopsis"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingVertical="8dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/star_on"
+                        app:tint="#FFD54F" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="Nội dung:"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/icSynopsisExpand"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/arrow_down_float"
+                        app:tint="@android:color/white" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/txtSynopsis"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textColor="#B0BEC5"
+                    android:textSize="15sp"
+                    android:lineSpacingExtra="6dp"
+                    android:ellipsize="end"
+                    android:maxLines="3"
+                    tools:text="Bạn đang đọc truyện Tiên Nghịch full (đã hoàn thành) của tác giả Nhĩ Căn. Vương Lâm, một thiếu niên bình thường, sống trong một gia đình bình dân..." />
+            </LinearLayout>
+
+            <!-- Latest Chapters -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="32dp">
+
+                <LinearLayout
+                    android:id="@+id/btnViewAllChapters"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingVertical="8dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/ic_menu_agenda"
+                        app:tint="#E53935" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="Chương mới nhất:"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/ic_media_next"
+                        app:tint="@android:color/white" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layoutChapters"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="12dp" />
+            </LinearLayout>
+
+            <!-- Comments -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="32dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingVertical="8dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/stat_notify_chat"
+                        app:tint="#4DD0E1" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="Bình luận:"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingTop="32dp"
+                    android:paddingBottom="24dp">
+
+                    <ImageView
+                        android:layout_width="200dp"
+                        android:layout_height="120dp"
+                        android:src="@drawable/ic_launcher_background"
+                        android:alpha="0.3"
+                        android:scaleType="fitCenter"/>
+                        
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Không có bình luận nào cả"
+                        android:textColor="#B0BEC5"
+                        android:textSize="16sp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="24dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnComment"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:text="Bình luận ngay"
+                        android:textColor="@android:color/white"
+                        android:backgroundTint="#1A1D24"
+                        app:cornerRadius="12dp"
+                        app:strokeColor="#2A2D3A"
+                        app:strokeWidth="1dp" 
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Similar Novels -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="32dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingVertical="8dp"
+                    android:layout_marginBottom="16dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/ic_menu_sort_by_size"
+                        app:tint="#FF7043" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="Cùng thể loại:"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerSimilar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" 
+                    android:clipToPadding="false" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Bottom Read Action -->
+    <LinearLayout
+        android:id="@+id/btnStartReading"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:layout_gravity="bottom"
+        android:background="#8CBEF4"
+        android:gravity="center"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:clickable="true"
+        android:focusable="true">
 
-        <!-- Nhãn phân loại: Tiểu thuyết -->
         <TextView
-            android:id="@+id/textCategory"
+            android:id="@+id/txtStartReadingTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_ad_chip"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp"
-            android:text="Tiểu thuyết"
+            android:text="Tiếp tục đọc"
             android:textColor="@android:color/white"
-            android:textStyle="bold" />
-
-        <ImageView
-            android:id="@+id/imgCover"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_marginTop="12dp"
-            android:scaleType="centerCrop" />
-
-        <TextView
-            android:id="@+id/txtTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingTop="8dp"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/txtSummary"
+            android:id="@+id/txtStartReadingSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="8dp" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerChapters"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:nestedScrollingEnabled="false" />
-
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="16dp"
-            android:visibility="gone" />
-
+            android:layout_marginTop="2dp"
+            android:text="Chương 1"
+            android:textColor="#E0F0FF"
+            android:textSize="13sp" />
     </LinearLayout>
-</ScrollView>
 
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -12,6 +12,8 @@ public class ChapterDetailDTO {
     private float chapterNum;
     @SerializedName("pages")
     private List<String> images;
+    @SerializedName("content")
+    private String content;
     @SerializedName("nextChapterId")
     private Integer nextChapterId;
     @SerializedName("prevChapterId")
@@ -23,6 +25,7 @@ public class ChapterDetailDTO {
     public String getTitle() { return title; }
     public float getChapterNum() { return chapterNum; }
     public List<String> getImages() { return images; }
+    public String getContent() { return content; }
     public Integer getNextChapterId() { return nextChapterId; }
     public Integer getPrevChapterId() { return prevChapterId; }
     public int getTotalPages() { return totalPages; }

@@ -55,15 +55,32 @@ public class HomeFragment extends Fragment {
         heroAdapter = new HomeHeroAdapter();
         quickActionAdapter = new HomeQuickActionAdapter();
         recentAdapter = new RecentAdapter();
+        recentAdapter.setListener(item -> {
+            NavHostFragment.findNavController(this).navigate(HomeFragmentDirections.actionHomeToDetail(item.getSlug(), 0));
+        });
+
         recommendAdapter = new ShelfAdapter(item -> {
             NavHostFragment.findNavController(this).navigate(HomeFragmentDirections.actionHomeToDetail(item.getSlug(), 0));
         });
+        
         newUpdateAdapter = new ShelfAdapter(item -> {
             NavHostFragment.findNavController(this).navigate(HomeFragmentDirections.actionHomeToDetail(item.getSlug(), 0));
         });
+        
         hotAdapter = new HotAdapter();
+        hotAdapter.setListener(item -> {
+            NavHostFragment.findNavController(this).navigate(HomeFragmentDirections.actionHomeToDetail(item.getSlug(), 0));
+        });
+
         completedAdapter = new LargeCardAdapter(true);
+        completedAdapter.setListener(item -> {
+            NavHostFragment.findNavController(this).navigate(HomeFragmentDirections.actionHomeToDetail(item.getSlug(), 0));
+        });
+
         newComicsAdapter = new LargeCardAdapter(false);
+        newComicsAdapter.setListener(item -> {
+            NavHostFragment.findNavController(this).navigate(HomeFragmentDirections.actionHomeToDetail(item.getSlug(), 0));
+        });
 
         // Initialize wrapper section adapters
         AdSearchSectionAdapter adSearchSection = new AdSearchSectionAdapter();
@@ -135,6 +152,10 @@ public class HomeFragment extends Fragment {
             }
             if (item.getItemId() == R.id.menu_novel) {
                 NavHostFragment.findNavController(this).navigate(R.id.novelFragment);
+                return true;
+            }
+            if (item.getItemId() == R.id.menu_more) {
+                NavHostFragment.findNavController(this).navigate(R.id.profileFragment);
                 return true;
             }
             return true;

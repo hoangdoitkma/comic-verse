@@ -61,12 +61,46 @@ public class NovelFragment extends Fragment {
         // Initialize child adapters
         heroAdapter = new HomeHeroAdapter();
         quickActionAdapter = new HomeQuickActionAdapter();
+        
         recentAdapter = new RecentAdapter();
-        recommendAdapter = new ShelfAdapter(item -> {});
-        newUpdateAdapter = new ShelfAdapter(item -> {});
+        recentAdapter.setListener(item -> {
+            NavHostFragment.findNavController(this).navigate(
+                com.example.comicversev1.NavGraphDirections.actionGlobalNovelDetail(0, item.getSlug())
+            );
+        });
+
+        recommendAdapter = new ShelfAdapter(item -> {
+            NavHostFragment.findNavController(this).navigate(
+                com.example.comicversev1.NavGraphDirections.actionGlobalNovelDetail(0, item.getSlug())
+            );
+        });
+        
+        newUpdateAdapter = new ShelfAdapter(item -> {
+            NavHostFragment.findNavController(this).navigate(
+                com.example.comicversev1.NavGraphDirections.actionGlobalNovelDetail(0, item.getSlug())
+            );
+        });
+        
         hotAdapter = new HotAdapter();
+        hotAdapter.setListener(item -> {
+            NavHostFragment.findNavController(this).navigate(
+                com.example.comicversev1.NavGraphDirections.actionGlobalNovelDetail(0, item.getSlug())
+            );
+        });
+
         completedAdapter = new LargeCardAdapter(true);
+        completedAdapter.setListener(item -> {
+            NavHostFragment.findNavController(this).navigate(
+                com.example.comicversev1.NavGraphDirections.actionGlobalNovelDetail(0, item.getSlug())
+            );
+        });
+
         newComicsAdapter = new LargeCardAdapter(false);
+        newComicsAdapter.setListener(item -> {
+            NavHostFragment.findNavController(this).navigate(
+                com.example.comicversev1.NavGraphDirections.actionGlobalNovelDetail(0, item.getSlug())
+            );
+        });
 
         // Initialize wrapper section adapters
         AdSearchSectionAdapter adSearchSection = new AdSearchSectionAdapter();
@@ -129,6 +163,10 @@ public class NovelFragment extends Fragment {
                 return true;
             }
             if (item.getItemId() == R.id.menu_novel) {
+                return true;
+            }
+            if (item.getItemId() == R.id.menu_more) {
+                NavHostFragment.findNavController(this).navigate(R.id.profileFragment);
                 return true;
             }
             return false;

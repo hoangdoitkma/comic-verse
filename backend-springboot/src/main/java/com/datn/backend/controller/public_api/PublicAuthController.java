@@ -21,7 +21,7 @@ public class PublicAuthController {
     private final PublicAuthService publicAuthService;
 
     // Login matching exactly Android's BaseResponse<LoginResponse> expectation
-    @PostMapping({ "/login", "/public/login" })
+    @PostMapping("/public/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = publicAuthService.login(request);
         return ResponseEntity.ok(ApiResponse.success(response, "Login successfully"));

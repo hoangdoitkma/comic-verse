@@ -3,12 +3,17 @@ package com.example.comicversev1.data.model;
 import com.google.gson.annotations.SerializedName;
 
 public class LoginResponse {
-    @SerializedName("access_token")
-    private String accessToken;
-    @SerializedName("refresh_token")
-    private String refreshToken;
+    @SerializedName("token")
+    private String token;
+    
+    @SerializedName("displayName")
+    private String displayName;
+    
+    @SerializedName("email")
+    private String email;
 
-    public String getAccessToken() { return accessToken; }
-    public String getRefreshToken() { return refreshToken; }
+    public String getToken() { return token; }
+    public String getDisplayName() { return displayName; }
+    public String getEmail() { return email; }
 }
 

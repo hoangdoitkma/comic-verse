@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.navigation.safe.args)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
@@ -27,6 +28,9 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = '11'
     }
     buildFeatures {
         viewBinding true
@@ -64,4 +68,11 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
+
+    // PhotoView for pinch-to-zoom
+    implementation 'com.github.chrisbanes:PhotoView:2.3.0'
+
+    // Kotlin Coroutines for Timer
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 }

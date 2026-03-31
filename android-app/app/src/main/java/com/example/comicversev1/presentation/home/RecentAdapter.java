@@ -15,7 +15,16 @@ import java.util.List;
 
 public class RecentAdapter extends RecyclerView.Adapter<RecentAdapter.RecentViewHolder> {
 
+    public interface OnComicClickListener {
+        void onComicClick(HomeContent.ComicCard item);
+    }
+
     private final List<HomeContent.ComicCard> items = new ArrayList<>();
+    private OnComicClickListener listener;
+
+    public void setListener(OnComicClickListener listener) {
+        this.listener = listener;
+    }
 
     public void submitList(List<HomeContent.ComicCard> data) {
         items.clear();
@@ -49,6 +58,10 @@ public class RecentAdapter extends RecyclerView.Adapter<RecentAdapter.RecentView
                 .load(item.getCoverUrl())
                 .centerCrop()
                 .into(holder.binding.imageCover);
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onComicClick(item);
+        });
     }
 
     /**

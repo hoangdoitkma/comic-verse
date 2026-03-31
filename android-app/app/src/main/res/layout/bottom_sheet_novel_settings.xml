@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/bg_bottom_sheet">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Cài đặt giao diện đọc"
+        android:textColor="@color/black"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Text Size -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cỡ chữ"
+        android:textSize="14sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="8dp" />
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="24dp">
+        <Button
+            android:id="@+id/btnSizeDecrease"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="A-" />
+        <TextView
+            android:id="@+id/tvCurrentSize"
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:text="16"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:textColor="@color/black" />
+        <Button
+            android:id="@+id/btnSizeIncrease"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="A+" />
+    </LinearLayout>
+
+    <!-- Theme -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Màu nền"
+        android:textSize="14sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="8dp" />
+        
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+        <Button
+            android:id="@+id/btnThemeLight"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:backgroundTint="#FFFFFF"
+            android:textColor="#000000"
+            android:text="Sáng" />
+        <Space android:layout_width="8dp" android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btnThemeSepia"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:backgroundTint="#F4ECD8"
+            android:textColor="#5B4636"
+            android:text="Vàng" />
+        <Space android:layout_width="8dp" android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btnThemeDark"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:backgroundTint="#222222"
+            android:textColor="#FFFFFF"
+            android:text="Tối" />
+    </LinearLayout>
+
+</LinearLayout>

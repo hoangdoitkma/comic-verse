@@ -97,6 +97,7 @@ public class ComicRepositoryImpl implements ComicRepository {
         if (dto == null) return new ChapterEntity(0, "", new ArrayList<>());
         return new ChapterEntity(dto.getId(), dto.getTitle(), dto.getChapterNum(),
                 dto.getImages() != null ? dto.getImages() : new ArrayList<>(),
+                dto.getContent(),
                 dto.getNextChapterId(), dto.getPrevChapterId());
     }
 
@@ -110,8 +111,12 @@ public class ComicRepositoryImpl implements ComicRepository {
     }
 
     private ComicDetailEntity mapComicDetail(ComicDetailDTO dto) {
-        if (dto == null) return new ComicDetailEntity(0, "", "", "", "");
-        return new ComicDetailEntity(dto.getId(), dto.getSlug(), dto.getTitle(), dto.getCoverImage(), dto.getAiSummary());
+        if (dto == null) return new ComicDetailEntity(0, "", "", "", "", "", "", "", "", 0, new ArrayList<>());
+        return new ComicDetailEntity(
+            dto.getId(), dto.getSlug(), dto.getTitle(), dto.getCoverImage(), dto.getAiSummary(),
+            dto.getSynopsis(), dto.getAuthorName(), dto.getStatus(), dto.getUpdatedAt(), dto.getViewCount(),
+            dto.getGenres() != null ? dto.getGenres() : new ArrayList<>()
+        );
     }
 
     private List<ChapterItem> mapChapterItems(List<ChapterItemDTO> dtos) {

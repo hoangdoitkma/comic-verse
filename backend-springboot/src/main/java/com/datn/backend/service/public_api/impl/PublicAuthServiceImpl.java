@@ -43,7 +43,7 @@ public class PublicAuthServiceImpl implements PublicAuthService {
                 .id(userDetails.getId())
                 .email(userDetails.getEmail())
                 .roles(roles)
-                .displayName(userDetails.getUsername()) // Mapping username to displayName
+                .displayName(userDetails.getDisplayName()) // Correct mapping
                 .build();
     }
 

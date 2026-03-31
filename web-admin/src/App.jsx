@@ -7,6 +7,7 @@ import UploaderLayout from './layouts/UploaderLayout';
 import ComicsPage from './pages/uploader/ComicsPage';
 import ComicDetailPage from './pages/uploader/ComicDetailPage';
 import BulkUploadChaptersPage from './pages/uploader/BulkUploadChaptersPage';
+import BulkUploadNovelPage from './pages/uploader/BulkUploadNovelPage';
 
 // Admin
 import AdminLayout from './layouts/AdminLayout';
@@ -54,6 +55,7 @@ function App() {
             <Route path="comics" element={<ComicsPage />} />
             <Route path="comics/:comicId" element={<ComicDetailPage />} />
             <Route path="comics/:comicId/bulk-upload" element={<BulkUploadChaptersPage />} />
+            <Route path="comics/:comicId/bulk-upload-novel" element={<BulkUploadNovelPage />} />
           </Route>
         </Route>
 

@@ -16,8 +16,17 @@ import java.util.List;
 
 public class LargeCardAdapter extends RecyclerView.Adapter<LargeCardAdapter.LargeCardViewHolder> {
 
+    public interface OnComicClickListener {
+        void onComicClick(HomeContent.ComicCard item);
+    }
+
     private final List<HomeContent.ComicCard> items = new ArrayList<>();
     private boolean showHotBadge;
+    private OnComicClickListener listener;
+
+    public void setListener(OnComicClickListener listener) {
+        this.listener = listener;
+    }
 
     public LargeCardAdapter(boolean showHotBadge) {
         this.showHotBadge = showHotBadge;
@@ -49,6 +58,10 @@ public class LargeCardAdapter extends RecyclerView.Adapter<LargeCardAdapter.Larg
                 .load(item.getCoverUrl())
                 .centerCrop()
                 .into(holder.binding.imageCover);
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onComicClick(item);
+        });
     }
 
     @Override

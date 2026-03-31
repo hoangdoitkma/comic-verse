@@ -20,5 +20,8 @@ public class ReadingHistoryEntity {
 
     @ColumnInfo(name = "read_at")
     public long readAt;
+
+    @ColumnInfo(name = "percent")
+    public int percent;
 }
 

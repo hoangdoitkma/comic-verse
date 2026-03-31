@@ -34,6 +34,14 @@ public class PublicChapterServiceImpl implements PublicChapterService {
     }
 
     @Override
+    public List<ChapterItemDTO> getChaptersByComicId(Integer comicId) {
+        return chapterRepository.findByComicIdOrderBySortOrderAsc(comicId)
+                .stream()
+                .map(this::mapToItemDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public ChapterDetailDTO getChapterContent(Integer chapterId) {
         Chapter chapter = chapterRepository.findById(chapterId)
                 .orElseThrow(() -> new RuntimeException("Chapter not found"));

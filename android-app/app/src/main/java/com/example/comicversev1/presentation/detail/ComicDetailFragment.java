@@ -67,6 +67,16 @@ public class ComicDetailFragment extends Fragment implements ChapterListAdapter.
         observeState();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Cập nhật lại lịch sử đọc khi quay lại từ màn hình đọc truyện
+        ComicDetailUiState state = viewModel.uiState().getValue();
+        if (state != null && state.getComic() != null) {
+            viewModel.loadSavedProgress(state.getComic().getId());
+        }
+    }
+
     private void setupViews() {
         // App Bar Controls
         binding.toolbarDetail.setNavigationOnClickListener(v -> {
@@ -149,8 +159,28 @@ public class ComicDetailFragment extends Fragment implements ChapterListAdapter.
         viewModel.savedProgress().observe(getViewLifecycleOwner(), history -> {
             if (history != null && history.chapterId > 0) {
                 savedChapterId = history.chapterId;
-                binding.txtStartReadingTitle.setText("Đọc tiếp ▶");
-                binding.txtStartReadingSubtitle.setText("Tiếp tục từ lần trước");
+                
+                String chapterTitle = "Chương ?";
+                ComicDetailUiState state = viewModel.uiState().getValue();
+                if (state != null && state.getChapters() != null) {
+                    for (ChapterItem ch : state.getChapters()) {
+                        if (ch.getId() == history.chapterId) {
+                            chapterTitle = "Chương " + ch.getTitle();
+                            // API format might just be the number like "1", "2.1", "Hậu truyện"
+                            // So we add "Chương " just in case, but let's check what the API returns.
+                            // Assuming getTitle() returns something like "1" or "Chap 1", let's just use it:
+                            if (!ch.getTitle().toLowerCase().contains("chương") && !ch.getTitle().toLowerCase().contains("chap")) {
+                                chapterTitle = "Chương " + ch.getTitle();
+                            } else {
+                                chapterTitle = ch.getTitle();
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                binding.txtStartReadingTitle.setText("Đọc tiếp");
+                binding.txtStartReadingSubtitle.setText(chapterTitle + ": " + history.percent + " %");
             }
         });
     }

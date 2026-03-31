@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface PublicChapterService {
     List<ChapterItemDTO> getChaptersByComicSlug(String slug);
+    List<ChapterItemDTO> getChaptersByComicId(Integer comicId);
     ChapterDetailDTO getChapterContent(Integer chapterId);
 }

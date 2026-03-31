@@ -24,6 +24,7 @@ import com.bumptech.glide.load.DataSource;
 import android.graphics.drawable.Drawable;
 import android.content.res.Resources;
 import androidx.annotation.Nullable;
+import com.github.chrisbanes.photoview.PhotoView;
 
 public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -31,33 +32,33 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final int TYPE_SEPARATOR = 1;
 
     // Wrapper item to cleanly manage metadata
-    private static class ReaderItem {
+    private static class ChapterImageItem {
         final int type;
         final String imageUrl;      // for TYPE_PAGE
         final String chapterTitle;  // for TYPE_SEPARATOR
         final int chapterId;
-        final int relativeIndex;    // Page index within its chapter (0-based)
+        final int imageIndexInChapter;    // Page index within its chapter (0-based)
 
         // Type Page constructor
-        ReaderItem(String imageUrl, int chapterId, int relativeIndex) {
+        ChapterImageItem(String imageUrl, int chapterId, int imageIndexInChapter) {
             this.type = TYPE_PAGE;
             this.imageUrl = imageUrl;
             this.chapterTitle = null;
             this.chapterId = chapterId;
-            this.relativeIndex = relativeIndex;
+            this.imageIndexInChapter = imageIndexInChapter;
         }
 
         // Type Separator constructor
-        ReaderItem(String chapterTitle, int chapterId) {
+        ChapterImageItem(String chapterTitle, int chapterId) {
             this.type = TYPE_SEPARATOR;
             this.imageUrl = null;
             this.chapterTitle = chapterTitle;
             this.chapterId = chapterId;
-            this.relativeIndex = -1; // Separator does not represent a readable page index
+            this.imageIndexInChapter = -1; // Separator does not represent a readable page index
         }
     }
 
-    private final List<ReaderItem> items = new ArrayList<>();
+    private final List<ChapterImageItem> items = new ArrayList<>();
 
     public ReaderPagesAdapter() {
         // GÓC CHÚ Ý KHÔNG SỬ DỤNG: StateRestorationPolicy.PREVENT_WHEN_EMPTY
@@ -72,7 +73,7 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         items.clear();
         if (images != null) {
             for (int i = 0; i < images.size(); i++) {
-                items.add(new ReaderItem(images.get(i), chapterId, i));
+                items.add(new ChapterImageItem(images.get(i), chapterId, i));
             }
         }
         notifyDataSetChanged();
@@ -86,11 +87,11 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         int insertStart = items.size();
 
         // Thêm separator tiêu đề chương
-        items.add(new ReaderItem(chapterTitle, chapterId));
+        items.add(new ChapterImageItem(chapterTitle, chapterId));
 
-        // Thêm từng trang với `relativeIndex` đi kèm (từ 0 đến n-1)
+        // Thêm từng trang với `imageIndexInChapter` đi kèm (từ 0 đến n-1)
         for (int i = 0; i < images.size(); i++) {
-            items.add(new ReaderItem(images.get(i), chapterId, i));
+            items.add(new ChapterImageItem(images.get(i), chapterId, i));
         }
 
         notifyItemRangeInserted(insertStart, images.size() + 1);
@@ -112,9 +113,9 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
      */
     public int getRelativePageIndex(int position) {
         if (position >= 0 && position < items.size()) {
-            ReaderItem item = items.get(position);
+            ChapterImageItem item = items.get(position);
             // Nếu vô tình lọt vào Separator, ta trả về 0 (trang đầu tiên của list con)
-            return item.type == TYPE_PAGE ? item.relativeIndex : 0;
+            return item.type == TYPE_PAGE ? item.imageIndexInChapter : 0;
         }
         return 0;
     }
@@ -127,9 +128,9 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         int currentIndex = 0;
         Log.d("ReaderPagesAdapter", ">>> getAbsolutePosition Start: targetChapterId=" + targetChapterId + ", targetRelativePage=" + targetRelativePage);
         for (int i = 0; i < items.size(); i++) {
-            ReaderItem item = items.get(i);
+            ChapterImageItem item = items.get(i);
             if (item.chapterId == targetChapterId && item.type == TYPE_PAGE) {
-                if (item.relativeIndex == targetRelativePage) {
+                if (item.imageIndexInChapter == targetRelativePage) {
                     Log.d("ReaderPagesAdapter", ">>> FOUND! Absolute Index = " + i);
                     return i;
                 }
@@ -159,7 +160,7 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        ReaderItem item = items.get(position);
+        ChapterImageItem item = items.get(position);
         if (holder instanceof PageViewHolder) {
             PageViewHolder pageHolder = (PageViewHolder) holder;
 
@@ -202,6 +203,14 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 }
             }
 
+            // Xử lý xung đột cảm ứng khi Zoom
+            pageHolder.imageView.setOnTouchListener((v, event) -> {
+                if (pageHolder.imageView.getScale() > 1.0f) {
+                    v.getParent().requestDisallowInterceptTouchEvent(true);
+                }
+                return false;
+            });
+
         } else if (holder instanceof SeparatorViewHolder) {
             ((SeparatorViewHolder) holder).titleText.setText(item.chapterTitle);
         }
@@ -213,7 +222,7 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     static class PageViewHolder extends RecyclerView.ViewHolder {
-        ImageView imageView;
+        PhotoView imageView;
 
         PageViewHolder(@NonNull View itemView) {
             super(itemView);

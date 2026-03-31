@@ -14,6 +14,8 @@ import com.example.comicversev1.data.model.ChapterItemDTO;
 
 import java.util.List;
 
+import com.example.comicversev1.data.model.ViewTrackingRequest;
+
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import retrofit2.Call;
@@ -45,11 +47,16 @@ public interface ApiService {
     @GET("comics/{slug}/chapters")
     Single<BaseResponse<List<ChapterItemDTO>>> getChapters(@Path("slug") String slug);
 
+    @GET("comics/id/{id}/chapters")
+    Single<BaseResponse<List<ChapterItemDTO>>> getChaptersById(@Path("id") int comicId);
+
     @GET("chapters/{id}")
     Single<BaseResponse<ChapterDetailDTO>> getChapterContent(@Path("id") int chapterId);
 
     @GET("comics/home")
-    Single<BaseResponse<com.example.comicversev1.data.model.HomeDataResponse>> getHomeContent();
+    Single<BaseResponse<com.example.comicversev1.data.model.HomeDataResponse>> getHomeContent(
+            @Query("type") String type
+    );
 
     // User Action
     @POST("reading-history")
@@ -58,4 +65,7 @@ public interface ApiService {
     // Reading History Info (batch fetch comic info for local reading history)
     @POST("comics/reading-history-info")
     Single<BaseResponse<List<ReadingHistoryInfoDTO>>> getReadingHistoryInfo(@Body ReadingHistoryInfoRequest request);
+
+    @POST("tracking/view")
+    Completable trackView(@Body ViewTrackingRequest request);
 }

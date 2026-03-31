@@ -31,6 +31,8 @@ public class ReaderFragment extends Fragment {
     private int currentVisibleChapterId = -1;
     private String currentVisibleChapterTitle = "";
 
+    private ViewTrackingTimer viewTrackingTimer;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -44,13 +46,46 @@ public class ReaderFragment extends Fragment {
         viewModel = new ViewModelProvider(this).get(ReaderViewModel.class);
         adapter = new ReaderPagesAdapter();
         layoutManager = new LinearLayoutManager(requireContext());
+        viewTrackingTimer = new ViewTrackingTimer();
 
         binding.recyclerView.setLayoutManager(layoutManager);
         binding.recyclerView.setAdapter(adapter);
 
         setupBackButton();
         setupScrollListener();
+        setupTouchZones();
         observeState();
+    }
+
+    private void setupTouchZones() {
+        android.view.GestureDetector gestureDetector = new android.view.GestureDetector(requireContext(), new android.view.GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onSingleTapConfirmed(android.view.MotionEvent e) {
+                int screenHeight = binding.recyclerView.getHeight();
+                float y = e.getY();
+                if (y < screenHeight / 3.0f) {
+                    // Top zone: scroll up 1 page
+                    binding.recyclerView.smoothScrollBy(0, -screenHeight);
+                } else if (y > screenHeight * 2.0f / 3.0f) {
+                    // Bottom zone: scroll down 1 page
+                    binding.recyclerView.smoothScrollBy(0, screenHeight);
+                } else {
+                    // Middle zone: toggle topBar visibility
+                    boolean isVisible = binding.topBar.getVisibility() == View.VISIBLE;
+                    binding.topBar.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+                }
+                return true;
+            }
+        });
+
+        binding.recyclerView.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull android.view.MotionEvent e) {
+                gestureDetector.onTouchEvent(e);
+                // Return false allows child views (like PhotoView) to receive touch events (for zooming, paging)
+                return false; 
+            }
+        });
     }
 
     private void setupBackButton() {
@@ -105,6 +140,15 @@ public class ReaderFragment extends Fragment {
                             currentVisibleChapterTitle = ch.getTitle();
                             binding.txtChapterTitle.post(() -> binding.txtChapterTitle.setText(ch.getTitle()));
                         }
+                        
+                        // Start/Restart view tracking timer when scrolled to a new chapter
+                        if (viewTrackingTimer != null) {
+                            viewTrackingTimer.startTimer(viewModel.getComicId(), chapterId, (cId, chId) -> {
+                                if (viewModel != null) {
+                                    viewModel.trackChapterView(chId);
+                                }
+                            });
+                        }
                     }
 
                     // Update page progress (post to run queue to prevent requestLayout() loop during scroll)
@@ -151,6 +195,15 @@ public class ReaderFragment extends Fragment {
                 binding.txtPageProgress.setText(
                         String.format("Trang 1 / %d", ch.getImages() != null ? ch.getImages().size() : 0)
                 );
+                
+                // Track view for initial chapter load
+                if (viewTrackingTimer != null) {
+                    viewTrackingTimer.startTimer(viewModel.getComicId(), ch.getId(), (cId, chId) -> {
+                        if (viewModel != null) {
+                            viewModel.trackChapterView(chId);
+                        }
+                    });
+                }
                 
                 Log.d("ReaderFragment", ">>> Initial chapter loaded. ItemCount is now: " + adapter.getItemCount() + ". Scheduling scroll check.");
                 // Móc lệnh cuộn ngay trước khi giao diện bắt đầu render pixel đầu tiên
@@ -225,6 +278,10 @@ public class ReaderFragment extends Fragment {
                 }
             }
         }
+        
+        if (viewTrackingTimer != null) {
+            viewTrackingTimer.cancelTimer();
+        }
     }
 
     @Override
@@ -240,6 +297,9 @@ public class ReaderFragment extends Fragment {
                     viewModel.saveProgressImmediately(chapterId, relativePage);
                 }
             }
+        }
+        if (viewTrackingTimer != null) {
+            viewTrackingTimer.cancelTimer();
         }
         super.onDestroyView();
         binding = null;

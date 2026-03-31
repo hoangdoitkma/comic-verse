@@ -21,7 +21,7 @@ public class NovelViewModel extends ViewModel {
 
     @Inject
     public NovelViewModel(HomeRepository repository) {
-        disposables.add(repository.loadHomeContent()
+        disposables.add(repository.loadNovelContent()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(content -> uiState.setValue(NovelUiState.from(content)),

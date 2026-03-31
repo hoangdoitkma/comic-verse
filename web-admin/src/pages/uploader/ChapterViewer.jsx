@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, ChevronUp, Loader2, ImageOff, Maximize2, Minimize2 } from 'lucide-react';
+import { X, ChevronUp, Loader2, ImageOff, Maximize2, Minimize2, BookOpen } from 'lucide-react';
 import comicService from '../../services/comicService';
 
 export default function ChapterViewer({ isOpen, onClose, chapter }) {
@@ -11,12 +11,21 @@ export default function ChapterViewer({ isOpen, onClose, chapter }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const scrollRef = useRef(null);
 
+  // Detect if this chapter has text content (novel) or image pages (comic)
+  const isNovelChapter = !!(chapter?.content && chapter.content.trim().length > 0);
+
   useEffect(() => {
     if (isOpen && chapter?.id) {
       setLoading(true);
       setError('');
       setPages([]);
       setLoadedImages(new Set());
+
+      // If novel chapter with content, no need to fetch pages
+      if (isNovelChapter) {
+        setLoading(false);
+        return;
+      }
 
       comicService.getChapterPages(chapter.id)
         .then((data) => {
@@ -32,7 +41,7 @@ export default function ChapterViewer({ isOpen, onClose, chapter }) {
         })
         .finally(() => setLoading(false));
     }
-  }, [isOpen, chapter?.id]);
+  }, [isOpen, chapter?.id, isNovelChapter]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -64,6 +73,11 @@ export default function ChapterViewer({ isOpen, onClose, chapter }) {
 
   const chapterTitle = chapter?.title || `Chương ${chapter?.chapterNumber}`;
 
+  // Parse novel content into paragraphs
+  const novelParagraphs = isNovelChapter
+    ? chapter.content.split('\n').filter((p) => p.trim().length > 0)
+    : [];
+
   return (
     <div className="fixed inset-0 z-[90] flex flex-col bg-dark-950">
       {/* Header */}
@@ -78,11 +92,22 @@ export default function ChapterViewer({ isOpen, onClose, chapter }) {
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-white truncate">{chapterTitle}</h2>
             <p className="text-xs text-dark-500">
-              {loading ? 'Đang tải...' : `${pages.length} trang`}
+              {loading
+                ? 'Đang tải...'
+                : isNovelChapter
+                  ? `${novelParagraphs.length} đoạn văn • ${chapter.content.length.toLocaleString('vi-VN')} ký tự`
+                  : `${pages.length} trang`
+              }
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {isNovelChapter && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-violet-500/15 text-violet-400">
+              <BookOpen size={10} />
+              Novel
+            </span>
+          )}
           <button
             onClick={() => setIsFullscreen(!isFullscreen)}
             className="p-2 rounded-lg hover:bg-dark-800 text-dark-400 hover:text-white transition-all cursor-pointer"
@@ -103,20 +128,53 @@ export default function ChapterViewer({ isOpen, onClose, chapter }) {
         {loading && (
           <div className="flex flex-col items-center justify-center py-32">
             <Loader2 size={32} className="text-primary-400 animate-spin mb-3" />
-            <p className="text-dark-400 text-sm">Đang tải ảnh chương...</p>
+            <p className="text-dark-400 text-sm">
+              {isNovelChapter ? 'Đang tải nội dung...' : 'Đang tải ảnh chương...'}
+            </p>
           </div>
         )}
 
         {/* Error */}
-        {!loading && error && (
+        {!loading && error && !isNovelChapter && (
           <div className="flex flex-col items-center justify-center py-32">
             <ImageOff size={40} className="text-dark-600 mb-3" />
             <p className="text-dark-400 text-sm">{error}</p>
           </div>
         )}
 
-        {/* Images */}
-        {!loading && !error && pages.length > 0 && (
+        {/* ====== NOVEL TEXT CONTENT ====== */}
+        {!loading && isNovelChapter && (
+          <div className={`mx-auto px-6 py-8 ${isFullscreen ? 'max-w-4xl' : 'max-w-2xl'} transition-all duration-300`}>
+            {/* Chapter title */}
+            <h1 className="text-xl font-bold text-white mb-8 text-center leading-relaxed">
+              {chapterTitle}
+            </h1>
+
+            {/* Paragraphs */}
+            <div className="space-y-4">
+              {novelParagraphs.map((paragraph, idx) => (
+                <p
+                  key={idx}
+                  className="text-[15px] leading-[1.9] text-dark-200 indent-8"
+                  style={{ fontFamily: "'Inter', 'Noto Serif', Georgia, serif" }}
+                >
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+
+            {/* End indicator */}
+            <div className="py-12 text-center border-t border-dark-800 mt-12">
+              <p className="text-dark-500 text-sm">— Hết chương —</p>
+              <p className="text-dark-600 text-xs mt-1">
+                {novelParagraphs.length} đoạn văn • {chapter.content.length.toLocaleString('vi-VN')} ký tự
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ====== COMIC IMAGE PAGES ====== */}
+        {!loading && !error && !isNovelChapter && pages.length > 0 && (
           <div className={`mx-auto ${isFullscreen ? 'max-w-full' : 'max-w-3xl'} transition-all duration-300`}>
             {pages.map((page, idx) => (
               <div key={idx} className="relative w-full">

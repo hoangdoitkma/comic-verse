@@ -25,6 +25,9 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
+import com.example.comicversev1.data.api.ApiService;
+import com.example.comicversev1.data.model.ViewTrackingRequest;
+
 import java.util.concurrent.TimeUnit;
 
 @HiltViewModel
@@ -34,6 +37,7 @@ public class ReaderViewModel extends ViewModel {
 
     private final GetChapterDetailUseCase getChapterDetailUseCase;
     private final ReadingHistoryDao readingHistoryDao;
+    private final ApiService apiService;
     private final CompositeDisposable disposables = new CompositeDisposable();
 
     private final int initialChapterId;
@@ -67,9 +71,11 @@ public class ReaderViewModel extends ViewModel {
     @Inject
     public ReaderViewModel(GetChapterDetailUseCase getChapterDetailUseCase,
                            ReadingHistoryDao readingHistoryDao,
-                           SavedStateHandle handle) {
+                           SavedStateHandle handle,
+                           ApiService apiService) {
         this.getChapterDetailUseCase = getChapterDetailUseCase;
         this.readingHistoryDao = readingHistoryDao;
+        this.apiService = apiService;
         this.initialChapterId = handle.get("chapterId");
         this.comicId = handle.get("comicId");
 
@@ -195,6 +201,14 @@ public class ReaderViewModel extends ViewModel {
         entity.pageIndex = pageIndex;
         entity.readAt = System.currentTimeMillis();
 
+        int percent = 0;
+        ChapterEntity chapter = getChapterById(chapterId);
+        if (chapter != null && chapter.getImages() != null && !chapter.getImages().isEmpty()) {
+            int totalPages = chapter.getImages().size();
+            percent = (int) (((pageIndex + 1) / (float) totalPages) * 100);
+        }
+        entity.percent = percent;
+
         // Push to subject for debounced processing
         saveProgressSubject.onNext(entity);
     }
@@ -241,6 +255,14 @@ public class ReaderViewModel extends ViewModel {
         entity.pageIndex = pageIndex;
         entity.readAt = System.currentTimeMillis();
 
+        int percent = 0;
+        ChapterEntity chapter = getChapterById(chapterId);
+        if (chapter != null && chapter.getImages() != null && !chapter.getImages().isEmpty()) {
+            int totalPages = chapter.getImages().size();
+            percent = (int) (((pageIndex + 1) / (float) totalPages) * 100);
+        }
+        entity.percent = percent;
+
         // Fire and forget - not added to disposables so it completes even if ViewModel is cleared
         readingHistoryDao.insertOrUpdate(entity)
                 .subscribeOn(Schedulers.io())
@@ -248,6 +270,19 @@ public class ReaderViewModel extends ViewModel {
                         () -> Log.d(TAG, ">>> ASYNC SAVED OK: comicId=" + entity.comicId + ", page=" + pageIndex),
                         throwable -> Log.e(TAG, ">>> ASYNC SAVE FAILED: " + throwable.getMessage())
                 );
+    }
+
+    public void trackChapterView(int chapterId) {
+        if (comicId <= 0 || chapterId <= 0) return;
+        disposables.add(
+                apiService.trackView(new ViewTrackingRequest(comicId, chapterId))
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                () -> Log.d(TAG, ">>> View tracking API SUCCESS for chapter: " + chapterId),
+                                throwable -> Log.e(TAG, ">>> View tracking API FAILED: " + throwable.getMessage())
+                        )
+        );
     }
 
     @Override

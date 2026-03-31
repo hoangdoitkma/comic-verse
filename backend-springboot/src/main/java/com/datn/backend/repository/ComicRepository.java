@@ -19,10 +19,13 @@ public interface ComicRepository extends JpaRepository<Comic, Integer> {
     long countByCreatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
 
     List<Comic> findTop5ByOrderByViewCountDesc();
+    List<Comic> findTop5ByContentTypeOrderByViewCountDesc(com.datn.backend.entity.enums.ContentType type);
 
     List<Comic> findTop15ByOrderByUpdatedAtDesc();
+    List<Comic> findTop15ByContentTypeOrderByUpdatedAtDesc(com.datn.backend.entity.enums.ContentType type);
 
     List<Comic> findTop10ByOrderByCreatedAtDesc();
+    List<Comic> findTop10ByContentTypeOrderByCreatedAtDesc(com.datn.backend.entity.enums.ContentType type);
 
     @Query(value = "SELECT DATE(created_at) as date, COUNT(*) as amount " +
                    "FROM comics " +

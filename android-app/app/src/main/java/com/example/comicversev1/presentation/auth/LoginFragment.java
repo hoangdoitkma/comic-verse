@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.comicversev1.databinding.FragmentLoginBinding;
 
@@ -37,9 +38,27 @@ public class LoginFragment extends Fragment {
     }
 
     private void setupUi() {
+        binding.btnBack.setOnClickListener(v -> {
+            NavHostFragment.findNavController(this).navigateUp();
+        });
+
+        binding.textRegister.setOnClickListener(v -> {
+            NavHostFragment.findNavController(this).navigate(com.example.comicversev1.R.id.action_login_to_register);
+        });
+
+        binding.btnGoogle.setOnClickListener(v -> {
+            Toast.makeText(requireContext(), "Login with Google clicked", Toast.LENGTH_SHORT).show();
+        });
+
         binding.btnLogin.setOnClickListener(v -> {
             String email = binding.edtEmail.getText().toString();
             String password = binding.edtPassword.getText().toString();
+            
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(requireContext(), "Vui lòng nhập email và mật khẩu", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
             viewModel.login(email, password);
         });
     }
@@ -50,7 +69,7 @@ public class LoginFragment extends Fragment {
             binding.btnLogin.setEnabled(!state.isLoading());
             if (state.isSuccess()) {
                 Toast.makeText(requireContext(), "Login success", Toast.LENGTH_SHORT).show();
-                // TODO: navigate to next screen
+                NavHostFragment.findNavController(this).navigate(com.example.comicversev1.R.id.action_login_to_home);
             }
             if (state.getErrorMessage() != null) {
                 Toast.makeText(requireContext(), state.getErrorMessage(), Toast.LENGTH_SHORT).show();

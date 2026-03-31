@@ -66,13 +66,26 @@ public class PublicComicServiceImpl implements PublicComicService {
     }
 
     @Override
-    public HomeDataResponse getHomeContent() {
-        List<ComicDTO> topTrending = comicRepository.findTop5ByOrderByViewCountDesc()
-                .stream().map(this::mapToDTO).collect(Collectors.toList());
-        List<ComicDTO> recentlyUpdated = comicRepository.findTop15ByOrderByUpdatedAtDesc()
-                .stream().map(this::mapToDTO).collect(Collectors.toList());
-        List<ComicDTO> newComics = comicRepository.findTop10ByOrderByCreatedAtDesc()
-                .stream().map(this::mapToDTO).collect(Collectors.toList());
+    public HomeDataResponse getHomeContent(com.datn.backend.entity.enums.ContentType type) {
+        List<ComicDTO> topTrending;
+        List<ComicDTO> recentlyUpdated;
+        List<ComicDTO> newComics;
+        
+        if (type == null) {
+            topTrending = comicRepository.findTop5ByOrderByViewCountDesc()
+                    .stream().map(this::mapToDTO).collect(Collectors.toList());
+            recentlyUpdated = comicRepository.findTop15ByOrderByUpdatedAtDesc()
+                    .stream().map(this::mapToDTO).collect(Collectors.toList());
+            newComics = comicRepository.findTop10ByOrderByCreatedAtDesc()
+                    .stream().map(this::mapToDTO).collect(Collectors.toList());
+        } else {
+            topTrending = comicRepository.findTop5ByContentTypeOrderByViewCountDesc(type)
+                    .stream().map(this::mapToDTO).collect(Collectors.toList());
+            recentlyUpdated = comicRepository.findTop15ByContentTypeOrderByUpdatedAtDesc(type)
+                    .stream().map(this::mapToDTO).collect(Collectors.toList());
+            newComics = comicRepository.findTop10ByContentTypeOrderByCreatedAtDesc(type)
+                    .stream().map(this::mapToDTO).collect(Collectors.toList());
+        }
 
         return HomeDataResponse.builder()
                 .topTrending(topTrending)

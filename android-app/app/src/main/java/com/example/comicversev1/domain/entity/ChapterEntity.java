@@ -7,28 +7,31 @@ public class ChapterEntity {
     private final String title;
     private final float chapterNum;
     private final List<String> images;
+    private final String content;
     private final Integer nextChapterId;
     private final Integer prevChapterId;
 
-    public ChapterEntity(int id, String title, float chapterNum, List<String> images,
+    public ChapterEntity(int id, String title, float chapterNum, List<String> images, String content,
                          Integer nextChapterId, Integer prevChapterId) {
         this.id = id;
         this.title = title;
         this.chapterNum = chapterNum;
         this.images = images;
+        this.content = content;
         this.nextChapterId = nextChapterId;
         this.prevChapterId = prevChapterId;
     }
 
     // Backward-compatible constructor
     public ChapterEntity(int id, String title, List<String> images) {
-        this(id, title, 0, images, null, null);
+        this(id, title, 0, images, null, null, null);
     }
 
     public int getId() { return id; }
     public String getTitle() { return title; }
     public float getChapterNum() { return chapterNum; }
     public List<String> getImages() { return images; }
+    public String getContent() { return content; }
     public Integer getNextChapterId() { return nextChapterId; }
     public Integer getPrevChapterId() { return prevChapterId; }
 }

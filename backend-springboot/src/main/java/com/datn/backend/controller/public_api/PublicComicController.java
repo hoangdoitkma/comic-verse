@@ -37,8 +37,9 @@ public class PublicComicController {
     }
 
     @GetMapping("/home")
-    public ResponseEntity<ApiResponse<HomeDataResponse>> getHomeContent() {
-        return ResponseEntity.ok(ApiResponse.success(publicComicService.getHomeContent()));
+    public ResponseEntity<ApiResponse<HomeDataResponse>> getHomeContent(
+            @RequestParam(required = false) com.datn.backend.entity.enums.ContentType type) {
+        return ResponseEntity.ok(ApiResponse.success(publicComicService.getHomeContent(type)));
     }
 
     @GetMapping("/{slug}")
@@ -49,6 +50,11 @@ public class PublicComicController {
     @GetMapping("/{slug}/chapters")
     public ResponseEntity<ApiResponse<List<ChapterItemDTO>>> getChapters(@PathVariable String slug) {
         return ResponseEntity.ok(ApiResponse.success(publicChapterService.getChaptersByComicSlug(slug)));
+    }
+
+    @GetMapping("/id/{id}/chapters")
+    public ResponseEntity<ApiResponse<List<ChapterItemDTO>>> getChaptersById(@PathVariable Integer id) {
+        return ResponseEntity.ok(ApiResponse.success(publicChapterService.getChaptersByComicId(id)));
     }
 
     @PostMapping("/reading-history-info")

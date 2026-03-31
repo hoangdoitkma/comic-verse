@@ -20,6 +20,7 @@ import comicService from '../../services/comicService';
 import CreateChapterModal from './CreateChapterModal';
 import ChapterViewer from './ChapterViewer';
 import { ToastContainer, useToast } from '../../components/Toast';
+import Pagination from '../../components/Pagination';
 
 // Status badge (same as ComicsPage)
 const statusConfig = {
@@ -65,6 +66,8 @@ function ChapterSkeletonRow() {
   );
 }
 
+const ITEMS_PER_PAGE = 20;
+
 export default function ComicDetailPage() {
   const { comicId } = useParams();
   const navigate = useNavigate();
@@ -76,6 +79,7 @@ export default function ComicDetailPage() {
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [deletingChapter, setDeletingChapter] = useState(null);
   const { toasts, addToast, dismissToast } = useToast();
+  const [currentPage, setCurrentPage] = useState(0);
 
   // Fetch comic info (from listing)
   useEffect(() => {
@@ -258,7 +262,11 @@ export default function ComicDetailPage() {
             <h2 className="text-lg font-semibold text-white">Danh sách Chương</h2>
             <div className="flex items-center gap-3">
               <button
-                onClick={() => navigate(`/uploader/comics/${comicId}/bulk-upload`)}
+                onClick={() => navigate(
+                  comic?.contentType === 'NOVEL'
+                    ? `/uploader/comics/${comicId}/bulk-upload-novel`
+                    : `/uploader/comics/${comicId}/bulk-upload`
+                )}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-dark-800 hover:bg-dark-700 text-dark-200 text-sm font-semibold transition-all duration-200 border border-dark-700/50 hover:border-dark-600 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
               >
                 <Upload size={16} />
@@ -314,8 +322,14 @@ export default function ComicDetailPage() {
               </div>
             )}
 
-            {/* Data Table */}
             {!loadingChapters && chapters.length > 0 && (
+              <>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(chapters.length / ITEMS_PER_PAGE)}
+                totalItems={chapters.length}
+                onPageChange={setCurrentPage}
+              />
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -327,9 +341,12 @@ export default function ComicDetailPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {chapters
-                      .sort((a, b) => a.chapterNumber - b.chapterNumber)
-                      .map((chapter, idx) => (
+                    {(() => {
+                      const sorted = [...chapters].sort((a, b) => a.chapterNumber - b.chapterNumber);
+                      const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE);
+                      const safePage = Math.min(currentPage, totalPages - 1);
+                      const paged = sorted.slice(safePage * ITEMS_PER_PAGE, (safePage + 1) * ITEMS_PER_PAGE);
+                      return paged.map((chapter, idx) => (
                         <React.Fragment key={idx}>
                           <tr
                             onClick={() => setSelectedChapter(chapter)}
@@ -380,10 +397,18 @@ export default function ComicDetailPage() {
                             </tr>
                           )}
                         </React.Fragment>
-                      ))}
+                      ));
+                    })()}
                   </tbody>
                 </table>
               </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(chapters.length / ITEMS_PER_PAGE)}
+                totalItems={chapters.length}
+                onPageChange={setCurrentPage}
+              />
+              </>
             )}
           </div>
         </div>
