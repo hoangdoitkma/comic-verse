@@ -63,6 +63,7 @@ public class ChapterController {
             map.put("chapterNumber", ch.getChapterNumber());
             map.put("title", ch.getTitle());
             map.put("accessType", ch.getAccessType());
+            map.put("viewCount", ch.getViewCount());
             map.put("status", statusMap.getOrDefault(ch.getId(), "APPROVED")); // Default if no log
             map.put("rejectReason", reasonMap.get(ch.getId()));
             result.add(map);

@@ -41,6 +41,10 @@ public class TrackingServiceImpl implements TrackingService {
                 // Buffer the view count in Redis
                 String countKey = "view_count:comic:" + comicId;
                 redisTemplate.opsForValue().increment(countKey);
+
+                // Buffer the chapter view count in Redis
+                String chapterCountKey = "view_count:chapter:" + chapterId;
+                redisTemplate.opsForValue().increment(chapterCountKey);
             } else {
                 log.debug("View ignored (Spam protection) for comic {} chapter {} by {}", comicId, chapterId, identifier);
             }

@@ -61,6 +61,7 @@ function ChapterSkeletonRow() {
       <td className="px-4 py-3"><div className="h-4 w-10 rounded bg-dark-700" /></td>
       <td className="px-4 py-3"><div className="h-4 w-32 rounded bg-dark-700" /></td>
       <td className="px-4 py-3"><div className="h-5 w-14 rounded-full bg-dark-700" /></td>
+      <td className="px-4 py-3"><div className="h-4 w-16 rounded bg-dark-700" /></td>
       <td className="px-4 py-3"><div className="h-5 w-16 rounded-full bg-dark-700" /></td>
     </tr>
   );
@@ -291,6 +292,7 @@ export default function ComicDetailPage() {
                     <th className="px-4 py-3 text-xs font-semibold text-dark-400 uppercase tracking-wider">Chương</th>
                     <th className="px-4 py-3 text-xs font-semibold text-dark-400 uppercase tracking-wider">Tiêu đề</th>
                     <th className="px-4 py-3 text-xs font-semibold text-dark-400 uppercase tracking-wider">Quyền truy cập</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-dark-400 uppercase tracking-wider">Lượt xem</th>
                     <th className="px-4 py-3 text-xs font-semibold text-dark-400 uppercase tracking-wider">Trạng thái</th>
                   </tr>
                 </thead>
@@ -337,6 +339,7 @@ export default function ComicDetailPage() {
                       <th className="px-4 py-3 text-xs font-semibold text-dark-400 uppercase tracking-wider w-24">Chương</th>
                       <th className="px-4 py-3 text-xs font-semibold text-dark-400 uppercase tracking-wider">Tiêu đề</th>
                       <th className="px-4 py-3 text-xs font-semibold text-dark-400 uppercase tracking-wider w-32">Quyền truy cập</th>
+                      <th className="px-4 py-3 text-xs font-semibold text-dark-400 uppercase tracking-wider w-32">Lượt xem</th>
                       <th className="px-4 py-3 text-xs font-semibold text-dark-400 uppercase tracking-wider w-32">Trạng thái</th>
                     </tr>
                   </thead>
@@ -366,12 +369,17 @@ export default function ComicDetailPage() {
                               <AccessBadge type={chapter.accessType} />
                             </td>
                             <td className="px-4 py-3">
+                              <span className="text-sm font-medium text-dark-300">
+                                {(chapter.viewCount ?? 0).toLocaleString('vi-VN')}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
                               <StatusBadge status={chapter.status} />
                             </td>
                           </tr>
                           {chapter.status === 'REJECTED' && (
                             <tr className="border-b border-dark-700/20 bg-red-500/10">
-                              <td colSpan={4} className="px-4 py-3">
+                              <td colSpan={5} className="px-4 py-3">
                                 <div className="flex items-start gap-3">
                                   <AlertCircle size={18} className="text-red-400 shrink-0 mt-0.5" />
                                   <div className="flex-1">
