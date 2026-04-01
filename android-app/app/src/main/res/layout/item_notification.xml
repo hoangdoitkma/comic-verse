@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/notificationItemRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="14dp"
+    android:background="?attr/selectableItemBackground">
+
+    <!-- Type Icon with circle background -->
+    <FrameLayout
+        android:layout_width="44dp"
+        android:layout_height="44dp">
+
+        <ImageView
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_notif_icon_circle" />
+
+        <ImageView
+            android:id="@+id/imageNotifIcon"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_notif_system" />
+    </FrameLayout>
+
+    <!-- Content -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/textNotifTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            tools:text="Chương mới đã ra mắt!" />
+
+        <TextView
+            android:id="@+id/textNotifMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="#B3B3B3"
+            android:textSize="13sp"
+            tools:text="Truyện One Piece vừa được cập nhật chương 1120 mới nhất..." />
+
+        <TextView
+            android:id="@+id/textNotifTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="#666666"
+            android:textSize="12sp"
+            tools:text="12 phút trước" />
+    </LinearLayout>
+
+    <!-- Unread dot indicator -->
+    <View
+        android:id="@+id/dotUnread"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/bg_notification_badge"
+        android:visibility="gone" />
+
+</LinearLayout>

@@ -141,6 +141,17 @@ const adminService = {
     const response = await axiosClient.get('/admin/dashboard/summary');
     return response.data;
   },
+
+  // ==================== TRANSACTIONS ====================
+
+  /**
+   * Lấy danh sách giao dịch VIP
+   * GET /api/admin/transactions?page=0&size=10
+   */
+  getTransactions: async (params = {}) => {
+    const response = await axiosClient.get('/admin/transactions', { params });
+    return response.data;
+  },
 };
 
 export default adminService;

@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.comicversev1.R;
+import com.example.comicversev1.data.api.ApiService;
 import com.example.comicversev1.databinding.FragmentHomeBinding;
 import com.example.comicversev1.presentation.shared.adapter.AdSearchSectionAdapter;
 
@@ -24,13 +25,22 @@ import com.example.comicversev1.presentation.shared.adapter.QuickActionSectionAd
 import com.example.comicversev1.presentation.shared.adapter.ShelfSectionAdapter;
 import com.example.comicversev1.domain.entity.HomeContent;
 
+import javax.inject.Inject;
+
 import dagger.hilt.android.AndroidEntryPoint;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @AndroidEntryPoint
 public class HomeFragment extends Fragment {
 
+    @Inject
+    ApiService apiService;
+
     private FragmentHomeBinding binding;
     private HomeViewModel viewModel;
+    private final CompositeDisposable disposables = new CompositeDisposable();
 
     // Child Adapters
     private HomeHeroAdapter heroAdapter;
@@ -54,6 +64,11 @@ public class HomeFragment extends Fragment {
         // Initialize child adapters
         heroAdapter = new HomeHeroAdapter();
         quickActionAdapter = new HomeQuickActionAdapter();
+        quickActionAdapter.setOnItemClickListener(action -> {
+            if ("vip".equals(action.getId())) {
+                NavHostFragment.findNavController(this).navigate(R.id.action_global_vipCenter);
+            }
+        });
         recentAdapter = new RecentAdapter();
         recentAdapter.setListener(item -> {
             NavHostFragment.findNavController(this).navigate(HomeFragmentDirections.actionHomeToDetail(item.getSlug(), 0));
@@ -162,12 +177,67 @@ public class HomeFragment extends Fragment {
         });
     }
 
+    private void setupNotificationBell() {
+        // Bell click → navigate to notification screen
+        binding.btnBell.setOnClickListener(v -> {
+            NavHostFragment.findNavController(this).navigate(R.id.action_global_notification);
+        });
+
+        // Fetch unread count
+        fetchUnreadCount();
+    }
+
+    private void fetchUnreadCount() {
+        android.content.SharedPreferences prefs = requireActivity().getSharedPreferences(
+                com.example.comicversev1.utils.Constants.PREF_AUTH, android.content.Context.MODE_PRIVATE);
+        String token = prefs.getString(com.example.comicversev1.utils.Constants.KEY_ACCESS_TOKEN, "");
+        
+        // Only fetch if user is logged in
+        if (token.isEmpty()) {
+            binding.textBadge.setVisibility(View.GONE);
+            return;
+        }
+
+        disposables.add(
+                apiService.getUnreadNotificationCount()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(response -> {
+                            if (response.isSuccess() && response.getData() != null) {
+                                long count = response.getData();
+                                updateBadge(count);
+                            }
+                        }, error -> {
+                            // Silently ignore — badge just won't show
+                            binding.textBadge.setVisibility(View.GONE);
+                        })
+        );
+    }
+
+    private void updateBadge(long count) {
+        if (count > 0) {
+            binding.textBadge.setVisibility(View.VISIBLE);
+            binding.textBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+        } else {
+            binding.textBadge.setVisibility(View.GONE);
+        }
+    }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
         setupRecyclerView();
         setupBottomNav();
+        setupNotificationBell();
         observeState();
     }
+
+    @Override
+    public void onDestroyView() {
+        disposables.clear();
+        binding = null;
+        super.onDestroyView();
+    }
 }
+

@@ -21,6 +21,12 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(name = "order_code", unique = true)
+    private Long orderCode;
+
+    @Column(name = "payment_link_id")
+    private String paymentLinkId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;

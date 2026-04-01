@@ -2,7 +2,7 @@ spring:
   application:
     name: comic-novel-platform
   datasource:
-    url: ${DB_URL:jdbc:mysql://comic-verse-db.cniko6wq6psw.ap-southeast-1.rds.amazonaws.com:3306/comicverse}
+    url: ${DB_URL:jdbc:mysql://comic-verse-db.cniko6wq6psw.ap-southeast-1.rds.amazonaws.com:3306/comicverse?serverTimezone=Asia/Ho_Chi_Minh}
     username: admin
     password: ${DB_PASSWORD:Duchoang003}
   jpa:
@@ -12,6 +12,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        jdbc:
+          time_zone: Asia/Ho_Chi_Minh
         
   servlet:
     multipart:
@@ -25,3 +27,8 @@ aws:
     credentials:
       access-key: ${AWS_ACCESS_KEY_ID:AKIA6F6ONXPVDOTS275Z}
       secret-key: ${AWS_SECRET_ACCESS_KEY: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}
+
+payos:
+  client-id: ${PAYOS_CLIENT_ID:6848b4bc-a1f6-4859-92b9-9a48f702f3fd}
+  api-key: ${PAYOS_API_KEY:4d266542-4884-4d98-9a07-2840081785f6}
+  checksum-key: ${PAYOS_CHECKSUM_KEY:efce9c60dfa83c89c6380d35e05bd358cfdd54a4cc16d22ef070197e0298067e}

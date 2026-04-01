@@ -25,7 +25,7 @@ public class AdminChapterReportServiceImpl implements AdminChapterReportService 
     public Page<ChapterReportResponse> getAllReports(String status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         if (status != null && !status.isEmpty()) {
-            com.datn.backend.entity.ReportStatus rs = com.datn.backend.entity.ReportStatus.valueOf(status.toUpperCase());
+            com.datn.backend.entity.enums.ReportStatus rs = com.datn.backend.entity.enums.ReportStatus.valueOf(status.toUpperCase());
             return chapterReportRepository.findByStatus(rs, pageable).map(this::mapToResponse);
         }
         return chapterReportRepository.findAll(pageable).map(this::mapToResponse);
@@ -36,7 +36,7 @@ public class AdminChapterReportServiceImpl implements AdminChapterReportService 
     public Page<ChapterReportResponse> getReportsByUploader(Integer uploaderId, String status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         if (status != null && !status.isEmpty()) {
-            com.datn.backend.entity.ReportStatus rs = com.datn.backend.entity.ReportStatus.valueOf(status.toUpperCase());
+            com.datn.backend.entity.enums.ReportStatus rs = com.datn.backend.entity.enums.ReportStatus.valueOf(status.toUpperCase());
             return chapterReportRepository.findByUploaderIdAndStatus(uploaderId, rs, pageable).map(this::mapToResponse);
         }
         return chapterReportRepository.findByUploaderId(uploaderId, pageable).map(this::mapToResponse);

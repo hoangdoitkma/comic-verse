@@ -87,6 +87,7 @@
     <action android:id="@+id/action_global_comicDetail" app:destination="@id/comicDetailFragment" />
     <action android:id="@+id/action_global_reader" app:destination="@id/readerFragment" />
     <action android:id="@+id/action_global_textNovelReader" app:destination="@id/textNovelReaderFragment" />
+    <action android:id="@+id/action_global_vipCenter" app:destination="@id/vipCenterFragment" />
 
     <fragment
         android:id="@+id/textNovelReaderFragment"
@@ -114,5 +115,17 @@
         android:id="@+id/profileFragment"
         android:name="com.example.comicversev1.presentation.profile.ProfileFragment"
         android:label="Profile" />
+        
+    <fragment
+        android:id="@+id/vipCenterFragment"
+        android:name="com.example.comicversev1.presentation.vip.VipCenterFragment"
+        android:label="VIP Center" />
+
+    <fragment
+        android:id="@+id/notificationFragment"
+        android:name="com.example.comicversev1.presentation.notification.NotificationFragment"
+        android:label="Thông báo" />
+
+    <action android:id="@+id/action_global_notification" app:destination="@id/notificationFragment" />
         
 </navigation>

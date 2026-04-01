@@ -14,7 +14,16 @@ import java.util.List;
 
 public class HomeQuickActionAdapter extends RecyclerView.Adapter<HomeQuickActionAdapter.ActionViewHolder> {
 
+    public interface OnItemClickListener {
+        void onItemClick(HomeContent.QuickAction action);
+    }
+
     private final List<HomeContent.QuickAction> items = new ArrayList<>();
+    private OnItemClickListener listener;
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
 
     public void submitList(List<HomeContent.QuickAction> actions) {
         items.clear();
@@ -37,6 +46,12 @@ public class HomeQuickActionAdapter extends RecyclerView.Adapter<HomeQuickAction
         holder.binding.textTitle.setText(action.getTitle());
         holder.binding.textSubtitle.setText(action.getSubtitle());
         holder.binding.imageIcon.setImageResource(action.getIconRes());
+        
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(action);
+            }
+        });
     }
 
     @Override

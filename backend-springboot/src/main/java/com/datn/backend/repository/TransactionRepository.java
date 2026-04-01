@@ -14,6 +14,8 @@ import java.util.List;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Integer> {
 
+    java.util.Optional<Transaction> findByOrderCode(Long orderCode);
+
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.status = :status AND t.createdAt >= :startDate AND t.createdAt < :endDate")
     BigDecimal sumAmountByStatusAndDateRange(@Param("status") TransactionStatus status, 
                                              @Param("startDate") LocalDateTime startDate, 
@@ -38,4 +40,24 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     // KPI: Count distinct users with active VIP (successful transactions)
     @Query("SELECT COUNT(DISTINCT t.user.id) FROM Transaction t WHERE t.status = :status")
     long countDistinctUserByStatus(@Param("status") TransactionStatus status);
+
+    @Query(value = "SELECT DATE(t.created_at) as date, SUM(t.amount) as revenue " +
+                   "FROM transactions t " +
+                   "WHERE t.status = 'SUCCESS' AND t.created_at >= :startDate " +
+                   "GROUP BY DATE(t.created_at) " +
+                   "ORDER BY date ASC", nativeQuery = true)
+    List<Object[]> getDailyRevenueByDateRange(@Param("startDate") LocalDateTime startDate);
+
+    @Query(value = "SELECT p.name, COUNT(t.id) as count " +
+                   "FROM transactions t " +
+                   "JOIN vip_packages p ON t.package_id = p.id " +
+                   "WHERE t.status = 'SUCCESS' " +
+                   "GROUP BY p.id, p.name " +
+                   "ORDER BY count DESC", nativeQuery = true)
+    List<Object[]> getVipPackageSales();
+
+    @Query(value = "SELECT t.status, COUNT(t.id) as count " +
+                   "FROM transactions t " +
+                   "GROUP BY t.status", nativeQuery = true)
+    List<Object[]> getTransactionRates();
 }

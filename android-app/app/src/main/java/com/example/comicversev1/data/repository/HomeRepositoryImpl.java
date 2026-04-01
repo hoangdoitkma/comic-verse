@@ -66,14 +66,11 @@ public class HomeRepositoryImpl implements HomeRepository {
                         greeting,
                         "Chào mừng trở lại ✨",
                         Collections.emptyList(),
-                        Arrays.asList(
+                        "COMIC".equals(type) ? Arrays.asList(
                             new HomeContent.QuickAction("vip", "Trung tâm VIP", "Ưu đãi hội viên", R.drawable.ic_vip),
                             new HomeContent.QuickAction("remove_ads", "Xoá quảng cáo", "Tăng tốc đọc", R.drawable.ic_remove_ads),
-                            new HomeContent.QuickAction("privacy", "Chính sách bảo mật", "Cập nhật mới", R.drawable.ic_policy),
-                            new HomeContent.QuickAction("server", "Chọn máy chủ", "Tối ưu tốc độ", R.drawable.ic_server),
-                            new HomeContent.QuickAction("download", "Tải xuống", "Đọc offline", R.drawable.ic_download),
                             new HomeContent.QuickAction("history", "Lịch sử", "Tiếp tục đọc", R.drawable.ic_history)
-                        ),
+                        ) : Collections.emptyList(),
                         null,
                         mapToCards(data.recentlyUpdated),
                         mapToCards(data.recommended),

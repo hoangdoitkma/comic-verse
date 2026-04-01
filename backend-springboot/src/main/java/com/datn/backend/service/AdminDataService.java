@@ -25,6 +25,7 @@ public interface AdminDataService {
     void deleteAuthor(Integer id);
 
     // VipPackage
+    List<VipPackageResponse> getActiveVipPackages();
     List<VipPackageResponse> getAllVipPackages();
     VipPackageResponse getVipPackageById(Integer id);
     VipPackageResponse createVipPackage(VipPackageRequest request);

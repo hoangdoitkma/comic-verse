@@ -97,6 +97,9 @@ public class PublicComicServiceImpl implements PublicComicService {
 
     @Override
     public List<ReadingHistoryInfoDTO> getReadingHistoryInfo(List<Integer> comicIds, Integer userId) {
+        if (comicIds == null || comicIds.isEmpty()) {
+            return List.of();
+        }
         List<Comic> comics = comicRepository.findAllById(comicIds);
         return comics.stream().map(comic -> {
             ReadingHistoryInfoDTO dto = ReadingHistoryInfoDTO.builder()

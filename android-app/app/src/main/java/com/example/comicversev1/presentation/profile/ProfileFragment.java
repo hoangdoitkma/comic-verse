@@ -22,8 +22,22 @@ import java.io.File;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
+import com.example.comicversev1.data.api.ApiService;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import android.util.Log;
+import javax.inject.Inject;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @AndroidEntryPoint
 public class ProfileFragment extends Fragment {
+
+    @Inject
+    ApiService apiService;
+
+    private CompositeDisposable disposable = new CompositeDisposable();
 
     private FragmentProfileBinding binding;
 
@@ -92,12 +106,53 @@ public class ProfileFragment extends Fragment {
                 // Future: Navigate to Profile details or show Logout popup
                 Toast.makeText(requireContext(), "Bạn đã đăng nhập dưới tên: " + name, Toast.LENGTH_SHORT).show();
             });
+            fetchUserProfile();
         } else {
             binding.textProfileName.setText("Đăng nhập hoặc đăng ký");
+            binding.textVipStatus.setVisibility(View.GONE);
             binding.cardProfile.setOnClickListener(v -> {
                 NavHostFragment.findNavController(this).navigate(R.id.loginFragment);
             });
         }
+    }
+
+    private void fetchUserProfile() {
+        disposable.add(
+            apiService.getUserProfile()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(response -> {
+                    if (response.isSuccess() && response.getData() != null) {
+                        com.example.comicversev1.data.model.UserProfileDTO profile = response.getData();
+                        binding.textProfileName.setText(profile.displayName);
+                        if (profile.vip) {
+                            binding.textVipStatus.setVisibility(View.VISIBLE);
+                            binding.textVipStatus.setTextColor(android.graphics.Color.parseColor("#FFD700"));
+                            if (profile.vipEndDate != null && !profile.vipEndDate.isEmpty()) {
+                                try {
+                                    LocalDateTime endDate = LocalDateTime.parse(profile.vipEndDate);
+                                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+                                    binding.textVipStatus.setText("Thành viên VIP - Hạn sử dụng: " + endDate.format(formatter));
+                                } catch (Exception e) {
+                                    binding.textVipStatus.setText("Thành viên VIP");
+                                }
+                            } else {
+                                binding.textVipStatus.setText("Thành viên VIP Trọn đời");
+                            }
+                        } else {
+                            binding.textVipStatus.setVisibility(View.VISIBLE);
+                            binding.textVipStatus.setTextColor(android.graphics.Color.parseColor("#B3B3B3"));
+                            binding.textVipStatus.setText("Thành viên Thường");
+                        }
+                    }
+                }, error -> {
+                    Log.e("ProfileFragment", "Error fetching profile", error);
+                    // Có thể mạng lỗi, vẫn hiển thị status thường cho đỡ trống
+                    binding.textVipStatus.setVisibility(View.VISIBLE);
+                    binding.textVipStatus.setTextColor(android.graphics.Color.parseColor("#B3B3B3"));
+                    binding.textVipStatus.setText("Thành viên Thường");
+                })
+        );
     }
 
     private void setupBottomNav() {

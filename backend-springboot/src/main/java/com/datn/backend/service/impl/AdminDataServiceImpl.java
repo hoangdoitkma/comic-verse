@@ -138,6 +138,13 @@ public class AdminDataServiceImpl implements AdminDataService {
 
     // --- VIP PACKAGE ---
     @Override
+    public List<VipPackageResponse> getActiveVipPackages() {
+        return vipPackageRepository.findByIsActiveTrue().stream()
+                .map(this::mapToVipPackageResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<VipPackageResponse> getAllVipPackages() {
         return vipPackageRepository.findAll().stream()
                 .map(this::mapToVipPackageResponse)

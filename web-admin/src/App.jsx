@@ -23,6 +23,10 @@ import NotificationsPage from './pages/admin/NotificationsPage';
 // Shared
 import ChapterReportsPage from './pages/shared/ChapterReportsPage';
 
+// Revenue
+import RevenuePage from './pages/admin/RevenuePage';
+import TransactionsPage from './pages/admin/TransactionsPage';
+
 function App() {
   return (
     <BrowserRouter>
@@ -44,6 +48,8 @@ function App() {
             <Route path="authors" element={<AuthorsPage />} />
             <Route path="vip-packages" element={<VipPackagesPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="revenue" element={<RevenuePage />} />
+            <Route path="transactions" element={<TransactionsPage />} />
             <Route path="reports" element={<ChapterReportsPage />} />
           </Route>
         </Route>

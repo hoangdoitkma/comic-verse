@@ -59,6 +59,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAuthenticationException(
+            org.springframework.security.core.AuthenticationException ex, WebRequest request) {
+        log.error("Authentication exception: {}", ex.getMessage());
+        ApiResponse<Object> response = ApiResponse.error(HttpStatus.UNAUTHORIZED.value(), "Invalid email or password");
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
     @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleNoResourceFoundException(
             org.springframework.web.servlet.resource.NoResourceFoundException ex, WebRequest request) {

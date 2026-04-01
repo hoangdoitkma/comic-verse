@@ -7,17 +7,6 @@
     android:paddingHorizontal="20dp"
     android:paddingBottom="4dp">
 
-    <TextView
-        android:id="@+id/textAd"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/bg_ad_chip"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="6dp"
-        android:text="Ad"
-        android:textColor="@android:color/white"
-        android:textStyle="bold" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/searchContainer"

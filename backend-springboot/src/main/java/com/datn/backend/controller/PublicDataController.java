@@ -22,4 +22,9 @@ public class PublicDataController {
     public ApiResponse<List<AuthorResponse>> getAllAuthors() {
         return ApiResponse.success(adminDataService.getAllAuthors());
     }
+
+    @GetMapping("/vip-packages")
+    public ApiResponse<List<com.datn.backend.dto.response.VipPackageResponse>> getActiveVipPackages() {
+        return ApiResponse.success(adminDataService.getActiveVipPackages());
+    }
 }

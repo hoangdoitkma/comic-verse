@@ -109,4 +109,31 @@ public interface ApiService {
             @Path("chapterId") int chapterId,
             @Body com.example.comicversev1.data.model.ChapterReportRequest request
     );
+
+    // Payment
+    @POST("payment/create-vip-order")
+    Single<com.example.comicversev1.data.model.PaymentResponse> createVipOrder(
+            @Body com.example.comicversev1.data.model.PaymentRequest request
+    );
+
+    // Profile
+    @GET("user/profile")
+    Single<BaseResponse<com.example.comicversev1.data.model.UserProfileDTO>> getUserProfile();
+
+    // VIP Packages
+    @GET("data/vip-packages")
+    Single<BaseResponse<List<com.example.comicversev1.data.model.VipPackageDTO>>> getVipPackages();
+
+    // Notifications
+    @GET("notifications")
+    Single<BaseResponse<List<com.example.comicversev1.data.model.NotificationDTO>>> getNotifications();
+
+    @GET("notifications/unread-count")
+    Single<BaseResponse<Long>> getUnreadNotificationCount();
+
+    @retrofit2.http.PUT("notifications/{id}/read")
+    Completable markNotificationAsRead(@Path("id") int id);
+
+    @retrofit2.http.PUT("notifications/read-all")
+    Completable markAllNotificationsAsRead();
 }

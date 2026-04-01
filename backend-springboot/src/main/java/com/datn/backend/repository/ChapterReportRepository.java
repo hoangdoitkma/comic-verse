@@ -15,7 +15,7 @@ public interface ChapterReportRepository extends JpaRepository<ChapterReport, In
 
     @Query(value = "SELECT cr FROM ChapterReport cr JOIN cr.chapter c JOIN c.comic co WHERE co.createdBy.id = :uploaderId AND cr.status = :status",
            countQuery = "SELECT count(cr) FROM ChapterReport cr JOIN cr.chapter c JOIN c.comic co WHERE co.createdBy.id = :uploaderId AND cr.status = :status")
-    Page<ChapterReport> findByUploaderIdAndStatus(@Param("uploaderId") Integer uploaderId, @Param("status") com.datn.backend.entity.ReportStatus status, Pageable pageable);
+    Page<ChapterReport> findByUploaderIdAndStatus(@Param("uploaderId") Integer uploaderId, @Param("status") com.datn.backend.entity.enums.ReportStatus status, Pageable pageable);
 
-    Page<ChapterReport> findByStatus(com.datn.backend.entity.ReportStatus status, Pageable pageable);
+    Page<ChapterReport> findByStatus(com.datn.backend.entity.enums.ReportStatus status, Pageable pageable);
 }

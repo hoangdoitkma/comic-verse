@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface VipPackageRepository extends JpaRepository<VipPackage, Integer> {
     boolean existsByName(String name);
+    java.util.List<VipPackage> findByIsActiveTrue();
 }

@@ -16,9 +16,12 @@ import {
   BookOpen,
   LayoutDashboard,
   Bell,
-  AlertOctagon
+  AlertOctagon,
+  DollarSign,
+  CreditCard
 } from 'lucide-react';
 import authService from '../services/authService';
+import adminService from '../services/adminService';
 import ProfileModal from '../components/ProfileModal';
 import { ToastContainer, useToast } from '../components/Toast';
 import NotificationBell from '../components/NotificationBell';
@@ -58,6 +61,16 @@ const menuItems = [
     label: 'Thông báo',
     path: '/admin/notifications',
     icon: Bell,
+  },
+  {
+    label: 'Doanh thu',
+    path: '/admin/revenue',
+    icon: DollarSign,
+  },
+  {
+    label: 'Giao dịch',
+    path: '/admin/transactions',
+    icon: CreditCard,
   },
   {
     label: 'Báo cáo lỗi',
@@ -107,6 +120,33 @@ export default function AdminLayout() {
     }
     return () => document.removeEventListener('keydown', handleEsc);
   }, [dropdownOpen]);
+
+  // Polling for new successful transactions
+  const [lastTxCount, setLastTxCount] = useState(0);
+  useEffect(() => {
+    let intervalId;
+    const pollTransactions = async () => {
+      try {
+        const res = await adminService.getTransactions({ page: 0, size: 1 });
+        if (res.success && res.data && res.data.totalElements !== undefined) {
+          const currentCount = res.data.totalElements;
+          setLastTxCount((prev) => {
+            if (prev > 0 && currentCount > prev) {
+              addToast('Có giao dịch thanh toán thành công VIP mới!', 'success');
+            }
+            return currentCount;
+          });
+        }
+      } catch (e) {
+        // silent fail
+      }
+    };
+    
+    pollTransactions();
+    intervalId = setInterval(pollTransactions, 15000); // 15s
+
+    return () => clearInterval(intervalId);
+  }, [addToast]);
 
   const handleProfileSave = () => {
     addToast('Hồ sơ đã được cập nhật thành công!', 'success');
