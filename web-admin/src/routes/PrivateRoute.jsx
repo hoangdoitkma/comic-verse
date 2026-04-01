@@ -1,17 +1,20 @@
-import { Navigate, Outlet } from 'react-router-dom';
-import authService from '../services/authService';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * PrivateRoute - Component bảo vệ route
  * @param {string[]} allowedRoles - Danh sách role được phép truy cập
  */
 const PrivateRoute = ({ allowedRoles }) => {
-  const isAuthenticated = authService.isAuthenticated();
-  const user = authService.getCurrentUser();
+  const { isAuthenticated, user, loading } = useAuth();
+  const location = useLocation();
+
+  // Đang check auth (dù đã check ở Context nhưng an toàn)
+  if (loading) return null;
 
   // Chưa đăng nhập -> Redirect về /login
   if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Kiểm tra role nếu có yêu cầu
@@ -22,12 +25,11 @@ const PrivateRoute = ({ allowedRoles }) => {
 
     if (!hasPermission) {
       // Không đủ quyền -> Redirect về trang phù hợp với role
-      const primaryRole = authService.getPrimaryRole();
-      if (primaryRole === 'ROLE_ADMIN') {
-        return <Navigate to="/admin" replace />;
+      if (user.roles?.includes('ROLE_ADMIN')) {
+        return <Navigate to="/dashboard" replace />;
       }
-      if (primaryRole === 'ROLE_UPLOADER') {
-        return <Navigate to="/uploader" replace />;
+      if (user.roles?.includes('ROLE_UPLOADER')) {
+        return <Navigate to="/content/comics" replace />;
       }
       return <Navigate to="/login" replace />;
     }

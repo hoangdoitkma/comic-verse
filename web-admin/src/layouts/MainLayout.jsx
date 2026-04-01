@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -15,86 +15,109 @@ import {
   ChevronDown,
   BookOpen,
   LayoutDashboard,
-  Bell,
   AlertOctagon,
   DollarSign,
   CreditCard
 } from 'lucide-react';
-import authService from '../services/authService';
+import { useAuth } from '../contexts/AuthContext';
 import adminService from '../services/adminService';
 import ProfileModal from '../components/ProfileModal';
 import { ToastContainer, useToast } from '../components/Toast';
 import NotificationBell from '../components/NotificationBell';
 
-const menuItems = [
+const MENU_ITEMS = [
   {
     label: 'Dashboard',
-    path: '/admin/dashboard',
+    path: '/dashboard',
     icon: LayoutDashboard,
+    allowedRoles: ['ROLE_ADMIN']
+  },
+  {
+    label: 'Quản lý Truyện',
+    path: '/content/comics',
+    icon: BookOpen,
+    allowedRoles: ['ROLE_ADMIN', 'ROLE_UPLOADER']
   },
   {
     label: 'Kiểm duyệt truyện',
-    path: '/admin/approval-queue',
+    path: '/content/approval-queue',
     icon: ShieldCheck,
+    allowedRoles: ['ROLE_ADMIN']
   },
   {
-    label: 'Quản lý Users',
-    path: '/admin/users',
-    icon: Users,
-  },
-  {
-    label: 'Quản lý Thể loại',
-    path: '/admin/genres',
+    label: 'Thể loại',
+    path: '/content/genres',
     icon: Layers,
+    allowedRoles: ['ROLE_ADMIN']
   },
   {
-    label: 'Quản lý Tác giả',
-    path: '/admin/authors',
+    label: 'Tác giả',
+    path: '/content/authors',
     icon: Pen,
-  },
-  {
-    label: 'Quản lý Gói VIP',
-    path: '/admin/vip-packages',
-    icon: Crown,
-  },
-  {
-    label: 'Thông báo',
-    path: '/admin/notifications',
-    icon: Bell,
+    allowedRoles: ['ROLE_ADMIN']
   },
   {
     label: 'Doanh thu',
-    path: '/admin/revenue',
+    path: '/revenue',
     icon: DollarSign,
+    allowedRoles: ['ROLE_ADMIN']
+  },
+  {
+    label: 'Gói VIP',
+    path: '/monetization/vip-packages',
+    icon: Crown,
+    allowedRoles: ['ROLE_ADMIN']
   },
   {
     label: 'Giao dịch',
-    path: '/admin/transactions',
+    path: '/monetization/transactions',
     icon: CreditCard,
+    allowedRoles: ['ROLE_ADMIN']
+  },
+  {
+    label: 'Người dùng',
+    path: '/community/users',
+    icon: Users,
+    allowedRoles: ['ROLE_ADMIN']
   },
   {
     label: 'Báo cáo lỗi',
-    path: '/admin/reports',
+    path: '/community/reports',
     icon: AlertOctagon,
-  },
+    allowedRoles: ['ROLE_ADMIN', 'ROLE_UPLOADER']
+  }
 ];
 
-export default function AdminLayout() {
+export default function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
-  const user = authService.getCurrentUser();
+  const { user, logout } = useAuth();
   const dropdownRef = useRef(null);
   const { toasts, addToast, dismissToast } = useToast();
 
-  const displayName = user?.displayName || user?.email?.split('@')[0] || 'Admin';
+  const userRoles = user?.roles || [];
+  const isGlobalAdmin = userRoles.includes('ROLE_ADMIN');
+
+  const visibleMenus = useMemo(() => {
+    return MENU_ITEMS.filter(item => 
+      item.allowedRoles.some(role => userRoles.includes(role))
+    );
+  }, [userRoles]);
+
+  const displayName = user?.displayName || user?.email?.split('@')[0] || 'User';
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
-  const isActive = (item) => location.pathname.startsWith(item.path);
+  const isActive = (item) => {
+    if (item.path === '/dashboard') {
+      return location.pathname === '/dashboard';
+    }
+    return location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+  };
 
   const handleLogout = () => {
-    authService.logout();
+    logout();
   };
 
   // Close dropdown on outside click
@@ -121,9 +144,10 @@ export default function AdminLayout() {
     return () => document.removeEventListener('keydown', handleEsc);
   }, [dropdownOpen]);
 
-  // Polling for new successful transactions
+  // Polling transactions ONLY for admins
   const [lastTxCount, setLastTxCount] = useState(0);
   useEffect(() => {
+    if (!isGlobalAdmin) return;
     let intervalId;
     const pollTransactions = async () => {
       try {
@@ -146,20 +170,17 @@ export default function AdminLayout() {
     intervalId = setInterval(pollTransactions, 15000); // 15s
 
     return () => clearInterval(intervalId);
-  }, [addToast]);
+  }, [addToast, isGlobalAdmin]);
 
   const handleProfileSave = () => {
     addToast('Hồ sơ đã được cập nhật thành công!', 'success');
   };
 
-  const currentPageLabel = menuItems.find((item) => isActive(item))?.label || 'Admin Panel';
+  const currentPageLabel = visibleMenus.find((item) => isActive(item))?.label || 'Bảng điều khiển';
 
   return (
     <div className="min-h-screen bg-dark-950 flex">
-      {/* Toast */}
       <ToastContainer toasts={toasts} dismissToast={dismissToast} />
-
-      {/* Profile Modal */}
       <ProfileModal
         isOpen={profileOpen}
         onClose={() => setProfileOpen(false)}
@@ -176,14 +197,11 @@ export default function AdminLayout() {
 
       {/* ===== Sidebar ===== */}
       <aside
-        className={`
-          fixed top-0 left-0 z-50 h-full w-64 bg-dark-900 border-r border-dark-700/50
+        className={`fixed top-0 left-0 z-50 h-full w-64 bg-dark-900 border-r border-dark-700/50
           flex flex-col transition-transform duration-300 ease-in-out
           lg:translate-x-0 lg:static lg:z-auto
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
-        {/* Logo */}
         <div className="h-16 flex items-center gap-3 px-6 border-b border-dark-700/50">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
             <ShieldCheck size={18} className="text-white" />
@@ -192,7 +210,7 @@ export default function AdminLayout() {
             Comic<span className="text-emerald-400">Hub</span>
           </span>
           <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold uppercase bg-emerald-500/15 text-emerald-400 rounded">
-            Admin
+            Panel
           </span>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -202,12 +220,11 @@ export default function AdminLayout() {
           </button>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto custom-scrollbar">
           <p className="px-3 mb-3 text-[11px] font-semibold uppercase tracking-widest text-dark-500">
-            Quản trị
+            Menu Chức năng
           </p>
-          {menuItems.map((item) => {
+          {visibleMenus.map((item) => {
             const Icon = item.icon;
             const active = isActive(item);
             return (
@@ -215,15 +232,11 @@ export default function AdminLayout() {
                 key={item.path}
                 to={item.path}
                 onClick={() => setSidebarOpen(false)}
-                className={`
-                  group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-                  transition-all duration-200
-                  ${
-                    active
+                className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                  ${active
                       ? 'bg-emerald-600/15 text-emerald-400 shadow-sm shadow-emerald-500/10'
                       : 'text-dark-400 hover:bg-dark-800 hover:text-dark-200'
-                  }
-                `}
+                  }`}
               >
                 <Icon
                   size={18}
@@ -238,7 +251,6 @@ export default function AdminLayout() {
           })}
         </nav>
 
-        {/* Logout */}
         <div className="p-3 border-t border-dark-700/50">
           <button
             onClick={handleLogout}
@@ -253,7 +265,6 @@ export default function AdminLayout() {
 
       {/* ===== Main Area ===== */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
         <header className="h-16 bg-dark-900/80 backdrop-blur-md border-b border-dark-700/50 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -262,16 +273,14 @@ export default function AdminLayout() {
             <Menu size={22} />
           </button>
 
-          {/* Breadcrumb */}
           <div className="hidden lg:flex items-center gap-2 text-sm text-dark-400">
             <span>Admin Panel</span>
             <ChevronRight size={14} className="text-dark-600" />
             <span className="text-dark-200 font-medium">{currentPageLabel}</span>
           </div>
 
-          {/* Notifications and User */}
           <div className="flex items-center gap-2 sm:gap-4 ml-auto">
-            <NotificationBell addToast={addToast} />
+            {isGlobalAdmin && <NotificationBell addToast={addToast} />}
             
             <div className="relative" ref={dropdownRef}>
               <button
@@ -282,7 +291,7 @@ export default function AdminLayout() {
                 <p className="text-sm font-medium text-dark-200 leading-tight group-hover:text-white transition-colors">
                   {displayName}
                 </p>
-                <p className="text-[11px] text-dark-500">Admin</p>
+                <p className="text-[11px] text-dark-500">{isGlobalAdmin ? 'Admin' : 'Uploader'}</p>
               </div>
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 ring-2 ring-transparent group-hover:ring-emerald-500/30 transition-all">
                 <span className="text-sm font-bold text-white">{avatarLetter}</span>
@@ -293,7 +302,6 @@ export default function AdminLayout() {
               />
             </button>
 
-            {/* Dropdown */}
             {dropdownOpen && (
               <div className="absolute right-0 top-full mt-2 w-56 bg-dark-800 border border-dark-700/50 rounded-xl shadow-2xl shadow-black/40 py-1.5 animate-scale-in z-50">
                 <div className="px-4 py-3 border-b border-dark-700/40">
@@ -337,7 +345,6 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        {/* Content */}
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
           <Outlet context={{ addToast }} />
         </main>

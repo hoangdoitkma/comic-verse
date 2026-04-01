@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, BookOpen, LogIn, Loader2 } from 'lucide-react';
-import authService from '../services/authService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -9,6 +9,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -26,14 +27,14 @@ const LoginPage = () => {
 
     try {
       console.log("👉 2. CHUẨN BỊ GỌI API...");
-      const data = await authService.login(formData.email, formData.password);
+      const data = await login(formData.email, formData.password);
 
       console.log("👉 3. API TRẢ VỀ THÀNH CÔNG:", data);
 
       if (data.roles?.includes('ROLE_ADMIN')) {
-        navigate('/admin', { replace: true });
+        navigate('/dashboard', { replace: true });
       } else if (data.roles?.includes('ROLE_UPLOADER')) {
-        navigate('/uploader', { replace: true });
+        navigate('/content/comics', { replace: true });
       } else {
         navigate('/', { replace: true });
       }

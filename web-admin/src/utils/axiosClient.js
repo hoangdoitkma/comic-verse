@@ -32,9 +32,7 @@ axiosClient.interceptors.response.use(
 
     // 401 Unauthorized -> Token hết hạn hoặc không hợp lệ
     if (status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      window.dispatchEvent(new Event('auth:unauthorized'));
     }
 
     // 403 Forbidden -> Không có quyền truy cập

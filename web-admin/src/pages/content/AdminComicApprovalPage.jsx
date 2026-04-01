@@ -14,7 +14,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import adminService from '../../services/adminService';
-import ChapterViewer from '../uploader/ChapterViewer';
+import ChapterViewer from './ChapterViewer';
 import ActionModal from '../../components/ActionModal';
 import Pagination from '../../components/Pagination';
 

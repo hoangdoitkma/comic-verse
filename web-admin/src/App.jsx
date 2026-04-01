@@ -1,76 +1,73 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import PrivateRoute from './routes/PrivateRoute';
-import LoginPage from './pages/LoginPage';
 
-// Uploader
-import UploaderLayout from './layouts/UploaderLayout';
-import ComicsPage from './pages/uploader/ComicsPage';
-import ComicDetailPage from './pages/uploader/ComicDetailPage';
-import BulkUploadChaptersPage from './pages/uploader/BulkUploadChaptersPage';
-import BulkUploadNovelPage from './pages/uploader/BulkUploadNovelPage';
+// Layout
+import MainLayout from './layouts/MainLayout';
 
-// Admin
-import AdminLayout from './layouts/AdminLayout';
-import DashboardPage from './pages/admin/DashboardPage';
-import ApprovalQueuePage from './pages/admin/ApprovalQueuePage';
-import UsersPage from './pages/admin/UsersPage';
-import GenresPage from './pages/admin/GenresPage';
-import AuthorsPage from './pages/admin/AuthorsPage';
-import VipPackagesPage from './pages/admin/VipPackagesPage';
-import AdminComicApprovalPage from './pages/admin/AdminComicApprovalPage';
-import NotificationsPage from './pages/admin/NotificationsPage';
+// Pages
+import LoginPage from './pages/auth/LoginPage';
+import DashboardPage from './pages/dashboard/DashboardPage';
+import RevenuePage from './pages/dashboard/RevenuePage';
 
-// Shared
-import ChapterReportsPage from './pages/shared/ChapterReportsPage';
+import ComicsPage from './pages/content/ComicsPage';
+import ComicDetailPage from './pages/content/ComicDetailPage';
+import ApprovalQueuePage from './pages/content/ApprovalQueuePage';
+import AdminComicApprovalPage from './pages/content/AdminComicApprovalPage';
+import GenresPage from './pages/content/GenresPage';
+import AuthorsPage from './pages/content/AuthorsPage';
+import BulkUploadChaptersPage from './pages/content/BulkUploadChaptersPage';
+import BulkUploadNovelPage from './pages/content/BulkUploadNovelPage';
 
-// Revenue
-import RevenuePage from './pages/admin/RevenuePage';
-import TransactionsPage from './pages/admin/TransactionsPage';
+import VipPackagesPage from './pages/monetization/VipPackagesPage';
+import TransactionsPage from './pages/monetization/TransactionsPage';
+
+import UsersPage from './pages/community/UsersPage';
+import ChapterReportsPage from './pages/community/ChapterReportsPage';
+import NotificationsPage from './pages/community/NotificationsPage';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* ===== Public Routes ===== */}
+        {/* ===== Public Route ===== */}
         <Route path="/login" element={<LoginPage />} />
 
-        {/* ===== Admin Routes (ROLE_ADMIN) ===== */}
-        <Route
-          element={<PrivateRoute allowedRoles={['ROLE_ADMIN']} />}
-        >
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="approval-queue" element={<ApprovalQueuePage />} />
-            <Route path="approval-queue/comics/:comicId" element={<AdminComicApprovalPage />} />
-            <Route path="users" element={<UsersPage />} />
-            <Route path="genres" element={<GenresPage />} />
-            <Route path="authors" element={<AuthorsPage />} />
-            <Route path="vip-packages" element={<VipPackagesPage />} />
-            <Route path="notifications" element={<NotificationsPage />} />
-            <Route path="revenue" element={<RevenuePage />} />
-            <Route path="transactions" element={<TransactionsPage />} />
-            <Route path="reports" element={<ChapterReportsPage />} />
+        {/* ===== VÙNG BẢO VỆ CHUNG CHO MỌI ROLE ===== */}
+        <Route element={<MainLayout />}>
+          
+          {/* Nhóm Content & Report: Dành cho CẢ Admin & Uploader */}
+          <Route element={<PrivateRoute allowedRoles={['ROLE_ADMIN', 'ROLE_UPLOADER']} />}>
+             <Route path="/content/comics" element={<ComicsPage />} />
+             <Route path="/content/comics/:comicId" element={<ComicDetailPage />} />
+             <Route path="/content/comics/:comicId/bulk-upload" element={<BulkUploadChaptersPage />} />
+             <Route path="/content/comics/:comicId/bulk-upload-novel" element={<BulkUploadNovelPage />} />
+             <Route path="/community/reports" element={<ChapterReportsPage />} />
           </Route>
-        </Route>
 
-        {/* ===== Uploader Routes (ROLE_UPLOADER hoặc ROLE_ADMIN) ===== */}
-        <Route
-          element={
-            <PrivateRoute allowedRoles={['ROLE_UPLOADER', 'ROLE_ADMIN']} />
-          }
-        >
-          <Route path="/uploader" element={<UploaderLayout />}>
-            <Route index element={<Navigate to="/uploader/comics" replace />} />
-            <Route path="comics" element={<ComicsPage />} />
-            <Route path="comics/:comicId" element={<ComicDetailPage />} />
-            <Route path="comics/:comicId/bulk-upload" element={<BulkUploadChaptersPage />} />
-            <Route path="comics/:comicId/bulk-upload-novel" element={<BulkUploadNovelPage />} />
-            <Route path="reports" element={<ChapterReportsPage />} />
+          {/* Các nhóm còn lại: CHỈ Dành cho Admin */}
+          <Route element={<PrivateRoute allowedRoles={['ROLE_ADMIN']} />}>
+             {/* Dashboard */}
+             <Route path="/dashboard" element={<DashboardPage />} />
+             <Route path="/revenue" element={<RevenuePage />} />
+             
+             {/* Quản lý danh mục cốt lõi */}
+             <Route path="/content/approval-queue" element={<ApprovalQueuePage />} />
+             <Route path="/content/approval-queue/comics/:comicId" element={<AdminComicApprovalPage />} />
+             <Route path="/content/genres" element={<GenresPage />} />
+             <Route path="/content/authors" element={<AuthorsPage />} />
+             
+             {/* Monetization */}
+             <Route path="/monetization/vip-packages" element={<VipPackagesPage />} />
+             <Route path="/monetization/transactions" element={<TransactionsPage />} />
+             
+             {/* Users */}
+             <Route path="/community/users" element={<UsersPage />} />
+             <Route path="/community/notifications" element={<NotificationsPage />} />
           </Route>
-        </Route>
 
-        {/* ===== Redirect mặc định ===== */}
+        </Route>
+        
+        {/* ===== Redirect Fallback ===== */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import adminService from '../services/adminService';
 import comicService from '../services/comicService';
-import ChapterViewer from '../pages/uploader/ChapterViewer';
+import ChapterViewer from '../pages/content/ChapterViewer';
 
 // Status badge (reused from AdminComicApprovalPage pattern)
 const statusConfig = {
