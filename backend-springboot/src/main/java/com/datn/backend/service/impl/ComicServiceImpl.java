@@ -61,13 +61,16 @@ public class ComicServiceImpl implements ComicService {
         ComicResponse response = new ComicResponse();
         response.setId(comic.getId());
         response.setTitle(comic.getTitle());
+        response.setSlug(comic.getSlug());
         response.setSynopsis(comic.getSynopsis());
         response.setThumbnailUrl(comic.getThumbnailUrl());
-        response.setContentType(comic.getContentType().name());
-        response.setComicFormat(comic.getComicFormat().name());
-        response.setStatus(comic.getStatus().name());
+        response.setContentType(comic.getContentType() != null ? comic.getContentType().name() : null);
+        response.setComicFormat(comic.getComicFormat() != null ? comic.getComicFormat().name() : null);
+        response.setAccessType(comic.getAccessType() != null ? comic.getAccessType().name() : "FREE");
+        response.setStatus(comic.getStatus() != null ? comic.getStatus().name() : null);
         response.setTotalChapters(comic.getTotalChapters());
         response.setViewCount(comic.getViewCount());
+        response.setIsDeleted(comic.getIsDeleted() != null ? comic.getIsDeleted() : false);
         response.setCreatedAt(comic.getCreatedAt());
         response.setUpdatedAt(comic.getUpdatedAt());
         return response;
@@ -97,6 +100,7 @@ public class ComicServiceImpl implements ComicService {
                         : null)
                 .contentType(request.getContentType())
                 .comicFormat(request.getComicFormat())
+                .accessType(request.getAccessType() != null ? request.getAccessType() : com.datn.backend.entity.enums.AccessType.FREE)
                 .status(com.datn.backend.entity.enums.ComicStatus.ONGOING)
                 .createdBy(uploader)
                 .build();
@@ -109,7 +113,7 @@ public class ComicServiceImpl implements ComicService {
     @Transactional(readOnly = true)
     public List<ComicResponse> getComicsByUploader() {
         User uploader = getCurrentUser();
-        List<Comic> comics = comicRepository.findByCreatedById(uploader.getId());
+        List<Comic> comics = comicRepository.findByCreatedByIdAndIsDeletedFalse(uploader.getId());
         return comics.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
@@ -122,6 +126,9 @@ public class ComicServiceImpl implements ComicService {
         comic.setSynopsis(request.getSynopsis());
         comic.setContentType(request.getContentType());
         comic.setComicFormat(request.getComicFormat());
+        if (request.getAccessType() != null) {
+            comic.setAccessType(request.getAccessType());
+        }
         // other fields can be updated as needed
         Comic updated = comicRepository.save(comic);
         return mapToResponse(updated);
@@ -133,5 +140,31 @@ public class ComicServiceImpl implements ComicService {
         Comic comic = comicRepository.findById(comicId)
                 .orElseThrow(() -> new ResourceNotFoundException("Comic", "id", comicId));
         return mapToResponse(comic);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<ComicResponse> getAllComicsForAdmin(int page, int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("updatedAt").descending());
+        org.springframework.data.domain.Page<Comic> comicsPage = comicRepository.findAll(pageable);
+        return comicsPage.map(this::mapToResponse);
+    }
+
+    @Override
+    @Transactional
+    public void deleteComic(Integer comicId) {
+        Comic comic = comicRepository.findById(comicId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comic", "id", comicId));
+        comic.setIsDeleted(true);
+        comicRepository.save(comic);
+    }
+
+    @Override
+    @Transactional
+    public void restoreComic(Integer comicId) {
+        Comic comic = comicRepository.findById(comicId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comic", "id", comicId));
+        comic.setIsDeleted(false);
+        comicRepository.save(comic);
     }
 }

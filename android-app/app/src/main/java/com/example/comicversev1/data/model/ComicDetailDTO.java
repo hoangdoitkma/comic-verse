@@ -30,6 +30,8 @@ public class ComicDetailDTO {
     private int viewCount;
     @SerializedName("genres")
     private List<String> genres;
+    @SerializedName("accessType")
+    private String accessType;
 
     public int getId() { return id; }
     public String getSlug() { return slug; }
@@ -43,5 +45,6 @@ public class ComicDetailDTO {
     public String getUpdatedAt() { return updatedAt; }
     public int getViewCount() { return viewCount; }
     public List<String> getGenres() { return genres; }
+    public String getAccessType() { return accessType; }
 }
 

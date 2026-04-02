@@ -123,6 +123,15 @@ const comicService = {
   },
 
   /**
+   * Lấy chi tiết nội dung chương (bao gồm content text và pages)
+   * GET /api/uploader/chapters/view/{chapterId}/detail
+   */
+  getChapterDetail: async (chapterId) => {
+    const response = await axiosClient.get(`/uploader/chapters/view/${chapterId}/detail`);
+    return response.data;
+  },
+
+  /**
    * Xóa bản nháp chương bị từ chối
    * DELETE /api/uploader/chapters/{chapterId}/rejected-draft
    */

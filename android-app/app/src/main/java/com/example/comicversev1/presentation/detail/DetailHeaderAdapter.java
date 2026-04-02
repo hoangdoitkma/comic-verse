@@ -45,6 +45,15 @@ public class DetailHeaderAdapter extends RecyclerView.Adapter<DetailHeaderAdapte
             // Giả lập mock tags hoặc N/A theo user 
             // TODO: Ở API chuẩn, comic.getTags() sẽ trả về mảng tag. Tạm thời show N/A nếu chưa map được Array.
             addTag(holder.layoutTags, "N/A");
+
+            ImageView vipIcon = holder.itemView.findViewById(R.id.ivVipIcon);
+            if (vipIcon != null) {
+                if ("VIP".equals(comic.getAccessType())) {
+                    vipIcon.setVisibility(View.VISIBLE);
+                } else {
+                    vipIcon.setVisibility(View.GONE);
+                }
+            }
             
         } else {
             holder.txtTitle.setText("Đang tải dữ liệu...");

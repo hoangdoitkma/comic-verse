@@ -39,7 +39,8 @@ public class HomeRepositoryImpl implements HomeRepository {
                 0, // fallback likes
                 dto.getViewCount(),
                 0, // fallback progress
-                "" // fallback timeLabel
+                "", // fallback timeLabel
+                dto.getAccessType() != null ? dto.getAccessType() : "FREE"
         )).collect(java.util.stream.Collectors.toList());
     }
 

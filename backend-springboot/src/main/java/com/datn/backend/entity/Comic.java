@@ -1,5 +1,6 @@
 package com.datn.backend.entity;
 
+import com.datn.backend.entity.enums.AccessType;
 import com.datn.backend.entity.enums.ComicFormat;
 import com.datn.backend.entity.enums.ComicStatus;
 import com.datn.backend.entity.enums.ContentType;
@@ -54,6 +55,10 @@ public class Comic {
     private ComicFormat comicFormat;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "access_type", length = 20)
+    private AccessType accessType;
+
+    @Enumerated(EnumType.STRING)
     @Column(length = 30)
     private ComicStatus status;
 
@@ -81,4 +86,8 @@ public class Comic {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
 }

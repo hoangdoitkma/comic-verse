@@ -22,4 +22,6 @@ public class ComicRequest {
 
     @NotNull(message = "Comic format is required")
     private com.datn.backend.entity.enums.ComicFormat comicFormat;
+
+    private com.datn.backend.entity.enums.AccessType accessType;
 }

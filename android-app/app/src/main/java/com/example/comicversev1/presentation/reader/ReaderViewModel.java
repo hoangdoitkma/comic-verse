@@ -192,7 +192,20 @@ public class ReaderViewModel extends ViewModel {
                         }, throwable -> {
                             isLoadingMore = false;
                             if (isInitial) {
-                                _uiState.setValue(ReaderUiState.error(throwable.getMessage()));
+                                boolean is404 = false;
+                                if (throwable instanceof com.example.comicversev1.data.model.NetworkException) {
+                                    if (((com.example.comicversev1.data.model.NetworkException) throwable).getErrorCode() == 404) is404 = true;
+                                } else if (throwable instanceof retrofit2.HttpException) {
+                                    if (((retrofit2.HttpException) throwable).code() == 404) is404 = true;
+                                }
+
+                                if (is404) {
+                                    _uiState.setValue(ReaderUiState.error("CHAPTER_DELETED"));
+                                    // Make sure it deletes history on background
+                                    disposables.add(readingHistoryDao.deleteHistoryByComicId(comicId).subscribeOn(Schedulers.io()).subscribe());
+                                } else {
+                                    _uiState.setValue(ReaderUiState.error(throwable.getMessage()));
+                                }
                             }
                         })
         );

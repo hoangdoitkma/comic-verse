@@ -59,6 +59,12 @@ public class LargeCardAdapter extends RecyclerView.Adapter<LargeCardAdapter.Larg
                 .centerCrop()
                 .into(holder.binding.imageCover);
 
+        if ("VIP".equals(item.getAccessType())) {
+            holder.binding.ivVipIcon.setVisibility(View.VISIBLE);
+        } else {
+            holder.binding.ivVipIcon.setVisibility(View.GONE);
+        }
+
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onComicClick(item);
         });

@@ -322,7 +322,12 @@ public class ReaderFragment extends Fragment {
             }
 
             if (state.getError() != null && adapter.getItemCount() == 0) {
-                binding.txtChapterTitle.setText("Lỗi: " + state.getError());
+                if ("CHAPTER_DELETED".equals(state.getError())) {
+                    android.widget.Toast.makeText(requireContext(), "Truyện hoặc chương này đã bị gỡ!", android.widget.Toast.LENGTH_LONG).show();
+                    NavHostFragment.findNavController(this).navigateUp();
+                } else {
+                    binding.txtChapterTitle.setText("Lỗi: " + state.getError());
+                }
             }
         });
 

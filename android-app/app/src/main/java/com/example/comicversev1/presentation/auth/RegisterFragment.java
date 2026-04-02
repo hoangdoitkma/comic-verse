@@ -9,13 +9,17 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.comicversev1.databinding.FragmentRegisterBinding;
+import dagger.hilt.android.AndroidEntryPoint;
 
+@AndroidEntryPoint
 public class RegisterFragment extends Fragment {
 
     private FragmentRegisterBinding binding;
+    private RegisterViewModel viewModel;
 
     @Nullable
     @Override
@@ -27,7 +31,9 @@ public class RegisterFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        viewModel = new ViewModelProvider(this).get(RegisterViewModel.class);
         setupUi();
+        observeState();
     }
 
     private void setupUi() {
@@ -51,8 +57,24 @@ public class RegisterFragment extends Fragment {
                 return;
             }
 
-            Toast.makeText(requireContext(), "Đăng ký thành công (Mock)", Toast.LENGTH_SHORT).show();
-            // TODO: call viewmodel register
+            viewModel.register(email, password, nickname);
+        });
+    }
+
+    private void observeState() {
+        viewModel.uiState().observe(getViewLifecycleOwner(), state -> {
+            binding.progressBar.setVisibility(state.isLoading() ? View.VISIBLE : View.GONE);
+            binding.btnRegister.setEnabled(!state.isLoading());
+            
+            if (state.isSuccess()) {
+                Toast.makeText(requireContext(), "Đăng ký thành công! Vui lòng đăng nhập.", Toast.LENGTH_SHORT).show();
+                viewModel.resetState();
+                NavHostFragment.findNavController(this).navigateUp();
+            }
+            if (state.getErrorMessage() != null) {
+                Toast.makeText(requireContext(), state.getErrorMessage(), Toast.LENGTH_SHORT).show();
+                viewModel.resetState();
+            }
         });
     }
 

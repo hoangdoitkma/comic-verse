@@ -11,6 +11,7 @@ import retrofit2.Call;
 
 public interface AuthRepository {
     Single<BaseResponse<LoginResponse>> login(LoginRequest request);
+    Single<BaseResponse<Object>> register(com.example.comicversev1.data.model.RegisterRequest request);
     Call<BaseResponse<TokenResponse>> refreshToken(TokenResponse request);
     Completable saveTokens(String accessToken, String refreshToken);
 }

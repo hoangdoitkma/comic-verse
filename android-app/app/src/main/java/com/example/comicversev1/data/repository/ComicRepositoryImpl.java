@@ -94,8 +94,8 @@ public class ComicRepositoryImpl implements ComicRepository {
     }
 
     private ComicEntity mapComic(ComicDTO dto) {
-        if (dto == null) return new ComicEntity(0, "", "", "");
-        return new ComicEntity(dto.getId(), dto.getSlug(), dto.getTitle(), dto.getCoverImage());
+        if (dto == null) return new ComicEntity(0, "", "", "", "FREE");
+        return new ComicEntity(dto.getId(), dto.getSlug(), dto.getTitle(), dto.getCoverImage(), dto.getAccessType() != null ? dto.getAccessType() : "FREE");
     }
 
     private ChapterEntity mapChapter(ChapterDetailDTO dto) {
@@ -110,17 +110,18 @@ public class ComicRepositoryImpl implements ComicRepository {
         List<ComicEntity> list = new ArrayList<>();
         if (entities == null) return list;
         for (ComicCacheEntity e : entities) {
-            list.add(new ComicEntity(e.comicId, e.slug, e.title, e.coverImage));
+            list.add(new ComicEntity(e.comicId, e.slug, e.title, e.coverImage, "FREE"));
         }
         return list;
     }
 
     private ComicDetailEntity mapComicDetail(ComicDetailDTO dto) {
-        if (dto == null) return new ComicDetailEntity(0, "", "", "", "", "", "", "", "", 0, new ArrayList<>());
+        if (dto == null) return new ComicDetailEntity(0, "", "", "", "", "", "", "", "", 0, new ArrayList<>(), "FREE");
         return new ComicDetailEntity(
             dto.getId(), dto.getSlug(), dto.getTitle(), dto.getCoverImage(), dto.getAiSummary(),
             dto.getSynopsis(), dto.getAuthorName(), dto.getStatus(), dto.getUpdatedAt(), dto.getViewCount(),
-            dto.getGenres() != null ? dto.getGenres() : new ArrayList<>()
+            dto.getGenres() != null ? dto.getGenres() : new ArrayList<>(),
+            dto.getAccessType() != null ? dto.getAccessType() : "FREE"
         );
     }
 

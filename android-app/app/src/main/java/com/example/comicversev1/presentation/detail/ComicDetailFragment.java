@@ -213,7 +213,12 @@ public class ComicDetailFragment extends Fragment implements CommentAdapter.OnCo
             }
 
             if (state.getError() != null) {
-                Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
+                if ("COMIC_DELETED".equals(state.getError())) {
+                    Toast.makeText(requireContext(), "Truyện này đã ngừng phát hành hoặc bị xóa", Toast.LENGTH_LONG).show();
+                    NavHostFragment.findNavController(this).navigateUp();
+                } else {
+                    Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
+                }
             }
         });
 

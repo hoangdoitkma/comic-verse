@@ -33,8 +33,8 @@ public class PublicComicServiceImpl implements PublicComicService {
 
     @Override
     public ComicDetailDTO getComicDetail(String slug) {
-        Comic comic = comicRepository.findBySlug(slug)
-                .orElseThrow(() -> new RuntimeException("Comic not found"));
+        Comic comic = comicRepository.findBySlugAndIsDeletedFalse(slug)
+                .orElseThrow(() -> new com.datn.backend.exception.ResourceNotFoundException("Comic", "slug", slug));
 
         ComicDetailDTO dto = new ComicDetailDTO();
         // Mapping basic fields
@@ -48,6 +48,7 @@ public class PublicComicServiceImpl implements PublicComicService {
         dto.setStatus(comic.getStatus() != null ? comic.getStatus().name() : null);
         dto.setContentType(comic.getContentType() != null ? comic.getContentType().name() : null);
         dto.setComicFormat(comic.getComicFormat() != null ? comic.getComicFormat().name() : null);
+        dto.setAccessType(comic.getAccessType() != null ? comic.getAccessType().name() : "FREE");
         dto.setCreatedAt(comic.getCreatedAt());
         dto.setUpdatedAt(comic.getUpdatedAt());
 
@@ -72,18 +73,18 @@ public class PublicComicServiceImpl implements PublicComicService {
         List<ComicDTO> newComics;
         
         if (type == null) {
-            topTrending = comicRepository.findTop5ByOrderByViewCountDesc()
+            topTrending = comicRepository.findTop5ByIsDeletedFalseOrderByViewCountDesc()
                     .stream().map(this::mapToDTO).collect(Collectors.toList());
-            recentlyUpdated = comicRepository.findTop15ByOrderByUpdatedAtDesc()
+            recentlyUpdated = comicRepository.findTop15ByIsDeletedFalseOrderByUpdatedAtDesc()
                     .stream().map(this::mapToDTO).collect(Collectors.toList());
-            newComics = comicRepository.findTop10ByOrderByCreatedAtDesc()
+            newComics = comicRepository.findTop10ByIsDeletedFalseOrderByCreatedAtDesc()
                     .stream().map(this::mapToDTO).collect(Collectors.toList());
         } else {
-            topTrending = comicRepository.findTop5ByContentTypeOrderByViewCountDesc(type)
+            topTrending = comicRepository.findTop5ByContentTypeAndIsDeletedFalseOrderByViewCountDesc(type)
                     .stream().map(this::mapToDTO).collect(Collectors.toList());
-            recentlyUpdated = comicRepository.findTop15ByContentTypeOrderByUpdatedAtDesc(type)
+            recentlyUpdated = comicRepository.findTop15ByContentTypeAndIsDeletedFalseOrderByUpdatedAtDesc(type)
                     .stream().map(this::mapToDTO).collect(Collectors.toList());
-            newComics = comicRepository.findTop10ByContentTypeOrderByCreatedAtDesc(type)
+            newComics = comicRepository.findTop10ByContentTypeAndIsDeletedFalseOrderByCreatedAtDesc(type)
                     .stream().map(this::mapToDTO).collect(Collectors.toList());
         }
 
@@ -100,7 +101,7 @@ public class PublicComicServiceImpl implements PublicComicService {
         if (comicIds == null || comicIds.isEmpty()) {
             return List.of();
         }
-        List<Comic> comics = comicRepository.findAllById(comicIds);
+        List<Comic> comics = comicRepository.findByIdInAndIsDeletedFalse(comicIds);
         return comics.stream().map(comic -> {
             ReadingHistoryInfoDTO dto = ReadingHistoryInfoDTO.builder()
                     .comicId(comic.getId())
@@ -134,6 +135,7 @@ public class PublicComicServiceImpl implements PublicComicService {
                 .status(comic.getStatus() != null ? comic.getStatus().name() : null)
                 .contentType(comic.getContentType() != null ? comic.getContentType().name() : null)
                 .comicFormat(comic.getComicFormat() != null ? comic.getComicFormat().name() : null)
+                .accessType(comic.getAccessType() != null ? comic.getAccessType().name() : "FREE")
                 .createdAt(comic.getCreatedAt())
                 .updatedAt(comic.getUpdatedAt())
                 .build();

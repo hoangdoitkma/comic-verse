@@ -23,5 +23,8 @@ public interface ComicCacheDao {
 
     @Query("SELECT * FROM comic_cache ORDER BY updated_at DESC")
     Flowable<List<ComicCacheEntity>> observeAll();
+
+    @Query("DELETE FROM comic_cache WHERE slug = :slug")
+    Completable deleteBySlug(String slug);
 }
 

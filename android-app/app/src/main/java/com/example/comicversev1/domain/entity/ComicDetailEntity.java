@@ -14,8 +14,9 @@ public class ComicDetailEntity {
     private final String updatedAt;
     private final int viewCount;
     private final List<String> genres;
+    private final String accessType;
 
-    public ComicDetailEntity(int id, String slug, String title, String coverImage, String aiSummary, String synopsis, String authorName, String status, String updatedAt, int viewCount, List<String> genres) {
+    public ComicDetailEntity(int id, String slug, String title, String coverImage, String aiSummary, String synopsis, String authorName, String status, String updatedAt, int viewCount, List<String> genres, String accessType) {
         this.id = id;
         this.slug = slug;
         this.title = title;
@@ -27,6 +28,7 @@ public class ComicDetailEntity {
         this.updatedAt = updatedAt;
         this.viewCount = viewCount;
         this.genres = genres;
+        this.accessType = accessType;
     }
 
     public int getId() { return id; }
@@ -40,5 +42,6 @@ public class ComicDetailEntity {
     public String getUpdatedAt() { return updatedAt; }
     public int getViewCount() { return viewCount; }
     public List<String> getGenres() { return genres; }
+    public String getAccessType() { return accessType; }
 }
 

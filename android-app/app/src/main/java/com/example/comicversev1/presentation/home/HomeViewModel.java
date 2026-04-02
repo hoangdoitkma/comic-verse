@@ -94,7 +94,8 @@ public class HomeViewModel extends ViewModel {
                                                 dto.likes,
                                                 dto.views,
                                                 dto.progress,
-                                                "" // timeLabel N/A
+                                                "", // timeLabel N/A
+                                                "FREE"
                                         ));
                                     }
                                     _recentlyReadCards.setValue(cards);

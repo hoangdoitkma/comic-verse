@@ -475,9 +475,15 @@ public class ChapterServiceImpl implements ChapterService {
         return chapterRepository.findByComicIdOrderBySortOrderAsc(comicId);
     }
 
-    @Override
     @Transactional(readOnly = true)
     public List<ChapterPage> getChapterPages(Integer chapterId) {
         return chapterPageRepository.findByChapterIdOrderByPageNumberAsc(chapterId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Chapter getChapterById(Integer chapterId) {
+        return chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new ResourceNotFoundException("Chapter", "id", chapterId));
     }
 }

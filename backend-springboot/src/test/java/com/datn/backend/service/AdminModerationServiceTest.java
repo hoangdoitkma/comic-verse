@@ -30,6 +30,15 @@ public class AdminModerationServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private S3Service s3Service;
+
+    @Mock
+    private com.datn.backend.repository.ChapterPageRepository chapterPageRepository;
+
     @InjectMocks
     private AdminModerationServiceImpl adminModerationService;
 

@@ -1,17 +1,23 @@
 package com.datn.backend.controller;
 
-import com.datn.backend.dto.request.BulkChapterUploadRequest;
-import com.datn.backend.dto.request.ChapterRequest;
-import com.datn.backend.dto.response.ApiResponse;
-import com.datn.backend.dto.response.BulkInitResponse;
-import com.datn.backend.service.ChapterService;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigDecimal;
-import java.util.List;
+import com.datn.backend.dto.request.BulkChapterUploadRequest;
+import com.datn.backend.dto.request.ChapterRequest;
+import com.datn.backend.dto.response.ApiResponse;
+import com.datn.backend.dto.response.BulkInitResponse;
+import com.datn.backend.repository.UploadLogRepository;
+import com.datn.backend.service.ChapterService;
 
 @RestController
 @RequestMapping("/api/uploader/chapters")
@@ -21,44 +27,44 @@ public class ChapterController {
     @Autowired
     private ChapterService chapterService;
 
+    @Autowired
+    private UploadLogRepository uploadLogRepository;
+
     // ── Single chapter endpoints (existing) ──────────────────────────────
 
     @PostMapping("/{comicId}/comic")
     public ApiResponse<Void> createComicChapter(@PathVariable Integer comicId,
-                                                @ModelAttribute ChapterRequest request,
-                                                @RequestParam("pages") MultipartFile[] pages) {
+            @ModelAttribute ChapterRequest request,
+            @RequestParam("pages") MultipartFile[] pages) {
         chapterService.createComicChapter(comicId, request, pages);
         return ApiResponse.success(null, "Comic chapter created successfully");
     }
 
     @PostMapping("/{comicId}/novel")
     public ApiResponse<Void> createNovelChapter(@PathVariable Integer comicId,
-                                                @RequestBody ChapterRequest request) {
+            @RequestBody ChapterRequest request) {
         chapterService.createNovelChapter(comicId, request);
         return ApiResponse.success(null, "Novel chapter created successfully");
     }
 
-    @Autowired
-    private com.datn.backend.repository.UploadLogRepository uploadLogRepository;
-
     @GetMapping("/{comicId}")
-    public ApiResponse<List<java.util.Map<String, Object>>> getChapters(@PathVariable Integer comicId) {
-        var chapterEntities = chapterService.getChapterEntitiesByComic(comicId);
-        var logs = uploadLogRepository.findByComicIdOrderByCreatedAtDesc(comicId);
+    public ApiResponse<List<Map<String, Object>>> getChapters(@PathVariable Integer comicId) {
+        List<com.datn.backend.entity.Chapter> chapterEntities = chapterService.getChapterEntitiesByComic(comicId);
+        List<com.datn.backend.entity.UploadLog> logs = uploadLogRepository.findByComicIdOrderByCreatedAtDesc(comicId);
         
         // Group logs by chapter ID, since it's ordered desc, the first one encountered is the latest.
-        java.util.Map<Integer, String> statusMap = new java.util.HashMap<>();
-        java.util.Map<Integer, String> reasonMap = new java.util.HashMap<>();
-        for (var log : logs) {
+        Map<Integer, String> statusMap = new HashMap<>();
+        Map<Integer, String> reasonMap = new HashMap<>();
+        for (com.datn.backend.entity.UploadLog log : logs) {
             if (log.getChapter() != null && !statusMap.containsKey(log.getChapter().getId())) {
                 statusMap.put(log.getChapter().getId(), log.getStatus().name());
                 reasonMap.put(log.getChapter().getId(), log.getRejectReason());
             }
         }
 
-        List<java.util.Map<String, Object>> result = new java.util.ArrayList<>();
-        for (var ch : chapterEntities) {
-            java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (com.datn.backend.entity.Chapter ch : chapterEntities) {
+            Map<String, Object> map = new LinkedHashMap<>();
             map.put("id", ch.getId());
             map.put("chapterNumber", ch.getChapterNumber());
             map.put("title", ch.getTitle());
@@ -72,15 +78,36 @@ public class ChapterController {
     }
 
     @GetMapping("/view/{chapterId}/pages")
-    public ApiResponse<List<java.util.Map<String, Object>>> getChapterPages(@PathVariable Integer chapterId) {
-        var pages = chapterService.getChapterPages(chapterId);
-        List<java.util.Map<String, Object>> result = pages.stream().map(p -> {
-            java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+    public ApiResponse<List<Map<String, Object>>> getChapterPages(@PathVariable Integer chapterId) {
+        List<com.datn.backend.entity.ChapterPage> pages = chapterService.getChapterPages(chapterId);
+        List<Map<String, Object>> result = pages.stream().map(p -> {
+            Map<String, Object> map = new LinkedHashMap<>();
             map.put("pageNumber", p.getPageNumber());
             map.put("imageUrl", p.getImageUrl());
             return map;
         }).toList();
         return ApiResponse.success(result);
+    }
+
+    @GetMapping("/view/{chapterId}/detail")
+    public ApiResponse<Map<String, Object>> getChapterDetail(@PathVariable Integer chapterId) {
+        com.datn.backend.entity.Chapter ch = chapterService.getChapterById(chapterId);
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("id", ch.getId());
+        map.put("title", ch.getTitle());
+        map.put("chapterNumber", ch.getChapterNumber());
+        map.put("content", ch.getContent());
+
+        List<Map<String, Object>> pages = ch.getChapterPages().stream()
+                .sorted((p1, p2) -> Integer.compare(p1.getPageNumber(), p2.getPageNumber()))
+                .map(p -> {
+                    Map<String, Object> pMap = new LinkedHashMap<>();
+                    pMap.put("pageNumber", p.getPageNumber());
+                    pMap.put("imageUrl", p.getImageUrl());
+                    return pMap;
+                }).toList();
+        map.put("pages", pages);
+        return ApiResponse.success(map);
     }
 
     @GetMapping("/{comicId}/max-chapter-number")
@@ -105,8 +132,10 @@ public class ChapterController {
 
     /**
      * Step 1: Init bulk chapters.
-     * Receives JSON metadata, creates Chapter + ChapterPage records in DB (imageUrl = null).
-     * Returns mapping of pageId -> fileName so frontend knows where to upload each file.
+     * Receives JSON metadata, creates Chapter + ChapterPage records in DB (imageUrl
+     * = null).
+     * Returns mapping of pageId -> fileName so frontend knows where to upload each
+     * file.
      */
     @PostMapping("/{comicId}/bulk-init")
     public ApiResponse<BulkInitResponse> initBulkChapters(
@@ -118,7 +147,8 @@ public class ChapterController {
 
     /**
      * Step 2: Upload a single page file.
-     * Receives one image file, uploads to S3, and updates ChapterPage.imageUrl in DB.
+     * Receives one image file, uploads to S3, and updates ChapterPage.imageUrl in
+     * DB.
      * Frontend calls this endpoint in parallel (concurrency limit 3-5).
      */
     @PostMapping("/bulk-upload-page/{pageId}")

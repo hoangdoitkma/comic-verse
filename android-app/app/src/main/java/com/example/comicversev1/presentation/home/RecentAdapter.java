@@ -59,6 +59,12 @@ public class RecentAdapter extends RecyclerView.Adapter<RecentAdapter.RecentView
                 .centerCrop()
                 .into(holder.binding.imageCover);
 
+        if ("VIP".equals(item.getAccessType())) {
+            holder.binding.ivVipIcon.setVisibility(android.view.View.VISIBLE);
+        } else {
+            holder.binding.ivVipIcon.setVisibility(android.view.View.GONE);
+        }
+
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onComicClick(item);
         });

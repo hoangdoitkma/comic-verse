@@ -24,7 +24,7 @@ public class PublicChapterServiceImpl implements PublicChapterService {
 
     @Override
     public List<ChapterItemDTO> getChaptersByComicSlug(String slug) {
-        Comic comic = comicRepository.findBySlug(slug)
+        Comic comic = comicRepository.findBySlugAndIsDeletedFalse(slug)
                 .orElseThrow(() -> new RuntimeException("Comic not found"));
 
         return chapterRepository.findByComicIdOrderBySortOrderAsc(comic.getId())
@@ -35,6 +35,12 @@ public class PublicChapterServiceImpl implements PublicChapterService {
 
     @Override
     public List<ChapterItemDTO> getChaptersByComicId(Integer comicId) {
+        Comic comic = comicRepository.findById(comicId)
+                .orElseThrow(() -> new com.datn.backend.exception.ResourceNotFoundException("Comic", "id", comicId.toString()));
+        if (Boolean.TRUE.equals(comic.getIsDeleted())) {
+            throw new com.datn.backend.exception.ResourceNotFoundException("Comic", "id", comicId.toString());
+        }
+
         return chapterRepository.findByComicIdOrderBySortOrderAsc(comicId)
                 .stream()
                 .map(this::mapToItemDTO)
@@ -44,7 +50,11 @@ public class PublicChapterServiceImpl implements PublicChapterService {
     @Override
     public ChapterDetailDTO getChapterContent(Integer chapterId) {
         Chapter chapter = chapterRepository.findById(chapterId)
-                .orElseThrow(() -> new RuntimeException("Chapter not found"));
+                .orElseThrow(() -> new com.datn.backend.exception.ResourceNotFoundException("Chapter", "id", chapterId.toString()));
+
+        if (chapter.getComic() != null && Boolean.TRUE.equals(chapter.getComic().getIsDeleted())) {
+            throw new com.datn.backend.exception.ResourceNotFoundException("Chapter", "id", chapterId.toString());
+        }
 
         List<String> pages = chapter.getChapterPages().stream()
                 .sorted(Comparator.comparingInt(ChapterPage::getPageNumber))

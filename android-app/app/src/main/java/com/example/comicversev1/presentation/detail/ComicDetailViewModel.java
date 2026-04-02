@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
+import com.example.comicversev1.data.local.dao.ComicCacheDao;
 import com.example.comicversev1.data.local.dao.ReadingHistoryDao;
 import com.example.comicversev1.data.local.entity.ReadingHistoryEntity;
 import com.example.comicversev1.domain.entity.ChapterItem;
@@ -29,8 +30,10 @@ public class ComicDetailViewModel extends ViewModel {
     private final GetComicDetailUseCase getComicDetailUseCase;
     private final GetChaptersUseCase getChaptersUseCase;
     private final ReadingHistoryDao readingHistoryDao;
+    private final ComicCacheDao comicCacheDao;
     private final CompositeDisposable disposables = new CompositeDisposable();
     private final String slug;
+    private final int comicId;
 
     private final MutableLiveData<ComicDetailUiState> _uiState = new MutableLiveData<>(ComicDetailUiState.loading());
     public LiveData<ComicDetailUiState> uiState() { return _uiState; }
@@ -43,11 +46,17 @@ public class ComicDetailViewModel extends ViewModel {
     public ComicDetailViewModel(GetComicDetailUseCase getComicDetailUseCase,
                                 GetChaptersUseCase getChaptersUseCase,
                                 ReadingHistoryDao readingHistoryDao,
+                                ComicCacheDao comicCacheDao,
                                 SavedStateHandle savedStateHandle) {
         this.getComicDetailUseCase = getComicDetailUseCase;
         this.getChaptersUseCase = getChaptersUseCase;
         this.readingHistoryDao = readingHistoryDao;
+        this.comicCacheDao = comicCacheDao;
         this.slug = savedStateHandle.get("slug");
+        
+        Integer cId = savedStateHandle.get("comicId");
+        this.comicId = cId != null ? cId : 0;
+        
         loadData();
     }
 
@@ -96,6 +105,23 @@ public class ComicDetailViewModel extends ViewModel {
     }
 
     private void onError(Throwable throwable) {
+        boolean is404 = false;
+        if (throwable instanceof com.example.comicversev1.data.model.NetworkException) {
+            if (((com.example.comicversev1.data.model.NetworkException) throwable).getErrorCode() == 404) is404 = true;
+        } else if (throwable instanceof retrofit2.HttpException) {
+            if (((retrofit2.HttpException) throwable).code() == 404) is404 = true;
+        }
+        
+        if (is404) {
+            Log.d("ComicDetailVM", "Comic not found. Deleting stale local data.");
+            disposables.add(comicCacheDao.deleteBySlug(slug).subscribeOn(Schedulers.io()).subscribe());
+            if (comicId > 0) {
+                disposables.add(readingHistoryDao.deleteHistoryByComicId(comicId).subscribeOn(Schedulers.io()).subscribe());
+            }
+            _uiState.setValue(ComicDetailUiState.error("COMIC_DELETED"));
+            return;
+        }
+        
         _uiState.setValue(ComicDetailUiState.error(throwable.getMessage()));
     }
 

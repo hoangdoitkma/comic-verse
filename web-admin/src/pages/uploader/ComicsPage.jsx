@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, BookOpen, Eye, Layers, Search } from 'lucide-react';
+import { Plus, BookOpen, Eye, Layers, Search, Lock, Unlock } from 'lucide-react';
 import comicService from '../../services/comicService';
 import CreateComicModal from './CreateComicModal';
 import { ToastContainer, useToast } from '../../components/Toast';
@@ -18,6 +18,21 @@ function StatusBadge({ status }) {
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
       {config.label}
+    </span>
+  );
+}
+
+function AccessBadge({ type }) {
+  if (type === 'VIP') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-400 border border-amber-500/20 mt-1">
+        <Lock size={10} /> VIP
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 mt-1">
+      <Unlock size={10} /> Free
     </span>
   );
 }
@@ -269,9 +284,12 @@ export default function ComicsPage() {
                       </div>
                     </td>
 
-                    {/* Content Type */}
+                    {/* Content Type & Access */}
                     <td className="px-4 py-3">
-                      <span className="text-sm text-dark-300">{comic.contentType || '—'}</span>
+                      <div className="flex flex-col items-start gap-0.5">
+                        <span className="text-sm text-dark-300">{comic.contentType || '—'}</span>
+                        <AccessBadge type={comic.accessType} />
+                      </div>
                     </td>
 
                     {/* Status */}

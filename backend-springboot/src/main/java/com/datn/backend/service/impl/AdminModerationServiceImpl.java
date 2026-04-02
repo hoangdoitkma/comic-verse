@@ -56,9 +56,12 @@ public class AdminModerationServiceImpl implements AdminModerationService {
         UploadLog savedLog = uploadLogRepository.save(log);
 
         String title = "Kết quả duyệt chương";
+        String chapterTitle = log.getChapter() != null ? log.getChapter().getTitle() : "không xác định";
+        String comicTitle = log.getComic() != null ? log.getComic().getTitle() : "không xác định";
+
         String message = newStatus == UploadStatus.APPROVED 
-                ? "Chương " + log.getChapter().getTitle() + " của truyện " + log.getComic().getTitle() + " đã được phê duyệt và hiển thị." 
-                : "Chương " + log.getChapter().getTitle() + " bị từ chối.";
+                ? "Chương " + chapterTitle + " của truyện " + comicTitle + " đã được phê duyệt và hiển thị." 
+                : "Chương " + chapterTitle + " bị từ chối.";
         
         if (newStatus == UploadStatus.REJECTED) {
             if (request.getReason() != null && !request.getReason().trim().isEmpty()) {

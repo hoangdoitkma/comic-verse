@@ -28,8 +28,11 @@ import retrofit2.http.Query;
 public interface ApiService {
 
     // Auth Module
-    @POST("auth/public/login")
+    @POST("auth/login")
     Single<BaseResponse<LoginResponse>> login(@Body LoginRequest request);
+
+    @POST("auth/register")
+    Single<BaseResponse<Object>> register(@Body com.example.comicversev1.data.model.RegisterRequest request);
 
     @POST("auth/public/refresh")
     Call<BaseResponse<TokenResponse>> refreshToken(@Body TokenResponse request);

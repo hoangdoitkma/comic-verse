@@ -184,8 +184,9 @@ public class HomeContent {
         private final long views;
         private final int progress; // percentage 0-100
         private final String timeLabel; // e.g., "24 phút trước"
+        private final String accessType;
 
-        public ComicCard(String slug, String title, String chapterLabel, String coverUrl, long likes, long views, int progress, String timeLabel) {
+        public ComicCard(String slug, String title, String chapterLabel, String coverUrl, long likes, long views, int progress, String timeLabel, String accessType) {
             this.slug = slug;
             this.title = title;
             this.chapterLabel = chapterLabel;
@@ -194,6 +195,7 @@ public class HomeContent {
             this.views = views;
             this.progress = progress;
             this.timeLabel = timeLabel;
+            this.accessType = accessType;
         }
 
         public String getSlug() {
@@ -226,6 +228,10 @@ public class HomeContent {
 
         public String getTimeLabel() {
             return timeLabel;
+        }
+
+        public String getAccessType() {
+            return accessType;
         }
     }
 }

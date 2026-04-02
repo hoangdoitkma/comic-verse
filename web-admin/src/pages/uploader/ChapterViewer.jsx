@@ -11,37 +11,39 @@ export default function ChapterViewer({ isOpen, onClose, chapter }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const scrollRef = useRef(null);
 
+  const [chapterDetail, setChapterDetail] = useState(null);
+
   // Detect if this chapter has text content (novel) or image pages (comic)
-  const isNovelChapter = !!(chapter?.content && chapter.content.trim().length > 0);
+  const isNovelChapter = !!(chapterDetail?.content && chapterDetail.content.trim().length > 0);
 
   useEffect(() => {
     if (isOpen && chapter?.id) {
       setLoading(true);
       setError('');
       setPages([]);
+      setChapterDetail(null);
       setLoadedImages(new Set());
 
-      // If novel chapter with content, no need to fetch pages
-      if (isNovelChapter) {
-        setLoading(false);
-        return;
-      }
-
-      comicService.getChapterPages(chapter.id)
+      comicService.getChapterDetail(chapter.id)
         .then((data) => {
-          const filtered = (data || []).filter((p) => p.imageUrl);
-          if (filtered.length === 0) {
-            setError('Chương này chưa có ảnh nào được tải lên.');
+          setChapterDetail(data);
+          // Check if it's a novel
+          const isNovel = !!(data?.content && data.content.trim().length > 0);
+          if (!isNovel) {
+            const filtered = (data?.pages || []).filter((p) => p.imageUrl);
+            if (filtered.length === 0) {
+              setError('Chương này chưa có ảnh nào được tải lên.');
+            }
+            setPages(filtered);
           }
-          setPages(filtered);
         })
         .catch((err) => {
-          setError('Không thể tải ảnh chương. Vui lòng thử lại.');
+          setError('Không thể tải chi tiết chương. Vui lòng thử lại.');
           console.error('ChapterViewer error:', err);
         })
         .finally(() => setLoading(false));
     }
-  }, [isOpen, chapter?.id, isNovelChapter]);
+  }, [isOpen, chapter?.id]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -71,11 +73,11 @@ export default function ChapterViewer({ isOpen, onClose, chapter }) {
 
   if (!isOpen) return null;
 
-  const chapterTitle = chapter?.title || `Chương ${chapter?.chapterNumber}`;
+  const chapterTitle = chapterDetail?.title || chapter?.title || `Chương ${chapter?.chapterNumber}`;
 
   // Parse novel content into paragraphs
   const novelParagraphs = isNovelChapter
-    ? chapter.content.split('\n').filter((p) => p.trim().length > 0)
+    ? chapterDetail.content.split('\n').filter((p) => p.trim().length > 0)
     : [];
 
   return (
@@ -95,7 +97,7 @@ export default function ChapterViewer({ isOpen, onClose, chapter }) {
               {loading
                 ? 'Đang tải...'
                 : isNovelChapter
-                  ? `${novelParagraphs.length} đoạn văn • ${chapter.content.length.toLocaleString('vi-VN')} ký tự`
+                  ? `${novelParagraphs.length} đoạn văn • ${chapterDetail.content.length.toLocaleString('vi-VN')} ký tự`
                   : `${pages.length} trang`
               }
             </p>
@@ -167,7 +169,7 @@ export default function ChapterViewer({ isOpen, onClose, chapter }) {
             <div className="py-12 text-center border-t border-dark-800 mt-12">
               <p className="text-dark-500 text-sm">— Hết chương —</p>
               <p className="text-dark-600 text-xs mt-1">
-                {novelParagraphs.length} đoạn văn • {chapter.content.length.toLocaleString('vi-VN')} ký tự
+                {novelParagraphs.length} đoạn văn • {chapterDetail.content.length.toLocaleString('vi-VN')} ký tự
               </p>
             </div>
           </div>

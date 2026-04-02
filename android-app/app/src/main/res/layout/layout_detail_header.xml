@@ -21,6 +21,15 @@
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
             android:src="@mipmap/ic_launcher" />
+
+        <ImageView
+            android:id="@+id/ivVipIcon"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="top|start"
+            android:layout_margin="8dp"
+            android:src="@drawable/ic_vip"
+            android:visibility="gone" />
     </androidx.cardview.widget.CardView>
 
     <TextView

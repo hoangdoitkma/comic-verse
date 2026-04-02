@@ -45,16 +45,23 @@ public class DiscoverPagingAdapter extends PagingDataAdapter<ComicEntity, Discov
     static class ComicViewHolder extends RecyclerView.ViewHolder {
         private final TextView title;
         private final ImageView cover;
+        private final ImageView vipIcon;
 
         ComicViewHolder(@NonNull View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.txtComicTitle);
             cover = itemView.findViewById(R.id.imgComicCover);
+            vipIcon = itemView.findViewById(R.id.ivVipIcon);
         }
 
         void bind(ComicEntity entity, OnComicClickListener listener) {
             title.setText(entity.getTitle());
             Glide.with(cover.getContext()).load(entity.getCoverImage()).into(cover);
+            if ("VIP".equals(entity.getAccessType())) {
+                vipIcon.setVisibility(View.VISIBLE);
+            } else {
+                vipIcon.setVisibility(View.GONE);
+            }
             itemView.setOnClickListener(v -> listener.onComicClick(entity));
         }
     }

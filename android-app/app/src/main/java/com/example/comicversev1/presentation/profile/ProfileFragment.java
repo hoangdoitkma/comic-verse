@@ -100,11 +100,25 @@ public class ProfileFragment extends Fragment {
 
         if (!token.isEmpty()) {
             binding.textProfileName.setText(name);
-            binding.cardProfile.setFocusable(false);
-            binding.cardProfile.setClickable(false);
             binding.cardProfile.setOnClickListener(v -> {
-                // Future: Navigate to Profile details or show Logout popup
-                Toast.makeText(requireContext(), "Bạn đã đăng nhập dưới tên: " + name, Toast.LENGTH_SHORT).show();
+                new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                        .setTitle("Đăng xuất")
+                        .setMessage("Bạn có chắc chắn muốn đăng xuất không?")
+                        .setPositiveButton("Đăng xuất", (dialog, which) -> {
+                            prefs.edit()
+                                .remove(com.example.comicversev1.utils.Constants.KEY_ACCESS_TOKEN)
+                                .remove(com.example.comicversev1.utils.Constants.KEY_REFRESH_TOKEN)
+                                .remove(com.example.comicversev1.utils.Constants.KEY_DISPLAY_NAME)
+                                .remove(com.example.comicversev1.utils.Constants.KEY_EMAIL)
+                                .apply();
+                            Toast.makeText(requireContext(), "Đã đăng xuất", Toast.LENGTH_SHORT).show();
+                            // Refresh logic by navigating again to the same fragment
+                            NavHostFragment.findNavController(this).navigate(R.id.profileFragment, null, new androidx.navigation.NavOptions.Builder()
+                                    .setPopUpTo(R.id.profileFragment, true)
+                                    .build());
+                        })
+                        .setNegativeButton("Hủy", null)
+                        .show();
             });
             fetchUserProfile();
         } else {

@@ -213,6 +213,7 @@ export default function ComicDetailPage() {
             <div className="flex-1 space-y-4">
               <div className="flex items-center gap-3 flex-wrap">
                 <StatusBadge status={comic.status} />
+                <AccessBadge type={comic.accessType} />
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/15 text-blue-400">
                   <FileText size={12} />
                   {comic.contentType || '—'}

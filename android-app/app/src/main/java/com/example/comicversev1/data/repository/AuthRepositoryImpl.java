@@ -36,6 +36,11 @@ public class AuthRepositoryImpl implements AuthRepository {
     }
 
     @Override
+    public Single<BaseResponse<Object>> register(com.example.comicversev1.data.model.RegisterRequest request) {
+        return apiService.register(request);
+    }
+
+    @Override
     public Call<BaseResponse<TokenResponse>> refreshToken(TokenResponse request) {
         return apiService.refreshToken(request);
     }

@@ -23,6 +23,7 @@ public class ComicDTO {
     private String status;
     private String contentType;
     private String comicFormat;
+    private String accessType;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

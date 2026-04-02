@@ -22,6 +22,16 @@
             android:layout_height="150dp"
             android:scaleType="centerCrop" />
 
+        <ImageView
+            android:id="@+id/ivVipIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignStart="@id/imageCover"
+            android:layout_alignTop="@id/imageCover"
+            android:layout_margin="8dp"
+            android:src="@drawable/ic_vip"
+            android:visibility="gone" />
+
         <!-- Edit / Open Icon (top-right) -->
         <ImageView
             android:id="@+id/imageEdit"
