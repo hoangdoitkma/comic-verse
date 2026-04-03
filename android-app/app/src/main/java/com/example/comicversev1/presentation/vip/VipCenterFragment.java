@@ -65,6 +65,20 @@ public class VipCenterFragment extends Fragment {
 
     private void setupRecyclerView() {
         adapter = new VipPackageAdapter(new ArrayList<>(), vipPackage -> {
+            
+            // Client-side login check
+            android.content.SharedPreferences prefs = requireActivity().getSharedPreferences(
+                com.example.comicversev1.utils.Constants.PREF_AUTH, android.content.Context.MODE_PRIVATE);
+            String token = prefs.getString(com.example.comicversev1.utils.Constants.KEY_ACCESS_TOKEN, "");
+            
+            if (token.isEmpty()) {
+                Toast.makeText(requireContext(), "Yêu cầu đăng nhập trước khi thanh toán", Toast.LENGTH_SHORT).show();
+                try {
+                    NavHostFragment.findNavController(this).navigate(com.example.comicversev1.R.id.loginFragment);
+                } catch (Exception e) {}
+                return;
+            }
+
             Toast.makeText(requireContext(), "Đang tạo đơn hàng...", Toast.LENGTH_SHORT).show();
             // Call API: now user ID is captured by backend from Auth Header, send 0 or 1
             disposable.add(

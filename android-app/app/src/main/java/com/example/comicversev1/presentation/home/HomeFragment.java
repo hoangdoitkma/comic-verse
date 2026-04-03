@@ -177,6 +177,10 @@ public class HomeFragment extends Fragment {
                 NavHostFragment.findNavController(this).navigate(R.id.novelFragment);
                 return true;
             }
+            if (item.getItemId() == R.id.menu_favorite) {
+                NavHostFragment.findNavController(this).navigate(R.id.favoriteFragment);
+                return true;
+            }
             if (item.getItemId() == R.id.menu_more) {
                 NavHostFragment.findNavController(this).navigate(R.id.profileFragment);
                 return true;

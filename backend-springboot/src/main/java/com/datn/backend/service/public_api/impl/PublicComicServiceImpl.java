@@ -24,6 +24,7 @@ public class PublicComicServiceImpl implements PublicComicService {
 
     private final ComicRepository comicRepository;
     private final ReadingHistoryRepository readingHistoryRepository;
+    private final com.datn.backend.repository.ChapterRepository chapterRepository;
 
     @Override
     public Page<ComicDTO> getComics(int page, int limit) {
@@ -131,7 +132,7 @@ public class PublicComicServiceImpl implements PublicComicService {
                 .thumbnailUrl(comic.getThumbnailUrl())
                 .viewCount(comic.getViewCount())
                 .averageRating(comic.getAverageRating())
-                .totalChapters(comic.getTotalChapters())
+                .totalChapters(comic.getTotalChapters() != null && comic.getTotalChapters() > 0 ? comic.getTotalChapters() : getChapterCountSafely(comic.getId()))
                 .status(comic.getStatus() != null ? comic.getStatus().name() : null)
                 .contentType(comic.getContentType() != null ? comic.getContentType().name() : null)
                 .comicFormat(comic.getComicFormat() != null ? comic.getComicFormat().name() : null)
@@ -139,5 +140,14 @@ public class PublicComicServiceImpl implements PublicComicService {
                 .createdAt(comic.getCreatedAt())
                 .updatedAt(comic.getUpdatedAt())
                 .build();
+    }
+
+    private int getChapterCountSafely(Integer comicId) {
+        try {
+            Long count = chapterRepository.countByComicId(comicId);
+            return count != null ? count.intValue() : 0;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Brand Colors -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
@@ -7,18 +8,37 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- Theme Colors -->
     <color name="bg_dark_primary">#0F1115</color>
-    <color name="bg_start_reading">#8CBEF4</color>
-    <color name="bg_button_dark">#1A1D24</color>
-    <color name="stroke_button_dark">#2A2D3A</color>
+    <color name="bg_dark_surface">#1A1D24</color>
+    <color name="bg_dark_surface_elevated">#232733</color>
+    <color name="bg_dark_glass">#CC0F1115</color>
+    <color name="bg_start_reading">#4FC3F7</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B3B3B3</color>
+    <color name="text_tertiary">#808080</color>
+    <color name="text_hint_gray">#606060</color>
+    <color name="text_synopsis">#D6DDF0</color>
+    <color name="text_subtitle_light">#E0F0FF</color>
+
+    <!-- Button & Strokes -->
+    <color name="bg_button_dark">#232733</color>
+    <color name="stroke_button_dark">#3A3F50</color>
+    <color name="stroke_divider">#2A2D3A</color>
+
+    <!-- UI Accents & Icons -->
     <color name="icon_yellow">#FFD54F</color>
     <color name="icon_cyan">#4DD0E1</color>
     <color name="icon_light_blue">#4FC3F7</color>
-    <color name="icon_red">#E53935</color>
-    <color name="icon_orange">#FF7043</color>
+    <color name="icon_red">#FF4B4B</color>
+    <color name="icon_orange">#FF8A65</color>
+    <color name="icon_green">#81C784</color>
+    
+    <!-- Status Colors -->
     <color name="status_completed">#64B5F6</color>
     <color name="btn_report_text">#E57373</color>
-    <color name="text_synopsis">#B0BEC5</color>
-    <color name="text_subtitle_light">#E0F0FF</color>
-    <color name="text_hint_gray">#B0BEC5</color>
 </resources>

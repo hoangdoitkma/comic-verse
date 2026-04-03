@@ -46,7 +46,20 @@ public class ComicRepositoryImpl implements ComicRepository {
 
     @Override
     public Single<ComicDetailEntity> getComicDetail(String slug) {
-        return apiService.getComicDetail(slug).map(response -> mapComicDetail(response.getData()));
+        return apiService.getComicDetail(slug)
+                .map(response -> mapComicDetail(response.getData()))
+                .flatMap(detail -> {
+                    ComicCacheEntity e = new ComicCacheEntity();
+                    e.comicId = detail.getId();
+                    e.slug = detail.getSlug();
+                    e.title = detail.getTitle();
+                    e.coverImage = detail.getCoverImage();
+                    e.author = detail.getAuthorName();
+                    e.viewCount = detail.getViewCount();
+                    e.updatedAt = System.currentTimeMillis();
+                    return cacheDao.upsertAll(java.util.Collections.singletonList(e))
+                            .andThen(Single.just(detail));
+                });
     }
 
     @Override

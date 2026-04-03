@@ -114,6 +114,19 @@ public class ProfileFragment extends Fragment {
                                     .remove(com.example.comicversev1.utils.Constants.KEY_EMAIL)
                                     .apply();
                             Toast.makeText(requireContext(), "Đã đăng xuất", Toast.LENGTH_SHORT).show();
+                            
+                            // Clear cached username/greeting in other ViewModels
+                            try {
+                                new androidx.lifecycle.ViewModelProvider(requireActivity())
+                                        .get(com.example.comicversev1.presentation.home.HomeViewModel.class)
+                                        .refresh();
+                                new androidx.lifecycle.ViewModelProvider(requireActivity())
+                                        .get(com.example.comicversev1.presentation.novel.NovelViewModel.class)
+                                        .refresh();
+                            } catch (Exception e) {
+                                // Ignore if ViewModels are not yet created
+                            }
+
                             // Refresh logic by navigating again to the same fragment
                             NavHostFragment.findNavController(this).navigate(R.id.profileFragment, null,
                                     new androidx.navigation.NavOptions.Builder()
@@ -183,6 +196,10 @@ public class ProfileFragment extends Fragment {
             }
             if (item.getItemId() == R.id.menu_novel) {
                 NavHostFragment.findNavController(this).navigate(R.id.novelFragment);
+                return true;
+            }
+            if (item.getItemId() == R.id.menu_favorite) {
+                NavHostFragment.findNavController(this).navigate(R.id.favoriteFragment);
                 return true;
             }
             if (item.getItemId() == R.id.menu_more) {

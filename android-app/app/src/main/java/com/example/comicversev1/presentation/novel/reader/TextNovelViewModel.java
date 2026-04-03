@@ -13,6 +13,7 @@ import com.example.comicversev1.data.model.ViewTrackingRequest;
 import com.example.comicversev1.domain.entity.ChapterEntity;
 import com.example.comicversev1.domain.usecase.GetChapterDetailUseCase;
 import com.example.comicversev1.domain.entity.ChapterItem;
+import com.example.comicversev1.data.local.dao.ComicCacheDao;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ public class TextNovelViewModel extends ViewModel {
 
     private final GetChapterDetailUseCase getChapterDetailUseCase;
     private final ReadingHistoryDao readingHistoryDao;
+    private final ComicCacheDao comicCacheDao;
     private final ApiService apiService;
     private final CompositeDisposable disposables = new CompositeDisposable();
     
@@ -49,6 +51,13 @@ public class TextNovelViewModel extends ViewModel {
 
     private final int comicId;
     private final int initialChapterId;
+    
+    // Cached variables config UI for history
+    private String cachedComicTitle = "Truyện Chữ";
+    private String cachedCoverUrl = "";
+    private String cachedSlug = "";
+    private String cachedAuthorName = "Unknown";
+    private long cachedViewCount = 0;
 
     // Trạng thái load cho UI
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
@@ -89,15 +98,31 @@ public class TextNovelViewModel extends ViewModel {
     @Inject
     public TextNovelViewModel(GetChapterDetailUseCase getChapterDetailUseCase,
                               ReadingHistoryDao readingHistoryDao,
+                              ComicCacheDao comicCacheDao,
                               SavedStateHandle handle,
                               ApiService apiService) {
         this.getChapterDetailUseCase = getChapterDetailUseCase;
         this.readingHistoryDao = readingHistoryDao;
+        this.comicCacheDao = comicCacheDao;
         this.apiService = apiService;
         
         // Nhận param truyền từ màn chi tiết
         this.initialChapterId = handle.get("chapterId");
         this.comicId = handle.get("comicId");
+
+        // Load cached properties for historic saves
+        disposables.add(comicCacheDao.getComicById(this.comicId)
+                .subscribeOn(Schedulers.io())
+                .subscribe(cached -> {
+                    this.cachedComicTitle = cached.title != null ? cached.title : "Truyện Chữ";
+                    this.cachedCoverUrl = cached.coverImage != null ? cached.coverImage : "";
+                    this.cachedSlug = cached.slug != null ? cached.slug : "";
+                    this.cachedAuthorName = cached.author != null ? cached.author : "Unknown";
+                    this.cachedViewCount = cached.viewCount;
+                }, throwable -> {
+                    Log.e(TAG, "Not found in comicCache: " + throwable.getMessage());
+                })
+        );
 
         setupSaveDebouncer();
         loadSavedProgressAndStart();
@@ -291,6 +316,17 @@ public class TextNovelViewModel extends ViewModel {
         entity.chapterId = chapterId;
         entity.pageIndex = paragraphIndex;
         entity.readAt = System.currentTimeMillis();
+        
+        entity.comicTitle = this.cachedComicTitle;
+        entity.coverUrl = this.cachedCoverUrl;
+        entity.slug = this.cachedSlug;
+        entity.comicType = "NOVEL";
+        entity.authorName = this.cachedAuthorName;
+        entity.viewCount = this.cachedViewCount;
+        
+        String chTitle = chapterTitleCache.get(chapterId);
+        entity.chapterTitle = chTitle != null ? chTitle : "Chương " + chapterId;
+
         // Percent tính phức tạp hơn với List flat, ta set tạm 0 hoặc số trang ước lượng
         entity.percent = 0; 
         

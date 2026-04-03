@@ -11,6 +11,7 @@ import com.example.comicversev1.data.local.dao.ReadingHistoryDao;
 import com.example.comicversev1.data.local.entity.ReadingHistoryEntity;
 import com.example.comicversev1.domain.entity.ChapterEntity;
 import com.example.comicversev1.domain.usecase.GetChapterDetailUseCase;
+import com.example.comicversev1.data.local.dao.ComicCacheDao;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -37,11 +38,19 @@ public class ReaderViewModel extends ViewModel {
 
     private final GetChapterDetailUseCase getChapterDetailUseCase;
     private final ReadingHistoryDao readingHistoryDao;
+    private final ComicCacheDao comicCacheDao;
     private final ApiService apiService;
     private final CompositeDisposable disposables = new CompositeDisposable();
 
     private final int initialChapterId;
     private final int comicId;
+    
+    // Cached variables config UI for history
+    private String cachedComicTitle = "Comic";
+    private String cachedCoverUrl = "";
+    private String cachedSlug = "";
+    private String cachedAuthorName = "Unknown";
+    private long cachedViewCount = 0;
 
     // Track loaded chapters to avoid duplicates
     private final Set<Integer> loadedChapterIds = new HashSet<>();
@@ -88,13 +97,29 @@ public class ReaderViewModel extends ViewModel {
     @Inject
     public ReaderViewModel(GetChapterDetailUseCase getChapterDetailUseCase,
                            ReadingHistoryDao readingHistoryDao,
+                           ComicCacheDao comicCacheDao,
                            SavedStateHandle handle,
                            ApiService apiService) {
         this.getChapterDetailUseCase = getChapterDetailUseCase;
         this.readingHistoryDao = readingHistoryDao;
+        this.comicCacheDao = comicCacheDao;
         this.apiService = apiService;
         this.initialChapterId = handle.get("chapterId");
         this.comicId = handle.get("comicId");
+
+        // Load cached properties for historic saves
+        disposables.add(comicCacheDao.getComicById(this.comicId)
+                .subscribeOn(Schedulers.io())
+                .subscribe(cached -> {
+                    this.cachedComicTitle = cached.title != null ? cached.title : "Truyện";
+                    this.cachedCoverUrl = cached.coverImage != null ? cached.coverImage : "";
+                    this.cachedSlug = cached.slug != null ? cached.slug : "";
+                    this.cachedAuthorName = cached.author != null ? cached.author : "Unknown";
+                    this.cachedViewCount = cached.viewCount;
+                }, throwable -> {
+                    Log.e(TAG, "Not found in comicCache: " + throwable.getMessage());
+                })
+        );
 
         setupSaveDebouncer();
 
@@ -269,12 +294,24 @@ public class ReaderViewModel extends ViewModel {
         entity.chapterId = chapterId;
         entity.pageIndex = pageIndex;
         entity.readAt = System.currentTimeMillis();
+        
+        entity.comicTitle = this.cachedComicTitle;
+        entity.coverUrl = this.cachedCoverUrl;
+        entity.slug = this.cachedSlug;
+        entity.comicType = "COMIC";
+        entity.authorName = this.cachedAuthorName;
+        entity.viewCount = this.cachedViewCount;
 
         int percent = 0;
         ChapterEntity chapter = getChapterById(chapterId);
-        if (chapter != null && chapter.getImages() != null && !chapter.getImages().isEmpty()) {
-            int totalPages = chapter.getImages().size();
-            percent = (int) (((pageIndex + 1) / (float) totalPages) * 100);
+        if (chapter != null) {
+            entity.chapterTitle = chapter.getTitle();
+            if (chapter.getImages() != null && !chapter.getImages().isEmpty()) {
+                int totalPages = chapter.getImages().size();
+                percent = (int) (((pageIndex + 1) / (float) totalPages) * 100);
+            }
+        } else {
+            entity.chapterTitle = "Chương " + chapterId;
         }
         entity.percent = percent;
 
@@ -326,12 +363,24 @@ public class ReaderViewModel extends ViewModel {
         entity.chapterId = chapterId;
         entity.pageIndex = pageIndex;
         entity.readAt = System.currentTimeMillis();
+        
+        entity.comicTitle = this.cachedComicTitle;
+        entity.coverUrl = this.cachedCoverUrl;
+        entity.slug = this.cachedSlug;
+        entity.comicType = "COMIC";
+        entity.authorName = this.cachedAuthorName;
+        entity.viewCount = this.cachedViewCount;
 
         int percent = 0;
         ChapterEntity chapter = getChapterById(chapterId);
-        if (chapter != null && chapter.getImages() != null && !chapter.getImages().isEmpty()) {
-            int totalPages = chapter.getImages().size();
-            percent = (int) (((pageIndex + 1) / (float) totalPages) * 100);
+        if (chapter != null) {
+            entity.chapterTitle = chapter.getTitle();
+            if (chapter.getImages() != null && !chapter.getImages().isEmpty()) {
+                int totalPages = chapter.getImages().size();
+                percent = (int) (((pageIndex + 1) / (float) totalPages) * 100);
+            }
+        } else {
+            entity.chapterTitle = "Chương " + chapterId;
         }
         entity.percent = percent;
 

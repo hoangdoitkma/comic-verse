@@ -158,7 +158,6 @@ public class NovelFragment extends Fragment {
             
             continueSection.setContinueData(state.getContinueSubtitle(), state.getContinueProgress());
             
-            recentAdapter.submitList(state.getRecentlyRead());
             recommendAdapter.submitList(state.getRecommendations());
             newUpdateAdapter.submitList(state.getNewUpdates());
             hotAdapter.submitList(state.getHotComics());
@@ -167,6 +166,16 @@ public class NovelFragment extends Fragment {
             
             // To force update the ConcatAdapter visibility checks
             binding.recyclerMain.getAdapter().notifyDataSetChanged();
+        });
+
+        // Observe local reading history (from Room DB offline directly)
+        viewModel.recentlyReadCards().observe(getViewLifecycleOwner(), cards -> {
+            if (cards != null) {
+                recentAdapter.submitList(cards);
+                if (binding.recyclerMain.getAdapter() != null) {
+                    binding.recyclerMain.getAdapter().notifyDataSetChanged();
+                }
+            }
         });
     }
 
@@ -178,6 +187,10 @@ public class NovelFragment extends Fragment {
                 return true;
             }
             if (item.getItemId() == R.id.menu_novel) {
+                return true;
+            }
+            if (item.getItemId() == R.id.menu_favorite) {
+                NavHostFragment.findNavController(this).navigate(R.id.favoriteFragment);
                 return true;
             }
             if (item.getItemId() == R.id.menu_more) {

@@ -69,6 +69,14 @@ public class LoginFragment extends Fragment {
             binding.btnLogin.setEnabled(!state.isLoading());
             if (state.isSuccess()) {
                 Toast.makeText(requireContext(), "Login success", Toast.LENGTH_SHORT).show();
+                try {
+                    new ViewModelProvider(requireActivity())
+                            .get(com.example.comicversev1.presentation.home.HomeViewModel.class)
+                            .refresh();
+                    new ViewModelProvider(requireActivity())
+                            .get(com.example.comicversev1.presentation.novel.NovelViewModel.class)
+                            .refresh();
+                } catch (Exception e) {}
                 NavHostFragment.findNavController(this).navigate(com.example.comicversev1.R.id.action_login_to_home);
             }
             if (state.getErrorMessage() != null) {

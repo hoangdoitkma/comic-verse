@@ -40,4 +40,10 @@ public class DatabaseModule {
         return db.comicCacheDao();
     }
 
+    @Provides
+    @Singleton
+    com.example.comicversev1.data.local.dao.FavoriteComicDao provideFavoriteComicDao(AppDatabase db) {
+        return db.favoriteComicDao();
+    }
+
 }

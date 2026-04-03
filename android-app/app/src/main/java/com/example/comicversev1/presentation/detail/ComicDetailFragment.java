@@ -100,7 +100,12 @@ public class ComicDetailFragment extends Fragment implements CommentAdapter.OnCo
         });
 
         binding.btnSubscribe.setOnClickListener(v -> {
-            Toast.makeText(requireContext(), "Đã đăng ký truyện!", Toast.LENGTH_SHORT).show();
+            ComicDetailUiState state = viewModel.uiState().getValue();
+            if (state != null && state.getComic() != null) {
+                // Determine type (COMIC if not containing Novel in ViewModel logic or path)
+                // ComicDetailFragment is typically for COMIC
+                viewModel.toggleFavorite(state.getComic().getTitle(), state.getComic().getCoverImage(), "COMIC");
+            }
         });
 
 
@@ -219,6 +224,18 @@ public class ComicDetailFragment extends Fragment implements CommentAdapter.OnCo
                 } else {
                     Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+
+        viewModel.isFavorite().observe(getViewLifecycleOwner(), isFav -> {
+            if (isFav) {
+                binding.btnSubscribe.setText("Đã lưu");
+                binding.btnSubscribe.setStrokeColorResource(R.color.icon_yellow);
+                binding.btnSubscribe.setTextColor(requireContext().getColor(R.color.icon_yellow));
+            } else {
+                binding.btnSubscribe.setText("Yêu thích");
+                binding.btnSubscribe.setStrokeColorResource(R.color.text_primary);
+                binding.btnSubscribe.setTextColor(requireContext().getColor(R.color.text_primary));
             }
         });
 

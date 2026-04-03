@@ -126,6 +126,11 @@
         android:name="com.example.comicversev1.presentation.notification.NotificationFragment"
         android:label="Thông báo" />
 
+    <fragment
+        android:id="@+id/favoriteFragment"
+        android:name="com.example.comicversev1.presentation.favorite.FavoriteFragment"
+        android:label="Yêu Thích" />
+
     <action android:id="@+id/action_global_notification" app:destination="@id/notificationFragment" />
         
 </navigation>

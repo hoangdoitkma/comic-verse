@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Padding/Margin -->
+    <dimen name="margin_tiny">4dp</dimen>
     <dimen name="margin_small">8dp</dimen>
     <dimen name="margin_medium_small">12dp</dimen>
     <dimen name="margin_medium">16dp</dimen>
     <dimen name="margin_large">20dp</dimen>
     <dimen name="margin_xlarge">24dp</dimen>
     <dimen name="margin_xxlarge">32dp</dimen>
+
+    <!-- Radii and Elevation -->
+    <dimen name="radius_small">6dp</dimen>
+    <dimen name="radius_medium">12dp</dimen>
+    <dimen name="radius_large">16dp</dimen>
+    <dimen name="radius_xlarge">24dp</dimen>
+    <dimen name="card_elevation">4dp</dimen>
 
     <!-- Specific Views -->
     <dimen name="cover_width">200dp</dimen>
@@ -16,8 +24,11 @@
     <dimen name="scroll_padding_bottom">90dp</dimen>
     <dimen name="bottom_bar_height">72dp</dimen>
     <dimen name="btn_height_large">56dp</dimen>
+    <dimen name="icon_size_small">16dp</dimen>
+    <dimen name="icon_size_medium">24dp</dimen>
 
     <!-- Text Sizes -->
+    <dimen name="text_size_tiny">11sp</dimen>
     <dimen name="text_size_small">13sp</dimen>
     <dimen name="text_size_normal">15sp</dimen>
     <dimen name="text_size_medium">16sp</dimen>

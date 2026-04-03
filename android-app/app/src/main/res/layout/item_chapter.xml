@@ -1,24 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="12dp">
+    android:gravity="center_vertical"
+    android:paddingHorizontal="@dimen/margin_medium"
+    android:paddingVertical="@dimen/margin_medium_small"
+    android:background="?attr/selectableItemBackground">
+
+    <ImageView
+        android:layout_width="@dimen/icon_size_small"
+        android:layout_height="@dimen/icon_size_small"
+        android:src="@drawable/baseline_menu_24"
+        app:tint="@color/text_tertiary"
+        android:layout_marginEnd="@dimen/margin_medium_small" />
 
     <TextView
         android:id="@+id/txtChapterTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textSize="16sp" />
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/text_size_normal"
+        android:ellipsize="end"
+        android:maxLines="1"
+        tools:text="Chương 1: Khởi đầu" />
 
     <TextView
         android:id="@+id/txtChapterBadge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/margin_small"
+        android:background="@drawable/bg_rank_badge"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="2dp"
         android:text="VIP"
-        android:textColor="@android:color/holo_red_dark"
-        android:visibility="gone" />
+        android:textColor="@color/icon_yellow"
+        android:textSize="@dimen/text_size_tiny"
+        android:textStyle="bold"
+        android:visibility="gone"
+        tools:visibility="visible" />
 
 </LinearLayout>
-

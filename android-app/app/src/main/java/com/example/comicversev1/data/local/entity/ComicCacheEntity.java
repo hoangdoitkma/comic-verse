@@ -19,6 +19,12 @@ public class ComicCacheEntity {
     @ColumnInfo(name = "cover_image")
     public String coverImage;
 
+    @ColumnInfo(name = "author")
+    public String author;
+
+    @ColumnInfo(name = "view_count")
+    public long viewCount;
+
     @ColumnInfo(name = "updated_at")
     public long updatedAt;
 }

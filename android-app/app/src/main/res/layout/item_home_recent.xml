@@ -140,13 +140,13 @@
             android:paddingBottom="14dp">
 
             <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:src="@android:drawable/btn_star_big_on"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_writer"
                 android:tint="#FF6B6B" />
 
             <TextView
-                android:id="@+id/textLikes"
+                android:id="@+id/textAuthor"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"

@@ -49,8 +49,8 @@ public class RecentAdapter extends RecyclerView.Adapter<RecentAdapter.RecentView
         holder.binding.progressCircle.setProgress(item.getProgress());
         holder.binding.textProgress.setText(item.getProgress() + "%");
 
-        // Format likes/views
-        holder.binding.textLikes.setText(formatCompact(item.getLikes()));
+        // Format author/views
+        holder.binding.textAuthor.setText(item.getAuthorName());
         holder.binding.textViews.setText(formatCompact(item.getViews()));
 
         // Load cover

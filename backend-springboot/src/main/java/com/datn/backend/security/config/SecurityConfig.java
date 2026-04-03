@@ -84,7 +84,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/comics/reading-history-info").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/payment/webhook").permitAll()
                         .requestMatchers("/api/reading-history/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/data/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/data/**").permitAll()
                         .requestMatchers("/api/uploader/**").hasAnyRole("UPLOADER", "ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated());

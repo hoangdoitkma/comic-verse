@@ -1,5 +1,8 @@
 package com.example.comicversev1.presentation.detail;
 
+import com.example.comicversev1.data.local.dao.FavoriteComicDao;
+import com.example.comicversev1.data.local.entity.FavoriteComicEntity;
+
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
@@ -42,22 +45,65 @@ public class ComicDetailViewModel extends ViewModel {
     private final MutableLiveData<ReadingHistoryEntity> _savedProgress = new MutableLiveData<>(null);
     public LiveData<ReadingHistoryEntity> savedProgress() { return _savedProgress; }
 
+    private final MutableLiveData<Boolean> _isFavorite = new MutableLiveData<>(false);
+    public LiveData<Boolean> isFavorite() { return _isFavorite; }
+
+    private final FavoriteComicDao favoriteComicDao;
+
     @Inject
     public ComicDetailViewModel(GetComicDetailUseCase getComicDetailUseCase,
                                 GetChaptersUseCase getChaptersUseCase,
                                 ReadingHistoryDao readingHistoryDao,
                                 ComicCacheDao comicCacheDao,
+                                FavoriteComicDao favoriteComicDao,
                                 SavedStateHandle savedStateHandle) {
         this.getComicDetailUseCase = getComicDetailUseCase;
         this.getChaptersUseCase = getChaptersUseCase;
         this.readingHistoryDao = readingHistoryDao;
         this.comicCacheDao = comicCacheDao;
+        this.favoriteComicDao = favoriteComicDao;
         this.slug = savedStateHandle.get("slug");
         
         Integer cId = savedStateHandle.get("comicId");
         this.comicId = cId != null ? cId : 0;
         
         loadData();
+        checkFavoriteStatus();
+    }
+
+
+    private void checkFavoriteStatus() {
+        disposables.add(
+                favoriteComicDao.checkIsFavorite(slug)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(isFav -> _isFavorite.setValue(isFav),
+                                throwable -> Log.e("ComicDetailVM", "Lỗi check favorite", throwable))
+        );
+    }
+
+    public void toggleFavorite(String title, String coverUrl, String type) {
+        Boolean current = _isFavorite.getValue();
+        if (current != null && current) {
+            // Remove
+            disposables.add(
+                    favoriteComicDao.deleteFavoriteBySlug(slug)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(() -> _isFavorite.setValue(false),
+                                    throwable -> Log.e("ComicDetailVM", "Lỗi xóa favorite", throwable))
+            );
+        } else {
+            // Add
+            FavoriteComicEntity entity = new FavoriteComicEntity(slug, title, coverUrl, type, System.currentTimeMillis());
+            disposables.add(
+                    favoriteComicDao.insertOrUpdate(entity)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(() -> _isFavorite.setValue(true),
+                                    throwable -> Log.e("ComicDetailVM", "Lỗi thêm favorite", throwable))
+            );
+        }
     }
 
     private void loadData() {

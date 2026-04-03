@@ -34,13 +34,14 @@ public class HomeRepositoryImpl implements HomeRepository {
         return dtos.stream().map(dto -> new HomeContent.ComicCard(
                 dto.getSlug() != null ? dto.getSlug() : "",
                 dto.getTitle() != null ? dto.getTitle() : "",
-                "Chương " + dto.getTotalChapters(),
+                dto.getTotalChapters() > 0 ? "Chương " + dto.getTotalChapters() : "Đang cập nhật",
                 dto.getCoverImage(),
                 0, // fallback likes
                 dto.getViewCount(),
                 0, // fallback progress
                 "", // fallback timeLabel
-                dto.getAccessType() != null ? dto.getAccessType() : "FREE"
+                dto.getAccessType() != null ? dto.getAccessType() : "FREE",
+                "" // fallback authorName
         )).collect(java.util.stream.Collectors.toList());
     }
 

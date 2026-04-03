@@ -21,7 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.comicversev1.R;
-import com.example.comicversev1.databinding.FragmentNovelDetailBinding;
+import com.example.comicversev1.databinding.FragmentComicDetailBinding;
 import com.example.comicversev1.domain.entity.ChapterItem;
 import com.example.comicversev1.domain.entity.ComicDetailEntity;
 import com.example.comicversev1.presentation.home.ShelfAdapter;
@@ -41,7 +41,7 @@ import com.example.comicversev1.presentation.comments.CommentViewModel;
 @AndroidEntryPoint
 public class NovelDetailFragment extends Fragment implements CommentAdapter.OnCommentInteractionListener {
 
-    private FragmentNovelDetailBinding binding;
+    private FragmentComicDetailBinding binding;
     private ComicDetailViewModel viewModel;
     
     private NovelDetailFragmentArgs args;
@@ -62,7 +62,7 @@ public class NovelDetailFragment extends Fragment implements CommentAdapter.OnCo
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        binding = FragmentNovelDetailBinding.inflate(inflater, container, false);
+        binding = FragmentComicDetailBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
 
@@ -94,7 +94,10 @@ public class NovelDetailFragment extends Fragment implements CommentAdapter.OnCo
         });
 
         binding.btnSubscribe.setOnClickListener(v -> {
-            Toast.makeText(requireContext(), "Đã đăng ký truyện!", Toast.LENGTH_SHORT).show();
+            ComicDetailUiState state = viewModel.uiState().getValue();
+            if (state != null && state.getComic() != null) {
+                viewModel.toggleFavorite(state.getComic().getTitle(), state.getComic().getCoverImage(), "NOVEL");
+            }
         });
 
 
@@ -208,6 +211,18 @@ public class NovelDetailFragment extends Fragment implements CommentAdapter.OnCo
 
             if (state.getError() != null) {
                 Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        viewModel.isFavorite().observe(getViewLifecycleOwner(), isFav -> {
+            if (isFav) {
+                binding.btnSubscribe.setText("Đã lưu");
+                binding.btnSubscribe.setStrokeColorResource(R.color.icon_yellow);
+                binding.btnSubscribe.setTextColor(requireContext().getColor(R.color.icon_yellow));
+            } else {
+                binding.btnSubscribe.setText("Yêu thích");
+                binding.btnSubscribe.setStrokeColorResource(R.color.text_primary);
+                binding.btnSubscribe.setTextColor(requireContext().getColor(R.color.text_primary));
             }
         });
 
