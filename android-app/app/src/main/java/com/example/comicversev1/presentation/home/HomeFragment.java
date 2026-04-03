@@ -65,8 +65,16 @@ public class HomeFragment extends Fragment {
         heroAdapter = new HomeHeroAdapter();
         quickActionAdapter = new HomeQuickActionAdapter();
         quickActionAdapter.setOnItemClickListener(action -> {
-            if ("vip".equals(action.getId())) {
-                NavHostFragment.findNavController(this).navigate(R.id.action_global_vipCenter);
+            try {
+                if ("vip".equals(action.getId()) || "remove_ads".equals(action.getId())) {
+                    androidx.navigation.Navigation.findNavController(requireView()).navigate(R.id.action_global_vipCenter);
+                } else if ("history".equals(action.getId())) {
+                    // Tạm thời chưa có Fragment History độc lập, chuyển hướng tạm sang Profile hoặc Toast
+                    android.widget.Toast.makeText(requireContext(), "Tính năng Lịch sử đang được cập nhật thêm!", android.widget.Toast.LENGTH_SHORT).show();
+                    // androidx.navigation.Navigation.findNavController(requireView()).navigate(R.id.profileFragment);
+                }
+            } catch (Exception e) {
+                android.widget.Toast.makeText(requireContext(), "Không thể mở: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
             }
         });
         recentAdapter = new RecentAdapter();
@@ -226,7 +234,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
+        viewModel = new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
         setupRecyclerView();
         setupBottomNav();
         setupNotificationBell();

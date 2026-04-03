@@ -9,6 +9,10 @@ import com.datn.backend.repository.AuthorRepository;
 import com.datn.backend.repository.ComicRepository;
 import com.datn.backend.repository.UserRepository;
 import com.datn.backend.service.ComicService;
+import com.datn.backend.entity.Genre;
+import com.datn.backend.entity.ComicGenre;
+import com.datn.backend.dto.response.GenreResponse;
+import com.datn.backend.repository.GenreRepository;
 import com.datn.backend.service.S3Service;
 import com.datn.backend.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +46,9 @@ public class ComicServiceImpl implements ComicService {
     @Autowired
     private com.datn.backend.service.NotificationService notificationService;
 
+    @Autowired
+    private GenreRepository genreRepository;
+
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
@@ -68,11 +75,22 @@ public class ComicServiceImpl implements ComicService {
         response.setComicFormat(comic.getComicFormat() != null ? comic.getComicFormat().name() : null);
         response.setAccessType(comic.getAccessType() != null ? comic.getAccessType().name() : "FREE");
         response.setStatus(comic.getStatus() != null ? comic.getStatus().name() : null);
+        response.setPublishStatus(comic.getPublishStatus() != null ? comic.getPublishStatus().name() : null);
+        response.setOriginCountry(comic.getOriginCountry() != null ? comic.getOriginCountry().name() : null);
         response.setTotalChapters(comic.getTotalChapters());
         response.setViewCount(comic.getViewCount());
         response.setIsDeleted(comic.getIsDeleted() != null ? comic.getIsDeleted() : false);
         response.setCreatedAt(comic.getCreatedAt());
         response.setUpdatedAt(comic.getUpdatedAt());
+        
+        List<GenreResponse> genreResponses = comic.getComicGenres() != null ? 
+            comic.getComicGenres().stream().map(cg -> GenreResponse.builder()
+                .id(cg.getGenre().getId())
+                .name(cg.getGenre().getName())
+                .description(cg.getGenre().getDescription())
+                .build()).collect(Collectors.toList()) : null;
+        response.setGenres(genreResponses);
+        
         return response;
     }
 
@@ -85,6 +103,11 @@ public class ComicServiceImpl implements ComicService {
                 ? request.getSlug().trim()
                 : request.getTitle().replaceAll("[^a-zA-Z0-9\\-\\s]", "").replaceAll("\\s+", "-").toLowerCase();
         String thumbnailUrl = s3Service.uploadFile(thumbnail, "comics/" + folderName + "/cover");
+        com.datn.backend.entity.enums.ComicFormat format = request.getComicFormat();
+        if (request.getContentType() == com.datn.backend.entity.enums.ContentType.NOVEL) {
+            format = null;
+        }
+
         Comic comic = Comic.builder()
                 .title(request.getTitle())
                 .slug(folderName)
@@ -99,12 +122,24 @@ public class ComicServiceImpl implements ComicService {
                                 .orElseThrow(() -> new ResourceNotFoundException("AgeRating", "id", request.getAgeRatingId()))
                         : null)
                 .contentType(request.getContentType())
-                .comicFormat(request.getComicFormat())
+                .comicFormat(format)
+                .publishStatus(request.getPublishStatus())
+                .originCountry(request.getOriginCountry())
                 .accessType(request.getAccessType() != null ? request.getAccessType() : com.datn.backend.entity.enums.AccessType.FREE)
                 .status(com.datn.backend.entity.enums.ComicStatus.ONGOING)
                 .createdBy(uploader)
                 .build();
         Comic saved = comicRepository.save(comic);
+
+        if (request.getGenreIds() != null && !request.getGenreIds().isEmpty()) {
+            List<Genre> genres = genreRepository.findAllById(request.getGenreIds());
+            List<ComicGenre> comicGenres = genres.stream()
+                .map(g -> ComicGenre.builder().comic(saved).genre(g).build())
+                .collect(Collectors.toList());
+            saved.getComicGenres().addAll(comicGenres);
+            comicRepository.save(saved);
+        }
+
         notifyAdmins(saved, uploader);
         return mapToResponse(saved);
     }
@@ -125,10 +160,30 @@ public class ComicServiceImpl implements ComicService {
         comic.setTitle(request.getTitle());
         comic.setSynopsis(request.getSynopsis());
         comic.setContentType(request.getContentType());
-        comic.setComicFormat(request.getComicFormat());
+        
+        com.datn.backend.entity.enums.ComicFormat format = request.getComicFormat();
+        if (request.getContentType() == com.datn.backend.entity.enums.ContentType.NOVEL) {
+            format = null;
+        }
+        comic.setComicFormat(format);
+        comic.setPublishStatus(request.getPublishStatus());
+        comic.setOriginCountry(request.getOriginCountry());
+
         if (request.getAccessType() != null) {
             comic.setAccessType(request.getAccessType());
         }
+
+        if (request.getGenreIds() != null) {
+            comic.getComicGenres().clear();
+            if (!request.getGenreIds().isEmpty()) {
+                List<Genre> genres = genreRepository.findAllById(request.getGenreIds());
+                List<ComicGenre> newComicGenres = genres.stream()
+                    .map(g -> ComicGenre.builder().comic(comic).genre(g).build())
+                    .collect(Collectors.toList());
+                comic.getComicGenres().addAll(newComicGenres);
+            }
+        }
+        
         // other fields can be updated as needed
         Comic updated = comicRepository.save(comic);
         return mapToResponse(updated);

@@ -20,6 +20,15 @@ const comicService = {
   },
 
   /**
+   * Lấy danh sách thể loại
+   * GET /api/data/genres
+   */
+  getGenres: async () => {
+    const response = await axiosClient.get('/data/genres');
+    return response.data;
+  },
+
+  /**
    * Tạo truyện mới (multipart/form-data)
    * POST /api/uploader/comics
    * @param {FormData} formData - Bao gồm: title, synopsis, authorId, ageRatingId, contentType, comicFormat, thumbnail (File)

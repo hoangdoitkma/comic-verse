@@ -43,7 +43,8 @@ public class ProfileFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         binding = FragmentProfileBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -81,20 +82,21 @@ public class ProfileFragment extends Fragment {
         // Contact & Support: Email
         binding.rowEmail.textTitle.setText("Gửi mail đến hỗ trợ");
         binding.rowEmail.icon.setImageResource(android.R.drawable.ic_dialog_email);
-        binding.rowEmail.getRoot().setOnClickListener(v -> openEmail("comicfan.official@gmail.com"));
+        binding.rowEmail.getRoot().setOnClickListener(v -> openEmail("hoangdoitkma@gmail.com"));
 
         // Contact & Support: Facebook
         binding.rowFacebook.textTitle.setText("Fanpage Facebook");
         binding.rowFacebook.icon.setImageResource(android.R.drawable.ic_menu_share);
-        binding.rowFacebook.getRoot().setOnClickListener(v -> openUrl("https://facebook.com"));
+        binding.rowFacebook.getRoot().setOnClickListener(v -> openUrl("https://facebook.com/duchoang3m"));
 
         // Contact & Support: Website
         binding.rowWebsite.textTitle.setText("Trang web chính thức");
         binding.rowWebsite.icon.setImageResource(android.R.drawable.ic_menu_info_details);
-        binding.rowWebsite.getRoot().setOnClickListener(v -> openUrl("https://mottruyenfan.com"));
+        binding.rowWebsite.getRoot().setOnClickListener(v -> openUrl("https://facebook.com/duchoang3m"));
 
         // Profile / Login logic
-        android.content.SharedPreferences prefs = requireActivity().getSharedPreferences(com.example.comicversev1.utils.Constants.PREF_AUTH, android.content.Context.MODE_PRIVATE);
+        android.content.SharedPreferences prefs = requireActivity().getSharedPreferences(
+                com.example.comicversev1.utils.Constants.PREF_AUTH, android.content.Context.MODE_PRIVATE);
         String token = prefs.getString(com.example.comicversev1.utils.Constants.KEY_ACCESS_TOKEN, "");
         String name = prefs.getString(com.example.comicversev1.utils.Constants.KEY_DISPLAY_NAME, "Người dùng ẩn danh");
 
@@ -106,16 +108,17 @@ public class ProfileFragment extends Fragment {
                         .setMessage("Bạn có chắc chắn muốn đăng xuất không?")
                         .setPositiveButton("Đăng xuất", (dialog, which) -> {
                             prefs.edit()
-                                .remove(com.example.comicversev1.utils.Constants.KEY_ACCESS_TOKEN)
-                                .remove(com.example.comicversev1.utils.Constants.KEY_REFRESH_TOKEN)
-                                .remove(com.example.comicversev1.utils.Constants.KEY_DISPLAY_NAME)
-                                .remove(com.example.comicversev1.utils.Constants.KEY_EMAIL)
-                                .apply();
+                                    .remove(com.example.comicversev1.utils.Constants.KEY_ACCESS_TOKEN)
+                                    .remove(com.example.comicversev1.utils.Constants.KEY_REFRESH_TOKEN)
+                                    .remove(com.example.comicversev1.utils.Constants.KEY_DISPLAY_NAME)
+                                    .remove(com.example.comicversev1.utils.Constants.KEY_EMAIL)
+                                    .apply();
                             Toast.makeText(requireContext(), "Đã đăng xuất", Toast.LENGTH_SHORT).show();
                             // Refresh logic by navigating again to the same fragment
-                            NavHostFragment.findNavController(this).navigate(R.id.profileFragment, null, new androidx.navigation.NavOptions.Builder()
-                                    .setPopUpTo(R.id.profileFragment, true)
-                                    .build());
+                            NavHostFragment.findNavController(this).navigate(R.id.profileFragment, null,
+                                    new androidx.navigation.NavOptions.Builder()
+                                            .setPopUpTo(R.id.profileFragment, true)
+                                            .build());
                         })
                         .setNegativeButton("Hủy", null)
                         .show();
@@ -132,41 +135,42 @@ public class ProfileFragment extends Fragment {
 
     private void fetchUserProfile() {
         disposable.add(
-            apiService.getUserProfile()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(response -> {
-                    if (response.isSuccess() && response.getData() != null) {
-                        com.example.comicversev1.data.model.UserProfileDTO profile = response.getData();
-                        binding.textProfileName.setText(profile.displayName);
-                        if (profile.vip) {
-                            binding.textVipStatus.setVisibility(View.VISIBLE);
-                            binding.textVipStatus.setTextColor(android.graphics.Color.parseColor("#FFD700"));
-                            if (profile.vipEndDate != null && !profile.vipEndDate.isEmpty()) {
-                                try {
-                                    LocalDateTime endDate = LocalDateTime.parse(profile.vipEndDate);
-                                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-                                    binding.textVipStatus.setText("Thành viên VIP - Hạn sử dụng: " + endDate.format(formatter));
-                                } catch (Exception e) {
-                                    binding.textVipStatus.setText("Thành viên VIP");
+                apiService.getUserProfile()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(response -> {
+                            if (response.isSuccess() && response.getData() != null) {
+                                com.example.comicversev1.data.model.UserProfileDTO profile = response.getData();
+                                binding.textProfileName.setText(profile.displayName);
+                                if (profile.vip) {
+                                    binding.textVipStatus.setVisibility(View.VISIBLE);
+                                    binding.textVipStatus.setTextColor(android.graphics.Color.parseColor("#FFD700"));
+                                    if (profile.vipEndDate != null && !profile.vipEndDate.isEmpty()) {
+                                        try {
+                                            LocalDateTime endDate = LocalDateTime.parse(profile.vipEndDate);
+                                            DateTimeFormatter formatter = DateTimeFormatter
+                                                    .ofPattern("dd/MM/yyyy HH:mm");
+                                            binding.textVipStatus.setText(
+                                                    "Thành viên VIP - Hạn sử dụng: " + endDate.format(formatter));
+                                        } catch (Exception e) {
+                                            binding.textVipStatus.setText("Thành viên VIP");
+                                        }
+                                    } else {
+                                        binding.textVipStatus.setText("Thành viên VIP Trọn đời");
+                                    }
+                                } else {
+                                    binding.textVipStatus.setVisibility(View.VISIBLE);
+                                    binding.textVipStatus.setTextColor(android.graphics.Color.parseColor("#B3B3B3"));
+                                    binding.textVipStatus.setText("Thành viên Thường");
                                 }
-                            } else {
-                                binding.textVipStatus.setText("Thành viên VIP Trọn đời");
                             }
-                        } else {
+                        }, error -> {
+                            Log.e("ProfileFragment", "Error fetching profile", error);
+                            // Có thể mạng lỗi, vẫn hiển thị status thường cho đỡ trống
                             binding.textVipStatus.setVisibility(View.VISIBLE);
                             binding.textVipStatus.setTextColor(android.graphics.Color.parseColor("#B3B3B3"));
                             binding.textVipStatus.setText("Thành viên Thường");
-                        }
-                    }
-                }, error -> {
-                    Log.e("ProfileFragment", "Error fetching profile", error);
-                    // Có thể mạng lỗi, vẫn hiển thị status thường cho đỡ trống
-                    binding.textVipStatus.setVisibility(View.VISIBLE);
-                    binding.textVipStatus.setTextColor(android.graphics.Color.parseColor("#B3B3B3"));
-                    binding.textVipStatus.setText("Thành viên Thường");
-                })
-        );
+                        }));
     }
 
     private void setupBottomNav() {

@@ -13,7 +13,10 @@ import {
   Unlock,
   Upload,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Tag,
+  Globe,
+  Clock
 } from 'lucide-react';
 import React from 'react';
 import comicService from '../../services/comicService';
@@ -50,6 +53,32 @@ function AccessBadge({ type }) {
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400">
       <Unlock size={10} /> Free
+    </span>
+  );
+}
+
+function PublishBadge({ status }) {
+  const label = status === 'ONGOING' ? 'Đang ra' :
+                status === 'COMPLETED' ? 'Hoàn thành' :
+                status === 'HIATUS' ? 'Tạm ngưng' :
+                status === 'DROPPED' ? 'Hủy bỏ' : status;
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">
+      <Clock size={12} />
+      {label}
+    </span>
+  );
+}
+
+function OriginBadge({ origin }) {
+  const label = origin === 'KOREA' ? 'Manhwa' :
+                origin === 'JAPAN' ? 'Manga' :
+                origin === 'CHINA' ? 'Manhua' :
+                origin === 'VIETNAM' ? 'Việt Nam' :
+                origin === 'GLOBAL' ? 'Global' : origin;
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-fuchsia-500/15 text-fuchsia-400 border border-fuchsia-500/20">
+      <Globe size={12} />{label}
     </span>
   );
 }
@@ -214,15 +243,29 @@ export default function ComicDetailPage() {
               <div className="flex items-center gap-3 flex-wrap">
                 <StatusBadge status={comic.status} />
                 <AccessBadge type={comic.accessType} />
+                {comic.publishStatus && <PublishBadge status={comic.publishStatus} />}
+                {comic.originCountry && <OriginBadge origin={comic.originCountry} />}
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/15 text-blue-400">
                   <FileText size={12} />
                   {comic.contentType || '—'}
                 </span>
+                {comic.contentType !== 'NOVEL' && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-violet-500/15 text-violet-400">
                   <Palette size={12} />
                   {comic.comicFormat || '—'}
                 </span>
+                )}
               </div>
+
+              {comic.genres && comic.genres.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-1 -ml-1">
+                  {comic.genres.map(g => (
+                    <span key={g.id} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-dark-800 text-dark-300 border border-dark-700">
+                      <Tag size={10} className="text-primary-500" /> {g.name}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {comic.synopsis && (
                 <p className="text-sm text-dark-400 leading-relaxed line-clamp-3">

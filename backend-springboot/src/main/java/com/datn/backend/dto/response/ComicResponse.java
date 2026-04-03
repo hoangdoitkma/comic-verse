@@ -1,6 +1,7 @@
 package com.datn.backend.dto.response;
 
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class ComicResponse {
@@ -16,6 +17,9 @@ public class ComicResponse {
     private Integer totalChapters;
     private Integer viewCount;
     private Boolean isDeleted;
+    private String publishStatus;
+    private String originCountry;
+    private List<GenreResponse> genres;
     private java.time.LocalDateTime createdAt;
     private java.time.LocalDateTime updatedAt;
 }

@@ -31,6 +31,9 @@ export default function CreateComicModal({ isOpen, onClose, onSuccess }) {
     accessType: 'FREE',
     authorId: '',
     ageRatingId: '',
+    publishStatus: 'ONGOING',
+    originCountry: 'KOREA',
+    genreIds: [],
   });
   const [slugEdited, setSlugEdited] = useState(false);
   const [thumbnail, setThumbnail] = useState(null);
@@ -39,12 +42,15 @@ export default function CreateComicModal({ isOpen, onClose, onSuccess }) {
   const [error, setError] = useState('');
   const [authors, setAuthors] = useState([]);
   const [loadingAuthors, setLoadingAuthors] = useState(false);
+  const [genres, setGenres] = useState([]);
+  const [loadingGenres, setLoadingGenres] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Fetch authors when modal opens
+  // Fetch authors and genres when modal opens
   useEffect(() => {
     if (isOpen) {
       fetchAuthors();
+      fetchGenres();
     }
   }, [isOpen]);
 
@@ -61,6 +67,19 @@ export default function CreateComicModal({ isOpen, onClose, onSuccess }) {
     }
   };
 
+  const fetchGenres = async () => {
+    try {
+      setLoadingGenres(true);
+      const data = await comicService.getGenres();
+      setGenres(data || []);
+    } catch (err) {
+      console.error('Lỗi khi tải danh sách thể loại:', err);
+      setGenres([]);
+    } finally {
+      setLoadingGenres(false);
+    }
+  };
+
   // Auto-generate slug khi title thay đổi (nếu user chưa tự sửa slug)
   useEffect(() => {
     if (!slugEdited && formData.title) {
@@ -70,7 +89,23 @@ export default function CreateComicModal({ isOpen, onClose, onSuccess }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+      if (name === 'contentType' && value === 'NOVEL') {
+        newData.comicFormat = ''; // Xóa comicFormat nếu chọn C.Thuyết
+      }
+      return newData;
+    });
+  };
+
+  const handleGenreToggle = (genreId) => {
+    setFormData((prev) => {
+      const currentIds = prev.genreIds || [];
+      const newIds = currentIds.includes(genreId)
+        ? currentIds.filter((id) => id !== genreId)
+        : [...currentIds, genreId];
+      return { ...prev, genreIds: newIds };
+    });
   };
 
   const handleSlugChange = (e) => {
@@ -95,7 +130,11 @@ export default function CreateComicModal({ isOpen, onClose, onSuccess }) {
   };
 
   const resetForm = () => {
-    setFormData({ title: '', slug: '', synopsis: '', contentType: 'COMIC', comicFormat: 'COLOR', accessType: 'FREE', authorId: '', ageRatingId: '' });
+    setFormData({ 
+      title: '', slug: '', synopsis: '', contentType: 'COMIC', 
+      comicFormat: 'COLOR', accessType: 'FREE', authorId: '', ageRatingId: '',
+      publishStatus: 'ONGOING', originCountry: 'KOREA', genreIds: [] 
+    });
     setSlugEdited(false);
     removeThumbnail();
     setError('');
@@ -121,8 +160,15 @@ export default function CreateComicModal({ isOpen, onClose, onSuccess }) {
       data.append('slug', formData.slug.trim());
       if (formData.synopsis.trim()) data.append('synopsis', formData.synopsis.trim());
       data.append('contentType', formData.contentType);
-      data.append('comicFormat', formData.comicFormat);
+      if (formData.contentType !== 'NOVEL' && formData.comicFormat) {
+          data.append('comicFormat', formData.comicFormat);
+      }
       data.append('accessType', formData.accessType);
+      data.append('publishStatus', formData.publishStatus);
+      data.append('originCountry', formData.originCountry);
+      if (formData.genreIds && formData.genreIds.length > 0) {
+        formData.genreIds.forEach(id => data.append('genreIds', id));
+      }
       if (formData.authorId) data.append('authorId', formData.authorId);
       if (formData.ageRatingId) data.append('ageRatingId', formData.ageRatingId);
       if (thumbnail) data.append('thumbnail', thumbnail);
@@ -227,6 +273,7 @@ export default function CreateComicModal({ isOpen, onClose, onSuccess }) {
               </select>
             </div>
 
+            {formData.contentType !== 'NOVEL' && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-dark-300 flex items-center gap-2">
                 <Palette size={14} />
@@ -240,6 +287,46 @@ export default function CreateComicModal({ isOpen, onClose, onSuccess }) {
               >
                 <option value="COLOR">Màu (Color)</option>
                 <option value="BLACK_WHITE">Đen trắng (B&W)</option>
+              </select>
+            </div>
+            )}
+          </div>
+
+          {/* Row: Status + Origin */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-dark-300 flex items-center gap-2">
+                <FileText size={14} />
+                Tiến độ xuất bản
+              </label>
+              <select
+                name="publishStatus"
+                value={formData.publishStatus}
+                onChange={handleChange}
+                className="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-700/50 text-sm text-dark-200 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 transition-all cursor-pointer"
+              >
+                <option value="ONGOING">Đang tiến hành (Ongoing)</option>
+                <option value="COMPLETED">Đã hoàn thành (Completed)</option>
+                <option value="HIATUS">Tạm ngưng (Hiatus)</option>
+                <option value="DROPPED">Hủy bỏ (Dropped)</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-dark-300 flex items-center gap-2">
+                <LinkIcon size={14} />
+                Quốc gia Origin
+              </label>
+              <select
+                name="originCountry"
+                value={formData.originCountry}
+                onChange={handleChange}
+                className="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-700/50 text-sm text-dark-200 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 transition-all cursor-pointer"
+              >
+                <option value="KOREA">Hàn Quốc (Manhwa)</option>
+                <option value="JAPAN">Nhật Bản (Manga)</option>
+                <option value="CHINA">Trung Quốc (Manhua)</option>
+                <option value="VIETNAM">Việt Nam</option>
+                <option value="GLOBAL">Quốc tế (Global)</option>
               </select>
             </div>
           </div>
@@ -303,6 +390,32 @@ export default function CreateComicModal({ isOpen, onClose, onSuccess }) {
                 className="w-full px-4 py-2.5 rounded-xl bg-dark-800 border border-dark-700/50 text-sm text-dark-200 placeholder:text-dark-500 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 transition-all"
               />
             </div>
+          </div>
+
+          {/* Genres Multiselect */}
+          <div className="space-y-2 border border-dark-700/50 p-4 rounded-xl bg-dark-800/50">
+            <label className="text-sm font-medium text-dark-300 flex items-center gap-2 mb-2">
+              <Tag size={14} />
+              Thể loại (Genres)
+            </label>
+            {loadingGenres ? (
+              <p className="text-sm text-dark-500">Đang tải danh sách thể loại...</p>
+            ) : (
+              <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar p-1">
+                {genres.map(g => (
+                  <label key={g.id} className="inline-flex items-center gap-2 bg-dark-800 border border-dark-700 hover:border-primary-500/40 px-3 py-1.5 rounded-lg cursor-pointer transition-colors">
+                    <input 
+                      type="checkbox" 
+                      className="accent-primary-500 w-4 h-4 cursor-pointer"
+                      checked={formData.genreIds.includes(g.id)}
+                      onChange={() => handleGenreToggle(g.id)}
+                    />
+                    <span className="text-sm text-dark-200 select-none">{g.name}</span>
+                  </label>
+                ))}
+                {genres.length === 0 && <p className="text-sm text-dark-500">Chưa có thể loại nào.</p>}
+              </div>
+            )}
           </div>
 
           {/* Thumbnail Upload */}

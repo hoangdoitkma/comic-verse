@@ -55,31 +55,53 @@ public class HomeRepositoryImpl implements HomeRepository {
     }
 
     private Single<HomeContent> fetchContent(String type) {
-        return apiService.getHomeContent(type)
-            .map(response -> {
-                HomeDataResponse data = response.getData();
-                if (data == null) data = new HomeDataResponse();
-                
-                String name = prefs.getString(Constants.KEY_DISPLAY_NAME, "");
-                String greeting = name.isEmpty() ? "Hi, Khách!" : "Hi, " + name + "!";
+        String token = prefs.getString(Constants.KEY_ACCESS_TOKEN, "");
 
-                return new HomeContent(
-                        greeting,
-                        "Chào mừng trở lại ✨",
-                        Collections.emptyList(),
-                        "COMIC".equals(type) ? Arrays.asList(
-                            new HomeContent.QuickAction("vip", "Trung tâm VIP", "Ưu đãi hội viên", R.drawable.ic_vip),
-                            new HomeContent.QuickAction("remove_ads", "Xoá quảng cáo", "Tăng tốc đọc", R.drawable.ic_remove_ads),
-                            new HomeContent.QuickAction("history", "Lịch sử", "Tiếp tục đọc", R.drawable.ic_history)
-                        ) : Collections.emptyList(),
-                        null,
-                        mapToCards(data.recentlyUpdated),
-                        mapToCards(data.recommended),
-                        mapToCards(data.recentlyUpdated),
-                        mapToCards(data.topTrending),
-                        Collections.emptyList(),
-                        mapToCards(data.newComics)
-                );
-            });
+        Single<HomeDataResponse> homeDataSingle = apiService.getHomeContent(type)
+                .map(response -> {
+                    if (response.getData() != null) return response.getData();
+                    return new HomeDataResponse();
+                });
+
+        if (token.isEmpty()) {
+            return homeDataSingle.map(data -> buildHomeContent(data, type));
+        } else {
+            return homeDataSingle.flatMap(data -> 
+                apiService.getUserProfile()
+                    .map(profileRes -> {
+                        if (profileRes.isSuccess() && profileRes.getData() != null) {
+                            String displayName = profileRes.getData().displayName;
+                            if (displayName != null && !displayName.isEmpty()) {
+                                prefs.edit().putString(Constants.KEY_DISPLAY_NAME, displayName).apply();
+                            }
+                        }
+                        return buildHomeContent(data, type);
+                    })
+                    .onErrorReturnItem(buildHomeContent(data, type))
+            );
+        }
+    }
+
+    private HomeContent buildHomeContent(HomeDataResponse data, String type) {
+        String name = prefs.getString(Constants.KEY_DISPLAY_NAME, "");
+        String greeting = name.isEmpty() ? "Hi, Khách!" : "Hi, " + name + "!";
+
+        return new HomeContent(
+                greeting,
+                "Chào mừng trở lại ✨",
+                Collections.emptyList(),
+                "COMIC".equals(type) ? Arrays.asList(
+                    new HomeContent.QuickAction("vip", "Mua gói VIP", "Ưu đãi hội viên", R.drawable.ic_vip),
+                    new HomeContent.QuickAction("remove_ads", "Xoá QC", "Tăng tốc đọc", R.drawable.ic_remove_ads),
+                    new HomeContent.QuickAction("history", "Lịch sử", "Tiếp tục đọc", R.drawable.ic_history)
+                ) : Collections.emptyList(),
+                null,
+                mapToCards(data.recentlyUpdated),
+                mapToCards(data.recommended),
+                mapToCards(data.recentlyUpdated),
+                mapToCards(data.topTrending),
+                Collections.emptyList(),
+                mapToCards(data.newComics)
+        );
     }
 }

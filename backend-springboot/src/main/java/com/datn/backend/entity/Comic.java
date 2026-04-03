@@ -4,6 +4,8 @@ import com.datn.backend.entity.enums.AccessType;
 import com.datn.backend.entity.enums.ComicFormat;
 import com.datn.backend.entity.enums.ComicStatus;
 import com.datn.backend.entity.enums.ContentType;
+import com.datn.backend.entity.enums.PublishStatus;
+import com.datn.backend.entity.enums.OriginCountry;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -62,6 +64,14 @@ public class Comic {
     @Column(length = 30)
     private ComicStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "publish_status", length = 30)
+    private PublishStatus publishStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "origin_country", length = 50)
+    private OriginCountry originCountry;
+
     @Column(name = "total_chapters")
     private Integer totalChapters;
 
@@ -78,6 +88,10 @@ public class Comic {
     @OneToMany(mappedBy = "comic", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Chapter> chapters = new ArrayList<>();
+
+    @OneToMany(mappedBy = "comic", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ComicGenre> comicGenres = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

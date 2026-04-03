@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ComicVerseV1</string>
+    <string name="app_name">ComicVerse</string>
     <string name="action_subscribe">Đăng ký</string>
     <string name="action_report">Báo cáo</string>
     <string name="action_start_reading">Tiếp tục đọc</string>

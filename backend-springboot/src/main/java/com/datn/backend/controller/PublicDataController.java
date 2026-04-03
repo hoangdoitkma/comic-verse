@@ -23,6 +23,11 @@ public class PublicDataController {
         return ApiResponse.success(adminDataService.getAllAuthors());
     }
 
+    @GetMapping("/genres")
+    public ApiResponse<List<com.datn.backend.dto.response.GenreResponse>> getAllGenres() {
+        return ApiResponse.success(adminDataService.getAllGenres());
+    }
+
     @GetMapping("/vip-packages")
     public ApiResponse<List<com.datn.backend.dto.response.VipPackageResponse>> getActiveVipPackages() {
         return ApiResponse.success(adminDataService.getActiveVipPackages());
