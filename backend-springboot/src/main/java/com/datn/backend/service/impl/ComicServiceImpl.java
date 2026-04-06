@@ -83,6 +83,13 @@ public class ComicServiceImpl implements ComicService {
         response.setCreatedAt(comic.getCreatedAt());
         response.setUpdatedAt(comic.getUpdatedAt());
         
+        if (comic.getAuthor() != null) {
+            response.setAuthorId(comic.getAuthor().getId());
+        }
+        if (comic.getAgeRating() != null) {
+            response.setAgeRatingId(comic.getAgeRating().getId());
+        }
+        
         List<GenreResponse> genreResponses = comic.getComicGenres() != null ? 
             comic.getComicGenres().stream().map(cg -> GenreResponse.builder()
                 .id(cg.getGenre().getId())
@@ -154,9 +161,10 @@ public class ComicServiceImpl implements ComicService {
 
     @Override
     @Transactional
-    public ComicResponse updateComic(Integer comicId, ComicRequest request) {
+    public ComicResponse updateComic(Integer comicId, ComicRequest request, MultipartFile thumbnail) {
         Comic comic = comicRepository.findById(comicId)
                 .orElseThrow(() -> new ResourceNotFoundException("Comic", "id", comicId));
+        
         comic.setTitle(request.getTitle());
         comic.setSynopsis(request.getSynopsis());
         comic.setContentType(request.getContentType());
@@ -182,6 +190,22 @@ public class ComicServiceImpl implements ComicService {
                     .collect(Collectors.toList());
                 comic.getComicGenres().addAll(newComicGenres);
             }
+        }
+        
+        if (request.getAuthorId() != null) {
+            comic.setAuthor(authorRepository.findById(request.getAuthorId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Author", "id", request.getAuthorId())));
+        }
+        
+        if (request.getAgeRatingId() != null) {
+            comic.setAgeRating(ageRatingRepository.findById(request.getAgeRatingId())
+                    .orElseThrow(() -> new ResourceNotFoundException("AgeRating", "id", request.getAgeRatingId())));
+        }
+        
+        if (thumbnail != null && !thumbnail.isEmpty()) {
+            String folderName = comic.getSlug();
+            String thumbnailUrl = s3Service.uploadFile(thumbnail, "comics/" + folderName + "/cover");
+            comic.setThumbnailUrl(thumbnailUrl);
         }
         
         // other fields can be updated as needed

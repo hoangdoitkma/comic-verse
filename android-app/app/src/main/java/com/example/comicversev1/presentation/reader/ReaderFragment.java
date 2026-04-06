@@ -325,6 +325,18 @@ public class ReaderFragment extends Fragment {
                 if ("CHAPTER_DELETED".equals(state.getError())) {
                     android.widget.Toast.makeText(requireContext(), "Truyện hoặc chương này đã bị gỡ!", android.widget.Toast.LENGTH_LONG).show();
                     NavHostFragment.findNavController(this).navigateUp();
+                } else if ("VIP_REQUIRED".equals(state.getError())) {
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Nội dung tính phí (VIP)")
+                        .setMessage("Chương này yêu cầu tài khoản VIP. Bạn có muốn nâng cấp tài khoản VIP ngay bây giờ không?")
+                        .setPositiveButton("Nâng cấp ngay", (dialog, which) -> {
+                            NavHostFragment.findNavController(this).navigate(R.id.action_global_vipCenter);
+                        })
+                        .setNegativeButton("Hủy", (dialog, which) -> {
+                            NavHostFragment.findNavController(this).navigateUp();
+                        })
+                        .setCancelable(false)
+                        .show();
                 } else {
                     binding.txtChapterTitle.setText("Lỗi: " + state.getError());
                 }

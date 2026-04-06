@@ -218,16 +218,24 @@ public class ReaderViewModel extends ViewModel {
                             isLoadingMore = false;
                             if (isInitial) {
                                 boolean is404 = false;
+                                boolean isVip = false;
                                 if (throwable instanceof com.example.comicversev1.data.model.NetworkException) {
                                     if (((com.example.comicversev1.data.model.NetworkException) throwable).getErrorCode() == 404) is404 = true;
                                 } else if (throwable instanceof retrofit2.HttpException) {
                                     if (((retrofit2.HttpException) throwable).code() == 404) is404 = true;
+                                    if (((retrofit2.HttpException) throwable).code() == 403) isVip = true;
+                                }
+
+                                if (throwable.getMessage() != null && throwable.getMessage().contains("VIP_REQUIRED")) {
+                                    isVip = true;
                                 }
 
                                 if (is404) {
                                     _uiState.setValue(ReaderUiState.error("CHAPTER_DELETED"));
                                     // Make sure it deletes history on background
                                     disposables.add(readingHistoryDao.deleteHistoryByComicId(comicId).subscribeOn(Schedulers.io()).subscribe());
+                                } else if (isVip) {
+                                    _uiState.setValue(ReaderUiState.error("VIP_REQUIRED"));
                                 } else {
                                     _uiState.setValue(ReaderUiState.error(throwable.getMessage()));
                                 }

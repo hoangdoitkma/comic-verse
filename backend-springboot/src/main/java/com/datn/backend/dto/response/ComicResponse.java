@@ -20,6 +20,8 @@ public class ComicResponse {
     private String publishStatus;
     private String originCountry;
     private List<GenreResponse> genres;
+    private Integer authorId;
+    private Integer ageRatingId;
     private java.time.LocalDateTime createdAt;
     private java.time.LocalDateTime updatedAt;
 }

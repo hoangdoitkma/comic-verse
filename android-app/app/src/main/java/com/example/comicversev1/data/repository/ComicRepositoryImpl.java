@@ -69,7 +69,17 @@ public class ComicRepositoryImpl implements ComicRepository {
 
     @Override
     public Single<ChapterEntity> getChapterDetail(int chapterId) {
-        return apiService.getChapterContent(chapterId).map(response -> mapChapter(response.getData()));
+        return apiService.getChapterContent(chapterId)
+                .map(response -> mapChapter(response.getData()))
+                .onErrorResumeNext(throwable -> {
+                    if (throwable instanceof retrofit2.adapter.rxjava3.HttpException) {
+                        retrofit2.adapter.rxjava3.HttpException httpException = (retrofit2.adapter.rxjava3.HttpException) throwable;
+                        if (httpException.code() == 403) {
+                            return Single.error(new Exception("VIP_REQUIRED"));
+                        }
+                    }
+                    return Single.error(throwable);
+                });
     }
 
     @Override

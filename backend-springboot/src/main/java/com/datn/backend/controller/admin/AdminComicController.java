@@ -35,7 +35,7 @@ public class AdminComicController {
     @PutMapping("/{comicId}")
     public ApiResponse<ComicResponse> updateComic(@PathVariable Integer comicId,
                                                   @RequestBody ComicRequest request) {
-        ComicResponse response = comicService.updateComic(comicId, request);
+        ComicResponse response = comicService.updateComic(comicId, request, null);
         return ApiResponse.success(response);
     }
 

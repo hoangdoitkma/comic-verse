@@ -264,7 +264,21 @@ public class TextNovelReaderFragment extends Fragment {
 
         viewModel.errorEvent().observe(getViewLifecycleOwner(), msg -> {
             if (msg != null && !msg.isEmpty()) {
-                Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+                if (msg.contains("VIP_REQUIRED")) {
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Nội dung tính phí (VIP)")
+                        .setMessage("Chương này yêu cầu tài khoản VIP. Bạn có muốn nâng cấp tài khoản VIP ngay bây giờ không?")
+                        .setPositiveButton("Nâng cấp ngay", (dialog, which) -> {
+                            androidx.navigation.fragment.NavHostFragment.findNavController(this).navigate(R.id.action_global_vipCenter);
+                        })
+                        .setNegativeButton("Hủy", (dialog, which) -> {
+                            androidx.navigation.fragment.NavHostFragment.findNavController(this).navigateUp();
+                        })
+                        .setCancelable(false)
+                        .show();
+                } else {
+                    Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+                }
             }
         });
 

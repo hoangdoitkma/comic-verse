@@ -209,12 +209,23 @@ public class TextNovelViewModel extends ViewModel {
                             _appendItemsEvent.setValue(items);
                         }, throwable -> {
                             isLoadingMore = false;
+                            boolean isVip = false;
+                            if (throwable.getMessage() != null && throwable.getMessage().contains("VIP_REQUIRED")) {
+                                isVip = true;
+                            }
                             if (isInitial) {
                                 _isLoading.setValue(false);
-                                _errorEvent.setValue("Lỗi tải S3 JSON hoặc API: " + throwable.getMessage());
+                                if (isVip) {
+                                    _errorEvent.setValue("VIP_REQUIRED");
+                                } else {
+                                    _errorEvent.setValue("Lỗi tải API: " + throwable.getMessage());
+                                }
                             } else {
-                                // Nên remove cái Spinner ở đây nếu là Load More (Fragment/Adapter tự lo bằng method removeLoadingItem)
-                                _errorEvent.setValue("Chưa tải được chương tiếp theo!");
+                                if (isVip) {
+                                    _errorEvent.setValue("VIP_REQUIRED");
+                                } else {
+                                    _errorEvent.setValue("Chưa tải được chương tiếp theo!");
+                                }
                             }
                         })
         );

@@ -16,11 +16,13 @@ import {
   AlertCircle,
   Tag,
   Globe,
-  Clock
+  Clock,
+  Edit3
 } from 'lucide-react';
 import React from 'react';
 import comicService from '../../services/comicService';
 import CreateChapterModal from './CreateChapterModal';
+import EditComicModal from './EditComicModal';
 import ChapterViewer from './ChapterViewer';
 import { ToastContainer, useToast } from '../../components/Toast';
 import Pagination from '../../components/Pagination';
@@ -106,6 +108,7 @@ export default function ComicDetailPage() {
   const [loadingComic, setLoadingComic] = useState(true);
   const [loadingChapters, setLoadingChapters] = useState(true);
   const [showChapterModal, setShowChapterModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [deletingChapter, setDeletingChapter] = useState(null);
   const { toasts, addToast, dismissToast } = useToast();
@@ -127,6 +130,17 @@ export default function ComicDetailPage() {
     };
     fetchComic();
   }, [comicId]);
+
+  const handleEditSuccess = async () => {
+    addToast('Cập nhật truyện thành công!', 'success');
+    try {
+      const comics = await comicService.getMyComics();
+      const found = (comics || []).find((c) => String(c.id) === String(comicId));
+      setComic(found || null);
+    } catch (err) {
+      console.error('Lỗi khi tải thông tin truyện:', err);
+    }
+  };
 
   // Fetch chapters
   useEffect(() => {
@@ -199,24 +213,45 @@ export default function ComicDetailPage() {
         contentType={comic?.contentType}
       />
 
+      {/* Edit Comic Modal */}
+      <EditComicModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSuccess={handleEditSuccess}
+        initialData={comic}
+      />
+
       {/* Back button + Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate('/uploader/comics')}
-          className="p-2 rounded-lg hover:bg-dark-800 text-dark-400 hover:text-white transition-all cursor-pointer"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold text-white">
-            {loadingComic ? (
-              <div className="h-7 w-48 rounded bg-dark-700 animate-pulse" />
-            ) : (
-              comic?.title || 'Không tìm thấy truyện'
-            )}
-          </h1>
-          <p className="text-sm text-dark-400 mt-0.5">Chi tiết & Quản lý chương</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/uploader/comics')}
+            className="p-2 rounded-lg hover:bg-dark-800 text-dark-400 hover:text-white transition-all cursor-pointer"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-white">
+              {loadingComic ? (
+                <div className="h-7 w-48 rounded bg-dark-700 animate-pulse" />
+              ) : (
+                comic?.title || 'Không tìm thấy truyện'
+              )}
+            </h1>
+            <p className="text-sm text-dark-400 mt-0.5">Chi tiết & Quản lý chương</p>
+          </div>
         </div>
+
+        {/* Edit Button */}
+        {!loadingComic && comic && (
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 border border-dark-700/50 text-white text-sm font-semibold transition-all duration-200 cursor-pointer"
+          >
+            <Edit3 size={16} />
+            <span className="hidden sm:inline">Chỉnh sửa</span>
+          </button>
+        )}
       </div>
 
       {/* Comic Info Card */}

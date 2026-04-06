@@ -43,6 +43,19 @@ const comicService = {
   },
 
   /**
+   * Cập nhật truyện (multipart/form-data)
+   * PUT /api/uploader/comics/{comicId}
+   */
+  updateComic: async (comicId, formData) => {
+    const response = await axiosClient.put(`/uploader/comics/${comicId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  /**
    * Lấy danh sách chương của một truyện
    * GET /api/uploader/chapters/{comicId}
    */

@@ -10,7 +10,7 @@ public interface ComicService {
     // For Uploader
     List<ComicResponse> getComicsByUploader();
     
-    ComicResponse updateComic(Integer comicId, ComicRequest request);
+    ComicResponse updateComic(Integer comicId, ComicRequest request, org.springframework.web.multipart.MultipartFile thumbnail);
     ComicResponse getComicById(Integer comicId);
 
     // For Admin
