@@ -75,6 +75,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ApiResponse<Object>> handleResponseStatusException(
+            org.springframework.web.server.ResponseStatusException ex, WebRequest request) {
+        log.warn("Response status exception: {}", ex.getReason());
+        ApiResponse<Object> response = ApiResponse.error(ex.getStatusCode().value(), ex.getReason());
+        return new ResponseEntity<>(response, ex.getStatusCode());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGlobalException(
             Exception ex, WebRequest request) {
