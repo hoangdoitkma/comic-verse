@@ -3,11 +3,11 @@ package com.example.comicversev1.data.model;
 import com.google.gson.annotations.SerializedName;
 
 public class ReadingHistoryRequest {
-    @SerializedName("comic_id")
+    @SerializedName("comicId")
     private final int comicId;
-    @SerializedName("chapter_id")
+    @SerializedName("chapterId")
     private final int chapterId;
-    @SerializedName("page_index")
+    @SerializedName("lastPage")
     private final int pageIndex;
 
     public ReadingHistoryRequest(int comicId, int chapterId, int pageIndex) {

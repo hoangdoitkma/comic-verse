@@ -25,7 +25,16 @@ public interface ReadingHistoryDao {
     @Query("SELECT * FROM reading_history WHERE comic_type = :comicType ORDER BY read_at DESC LIMIT 20")
     Flowable<List<ReadingHistoryEntity>> getRecentHistoryByType(String comicType);
 
+    @Query("SELECT * FROM reading_history WHERE comic_type = :comicType ORDER BY read_at DESC")
+    Flowable<List<ReadingHistoryEntity>> getAllHistoryByType(String comicType);
+
     @Query("DELETE FROM reading_history WHERE comic_id = :comicId")
     Completable deleteHistoryByComicId(int comicId);
+
+    @Query("DELETE FROM reading_history")
+    Completable deleteAllHistory();
+
+    @Query("SELECT * FROM reading_history")
+    Single<List<ReadingHistoryEntity>> getAllHistory();
 }
 

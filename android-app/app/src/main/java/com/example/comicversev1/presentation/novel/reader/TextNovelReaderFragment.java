@@ -265,17 +265,35 @@ public class TextNovelReaderFragment extends Fragment {
         viewModel.errorEvent().observe(getViewLifecycleOwner(), msg -> {
             if (msg != null && !msg.isEmpty()) {
                 if (msg.contains("VIP_REQUIRED")) {
-                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-                        .setTitle("Nội dung tính phí (VIP)")
-                        .setMessage("Chương này yêu cầu tài khoản VIP. Bạn có muốn nâng cấp tài khoản VIP ngay bây giờ không?")
-                        .setPositiveButton("Nâng cấp ngay", (dialog, which) -> {
+                    boolean isAnonymous = msg.contains("VIP_REQUIRED_ANONYMOUS");
+                    com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet = new com.google.android.material.bottomsheet.BottomSheetDialog(requireContext());
+                    View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_vip_required, null);
+                    bottomSheet.setContentView(sheetView);
+                    
+                    android.widget.TextView tvVipMessage = sheetView.findViewById(R.id.tvVipMessage);
+                    android.widget.TextView tvPrimaryAction = sheetView.findViewById(R.id.tvPrimaryAction);
+                    View btnPrimaryAction = sheetView.findViewById(R.id.btnPrimaryAction);
+                    View btnCancel = sheetView.findViewById(R.id.btnCancel);
+
+                    tvVipMessage.setText(isAnonymous ? "Chương này dành riêng cho tài khoản VIP. Bạn cần đăng nhập để tiếp tục." : "Chương này yêu cầu tài khoản VIP. Bạn có muốn nâng cấp tài khoản VIP ngay bây giờ không?");
+                    tvPrimaryAction.setText(isAnonymous ? "Đăng nhập" : "Nâng cấp ngay");
+                    
+                    btnPrimaryAction.setOnClickListener(v -> {
+                        bottomSheet.dismiss();
+                        if (isAnonymous) {
+                            androidx.navigation.fragment.NavHostFragment.findNavController(this).navigate(R.id.loginFragment);
+                        } else {
                             androidx.navigation.fragment.NavHostFragment.findNavController(this).navigate(R.id.action_global_vipCenter);
-                        })
-                        .setNegativeButton("Hủy", (dialog, which) -> {
-                            androidx.navigation.fragment.NavHostFragment.findNavController(this).navigateUp();
-                        })
-                        .setCancelable(false)
-                        .show();
+                        }
+                    });
+                    
+                    btnCancel.setOnClickListener(v -> {
+                        bottomSheet.dismiss();
+                        androidx.navigation.fragment.NavHostFragment.findNavController(this).navigateUp();
+                    });
+
+                    bottomSheet.setCancelable(false);
+                    bottomSheet.show();
                 } else {
                     Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
                 }

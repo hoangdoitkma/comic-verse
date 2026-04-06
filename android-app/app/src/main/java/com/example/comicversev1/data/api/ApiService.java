@@ -65,6 +65,9 @@ public interface ApiService {
     @POST("reading-history")
     Completable updateReadingHistory(@Body ReadingHistoryRequest request);
 
+    @POST("reading-history/sync")
+    Completable syncReadingHistory(@Body List<ReadingHistoryRequest> requests);
+
     // Reading History Info (batch fetch comic info for local reading history)
     @POST("comics/reading-history-info")
     Single<BaseResponse<List<ReadingHistoryInfoDTO>>> getReadingHistoryInfo(@Body ReadingHistoryInfoRequest request);

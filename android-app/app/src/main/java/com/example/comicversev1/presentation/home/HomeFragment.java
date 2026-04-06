@@ -69,9 +69,7 @@ public class HomeFragment extends Fragment {
                 if ("vip".equals(action.getId()) || "remove_ads".equals(action.getId())) {
                     androidx.navigation.Navigation.findNavController(requireView()).navigate(R.id.action_global_vipCenter);
                 } else if ("history".equals(action.getId())) {
-                    // Tạm thời chưa có Fragment History độc lập, chuyển hướng tạm sang Profile hoặc Toast
-                    android.widget.Toast.makeText(requireContext(), "Tính năng Lịch sử đang được cập nhật thêm!", android.widget.Toast.LENGTH_SHORT).show();
-                    // androidx.navigation.Navigation.findNavController(requireView()).navigate(R.id.profileFragment);
+                    androidx.navigation.Navigation.findNavController(requireView()).navigate(R.id.action_global_historyFragment);
                 }
             } catch (Exception e) {
                 android.widget.Toast.makeText(requireContext(), "Không thể mở: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();

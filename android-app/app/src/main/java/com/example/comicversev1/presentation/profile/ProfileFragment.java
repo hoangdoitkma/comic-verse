@@ -30,12 +30,20 @@ import android.util.Log;
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Observable;
+import com.example.comicversev1.data.local.dao.ReadingHistoryDao;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @AndroidEntryPoint
 public class ProfileFragment extends Fragment {
 
     @Inject
     ApiService apiService;
+
+    @Inject
+    ReadingHistoryDao readingHistoryDao;
 
     private CompositeDisposable disposable = new CompositeDisposable();
 
@@ -64,9 +72,10 @@ public class ProfileFragment extends Fragment {
         binding.rowReaderSettings.textTitle.setText("Cài đặt trình đọc");
         binding.rowReaderSettings.icon.setImageResource(android.R.drawable.ic_menu_preferences);
 
-        // Feature: Reading History
-        binding.rowReadingHistory.textTitle.setText("Lịch sử đọc truyện tranh");
-        binding.rowReadingHistory.icon.setImageResource(android.R.drawable.ic_menu_recent_history);
+        // Feature: Sync Data (formerly Reading History)
+        binding.rowReadingHistory.textTitle.setText("Đồng bộ dữ liệu");
+        binding.rowReadingHistory.icon.setImageResource(android.R.drawable.ic_popup_sync);
+        binding.rowReadingHistory.getRoot().setOnClickListener(v -> syncData());
 
         // Feature: Download List
         binding.rowDownloadList.textTitle.setText("Danh sách tải");
@@ -273,5 +282,38 @@ public class ProfileFragment extends Fragment {
             size = file.length();
         }
         return size;
+    }
+
+    private void syncData() {
+        android.content.SharedPreferences prefs = requireActivity().getSharedPreferences(
+                com.example.comicversev1.utils.Constants.PREF_AUTH, android.content.Context.MODE_PRIVATE);
+        String token = prefs.getString(com.example.comicversev1.utils.Constants.KEY_ACCESS_TOKEN, "");
+        if (token.isEmpty()) {
+            Toast.makeText(requireContext(), "Vui lòng đăng nhập để đồng bộ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(requireContext(), "Đang đồng bộ dữ liệu...", Toast.LENGTH_SHORT).show();
+        disposable.add(
+                readingHistoryDao.getAllHistory()
+                        .subscribeOn(Schedulers.io())
+                        .flatMapCompletable(historyList -> {
+                            if (historyList == null || historyList.isEmpty()) {
+                                return Completable.complete();
+                            }
+                            return Observable.fromIterable(historyList)
+                                    .map(entity -> new com.example.comicversev1.data.model.ReadingHistoryRequest(
+                                            entity.comicId, entity.chapterId, entity.pageIndex))
+                                    .toList()
+                                    .flatMapCompletable(requests -> apiService.syncReadingHistory(requests));
+                        })
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(() -> {
+                            Toast.makeText(requireContext(), "Đồng bộ thành công!", Toast.LENGTH_SHORT).show();
+                        }, error -> {
+                            Log.e("ProfileFragment", "Sync error", error);
+                            Toast.makeText(requireContext(), "Đồng bộ thất bại!", Toast.LENGTH_SHORT).show();
+                        })
+        );
     }
 }

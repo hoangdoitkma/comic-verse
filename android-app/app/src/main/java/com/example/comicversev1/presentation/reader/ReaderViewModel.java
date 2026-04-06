@@ -235,7 +235,11 @@ public class ReaderViewModel extends ViewModel {
                                     // Make sure it deletes history on background
                                     disposables.add(readingHistoryDao.deleteHistoryByComicId(comicId).subscribeOn(Schedulers.io()).subscribe());
                                 } else if (isVip) {
-                                    _uiState.setValue(ReaderUiState.error("VIP_REQUIRED"));
+                                    if (throwable.getMessage() != null && throwable.getMessage().contains("VIP_REQUIRED_ANONYMOUS")) {
+                                        _uiState.setValue(ReaderUiState.error("VIP_REQUIRED_ANONYMOUS"));
+                                    } else {
+                                        _uiState.setValue(ReaderUiState.error("VIP_REQUIRED"));
+                                    }
                                 } else {
                                     _uiState.setValue(ReaderUiState.error(throwable.getMessage()));
                                 }
@@ -356,6 +360,10 @@ public class ReaderViewModel extends ViewModel {
 
     public int getComicId() {
         return comicId;
+    }
+    
+    public String getCachedCoverUrl() {
+        return cachedCoverUrl;
     }
 
     /**

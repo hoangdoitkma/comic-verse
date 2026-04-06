@@ -132,5 +132,12 @@
         android:label="Yêu Thích" />
 
     <action android:id="@+id/action_global_notification" app:destination="@id/notificationFragment" />
+
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.example.comicversev1.presentation.history.HistoryFragment"
+        android:label="Lịch sử đọc" />
+        
+    <action android:id="@+id/action_global_historyFragment" app:destination="@id/historyFragment" />
         
 </navigation>

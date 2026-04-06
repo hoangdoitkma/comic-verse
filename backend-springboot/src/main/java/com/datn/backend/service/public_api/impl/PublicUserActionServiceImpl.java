@@ -13,6 +13,7 @@ import com.datn.backend.service.public_api.PublicUserActionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -52,5 +53,19 @@ public class PublicUserActionServiceImpl implements PublicUserActionService {
         }
 
         readingHistoryRepository.save(history);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void syncReadingHistory(List<ReadingHistoryRequest> requests, Integer userId) {
+        if (userId == null || requests == null || requests.isEmpty()) return;
+        for (ReadingHistoryRequest request : requests) {
+            try {
+                updateReadingHistory(request, userId);
+            } catch (Exception e) {
+                // Ignore errors for individual items to allow the rest to sync
+                System.err.println("Error syncing history for comicId: " + request.getComicId() + " - " + e.getMessage());
+            }
+        }
     }
 }

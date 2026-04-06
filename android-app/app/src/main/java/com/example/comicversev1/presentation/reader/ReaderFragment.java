@@ -325,18 +325,55 @@ public class ReaderFragment extends Fragment {
                 if ("CHAPTER_DELETED".equals(state.getError())) {
                     android.widget.Toast.makeText(requireContext(), "Truyện hoặc chương này đã bị gỡ!", android.widget.Toast.LENGTH_LONG).show();
                     NavHostFragment.findNavController(this).navigateUp();
-                } else if ("VIP_REQUIRED".equals(state.getError())) {
-                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-                        .setTitle("Nội dung tính phí (VIP)")
-                        .setMessage("Chương này yêu cầu tài khoản VIP. Bạn có muốn nâng cấp tài khoản VIP ngay bây giờ không?")
-                        .setPositiveButton("Nâng cấp ngay", (dialog, which) -> {
+                } else if ("VIP_REQUIRED".equals(state.getError()) || "VIP_REQUIRED_ANONYMOUS".equals(state.getError())) {
+                    boolean isAnonymous = "VIP_REQUIRED_ANONYMOUS".equals(state.getError());
+                    
+                    // Show a fake blurry/locked page background
+                    View vipLayout = binding.getRoot().findViewById(R.id.layoutVipBlocked);
+                    if (vipLayout != null) {
+                        vipLayout.setVisibility(View.VISIBLE);
+                        android.widget.ImageView imgBg = vipLayout.findViewById(R.id.imgVipBlockedBg);
+                        if (imgBg != null && viewModel.getCachedCoverUrl() != null && !viewModel.getCachedCoverUrl().isEmpty()) {
+                            com.bumptech.glide.Glide.with(requireContext())
+                                .load(viewModel.getCachedCoverUrl())
+                                .into(imgBg);
+                        }
+                    }
+                    
+                    com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet = new com.google.android.material.bottomsheet.BottomSheetDialog(requireContext());
+                    View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_vip_required, null);
+                    bottomSheet.setContentView(sheetView);
+                    
+                    android.widget.TextView tvVipMessage = sheetView.findViewById(R.id.tvVipMessage);
+                    android.widget.TextView tvPrimaryAction = sheetView.findViewById(R.id.tvPrimaryAction);
+                    View btnPrimaryAction = sheetView.findViewById(R.id.btnPrimaryAction);
+                    View btnCancel = sheetView.findViewById(R.id.btnCancel);
+
+                    tvVipMessage.setText(isAnonymous ? "Chương này dành riêng cho tài khoản VIP. Bạn cần đăng nhập để tiếp tục." : "Chương này yêu cầu tài khoản VIP. Bạn có muốn nâng cấp tài khoản VIP ngay bây giờ không?");
+                    tvPrimaryAction.setText(isAnonymous ? "Đăng nhập" : "Nâng cấp ngay");
+                    
+                    btnPrimaryAction.setOnClickListener(v -> {
+                        bottomSheet.dismiss();
+                        if (isAnonymous) {
+                            NavHostFragment.findNavController(this).navigate(R.id.loginFragment);
+                        } else {
                             NavHostFragment.findNavController(this).navigate(R.id.action_global_vipCenter);
-                        })
-                        .setNegativeButton("Hủy", (dialog, which) -> {
-                            NavHostFragment.findNavController(this).navigateUp();
-                        })
-                        .setCancelable(false)
-                        .show();
+                        }
+                    });
+                    
+                    btnCancel.setOnClickListener(v -> {
+                        bottomSheet.dismiss();
+                        NavHostFragment.findNavController(this).navigateUp();
+                    });
+
+                    bottomSheet.setOnDismissListener(dialog -> {
+                        if (vipLayout != null) {
+                            vipLayout.setVisibility(View.GONE);
+                        }
+                    });
+
+                    bottomSheet.setCancelable(false);
+                    bottomSheet.show();
                 } else {
                     binding.txtChapterTitle.setText("Lỗi: " + state.getError());
                 }

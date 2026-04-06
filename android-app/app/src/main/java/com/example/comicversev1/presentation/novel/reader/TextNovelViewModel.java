@@ -216,13 +216,21 @@ public class TextNovelViewModel extends ViewModel {
                             if (isInitial) {
                                 _isLoading.setValue(false);
                                 if (isVip) {
-                                    _errorEvent.setValue("VIP_REQUIRED");
+                                    if (throwable.getMessage() != null && throwable.getMessage().contains("VIP_REQUIRED_ANONYMOUS")) {
+                                        _errorEvent.setValue("VIP_REQUIRED_ANONYMOUS");
+                                    } else {
+                                        _errorEvent.setValue("VIP_REQUIRED");
+                                    }
                                 } else {
                                     _errorEvent.setValue("Lỗi tải API: " + throwable.getMessage());
                                 }
                             } else {
                                 if (isVip) {
-                                    _errorEvent.setValue("VIP_REQUIRED");
+                                    if (throwable.getMessage() != null && throwable.getMessage().contains("VIP_REQUIRED_ANONYMOUS")) {
+                                        _errorEvent.setValue("VIP_REQUIRED_ANONYMOUS");
+                                    } else {
+                                        _errorEvent.setValue("VIP_REQUIRED");
+                                    }
                                 } else {
                                     _errorEvent.setValue("Chưa tải được chương tiếp theo!");
                                 }

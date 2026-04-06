@@ -75,6 +75,17 @@ public class ComicRepositoryImpl implements ComicRepository {
                     if (throwable instanceof retrofit2.adapter.rxjava3.HttpException) {
                         retrofit2.adapter.rxjava3.HttpException httpException = (retrofit2.adapter.rxjava3.HttpException) throwable;
                         if (httpException.code() == 403) {
+                            try {
+                                String errorBody = httpException.response().errorBody() != null ? httpException.response().errorBody().string() : "";
+                                if (errorBody.contains("VIP_REQUIRED_ANONYMOUS")) {
+                                    return Single.error(new Exception("VIP_REQUIRED_ANONYMOUS"));
+                                } else if (errorBody.contains("VIP_REQUIRED_USER_NOT_FOUND")) {
+                                    return Single.error(new Exception("VIP_REQUIRED_ANONYMOUS"));
+                                } else if (errorBody.contains("VIP_REQUIRED_SUBSCRIPTION_EXPIRED")) {
+                                    return Single.error(new Exception("VIP_REQUIRED"));
+                                }
+                            } catch (Exception ignored) {
+                            }
                             return Single.error(new Exception("VIP_REQUIRED"));
                         }
                     }

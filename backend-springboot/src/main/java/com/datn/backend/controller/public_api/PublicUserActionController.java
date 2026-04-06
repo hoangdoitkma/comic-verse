@@ -31,4 +31,17 @@ public class PublicUserActionController {
         
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/sync")
+    public ResponseEntity<Void> syncReadingHistory(@RequestBody java.util.List<ReadingHistoryRequest> requests) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserDetailsImpl)) {
+            return ResponseEntity.status(401).build(); // Unauthorized if not logged in
+        }
+        
+        Integer userId = ((UserDetailsImpl) authentication.getPrincipal()).getId();
+        publicUserActionService.syncReadingHistory(requests, userId);
+        
+        return ResponseEntity.ok().build();
+    }
 }
