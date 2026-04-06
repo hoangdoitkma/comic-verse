@@ -170,20 +170,32 @@ public class ReaderFragment extends Fragment {
     private void setupTouchZones() {
         android.view.GestureDetector gestureDetector = new android.view.GestureDetector(requireContext(), new android.view.GestureDetector.SimpleOnGestureListener() {
             @Override
-            public boolean onSingleTapConfirmed(android.view.MotionEvent e) {
+            public boolean onSingleTapUp(android.view.MotionEvent e) {
                 int screenHeight = binding.recyclerView.getHeight();
+                int screenWidth = binding.recyclerView.getWidth();
+                float x = e.getX();
                 float y = e.getY();
+                
                 if (y < screenHeight / 3.0f) {
                     // Top zone: scroll up 1 page
-                    binding.recyclerView.smoothScrollBy(0, -screenHeight);
+                    binding.recyclerView.post(() -> binding.recyclerView.smoothScrollBy(0, -(int)(screenHeight * 0.9)));
                 } else if (y > screenHeight * 2.0f / 3.0f) {
                     // Bottom zone: scroll down 1 page
-                    binding.recyclerView.smoothScrollBy(0, screenHeight);
+                    binding.recyclerView.post(() -> binding.recyclerView.smoothScrollBy(0, (int)(screenHeight * 0.9)));
                 } else {
-                    // Middle zone: toggle topBar and bottomBar visibility
-                    boolean isVisible = binding.appBarLayout.getVisibility() == View.VISIBLE;
-                    binding.appBarLayout.setVisibility(isVisible ? View.GONE : View.VISIBLE);
-                    binding.bottomBar.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+                    // Middle zone row
+                    if (x < screenWidth / 3.0f) {
+                        // Left zone: Previous Chapter
+                        binding.btnPreviousChapter.performClick();
+                    } else if (x > screenWidth * 2.0f / 3.0f) {
+                        // Right zone: Next Chapter
+                        binding.btnNextChapter.performClick();
+                    } else {
+                        // Center zone: toggle topBar and bottomBar visibility
+                        boolean isVisible = binding.appBarLayout.getVisibility() == View.VISIBLE;
+                        binding.appBarLayout.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+                        binding.bottomBar.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+                    }
                 }
                 return true;
             }

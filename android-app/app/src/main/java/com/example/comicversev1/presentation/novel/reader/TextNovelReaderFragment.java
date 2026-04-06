@@ -205,15 +205,43 @@ public class TextNovelReaderFragment extends Fragment {
         // Toggle UI Hide/Show bằng GestureDetector
         android.view.GestureDetector gestureDetector = new android.view.GestureDetector(requireContext(), new android.view.GestureDetector.SimpleOnGestureListener() {
             @Override
-            public boolean onSingleTapConfirmed(android.view.MotionEvent e) {
-                toggleSystemUI();
+            public boolean onSingleTapUp(android.view.MotionEvent e) {
+                int screenHeight = recyclerView.getHeight();
+                int screenWidth = recyclerView.getWidth();
+                float x = e.getX();
+                float y = e.getY();
+                
+                if (y < screenHeight / 3.0f) {
+                    // Top zone: scroll up 1 page
+                    recyclerView.post(() -> recyclerView.smoothScrollBy(0, -(int)(screenHeight * 0.9)));
+                } else if (y > screenHeight * 2.0f / 3.0f) {
+                    // Bottom zone: scroll down 1 page
+                    recyclerView.post(() -> recyclerView.smoothScrollBy(0, (int)(screenHeight * 0.9)));
+                } else {
+                    // Middle zone row
+                    if (x < screenWidth / 3.0f) {
+                        // Left zone: Previous Chapter
+                        View btnPrev = getView() != null ? getView().findViewById(R.id.btn_previous_chapter) : null;
+                        if (btnPrev != null) btnPrev.performClick();
+                    } else if (x > screenWidth * 2.0f / 3.0f) {
+                        // Right zone: Next Chapter
+                        View btnNext = getView() != null ? getView().findViewById(R.id.btn_next_chapter) : null;
+                        if (btnNext != null) btnNext.performClick();
+                    } else {
+                        // Center zone: toggle system UI
+                        toggleSystemUI();
+                    }
+                }
                 return true;
             }
         });
 
-        recyclerView.setOnTouchListener((v, event) -> {
-            gestureDetector.onTouchEvent(event);
-            return false;
+        recyclerView.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull android.view.MotionEvent event) {
+                gestureDetector.onTouchEvent(event);
+                return false;
+            }
         });
 
         observeViewModel();
