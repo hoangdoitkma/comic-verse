@@ -55,8 +55,8 @@ jobs:
           # Lấy versionCode từ build.gradle
           VERSION_CODE=$(grep -oP 'versionCode\s+\K\d+' app/build.gradle)
           
-          # Lấy thông tin app
-          APK_PATH="${{steps.sign_app.outputs.signedReleaseFile}}"
+          # Lấy thông tin app (Do action trả về đường dẫn root, ta thêm ../ để lùi ra do đang đứng ở android-app)
+          APK_PATH="../${{steps.sign_app.outputs.signedReleaseFile}}"
           APK_NAME=$(basename "$APK_PATH")
           APK_SIZE=$(stat -c%s "$APK_PATH")
           RELEASE_NOTES="Cập nhật hệ thống lên phiên bản $VERSION_NAME"
@@ -85,7 +85,7 @@ jobs:
 
       - name: Deploy to AWS S3
         run: |
-          APK_PATH="${{steps.sign_app.outputs.signedReleaseFile}}"
+          APK_PATH="../${{steps.sign_app.outputs.signedReleaseFile}}"
           APK_NAME=$(basename "$APK_PATH")
           
           echo "Đẩy file APK lên S3..."
