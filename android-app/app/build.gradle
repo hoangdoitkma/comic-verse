@@ -13,8 +13,8 @@ android {
         applicationId "com.example.comicversev1"
         minSdk 24
         targetSdk 35
-        versionCode 3
-        versionName "1.1.0"
+        versionCode 4
+        versionName "1.1.1"
 
         buildConfigField "String", "BASE_URL", '"http://3.1.207.156:8080/api/"'
     }
