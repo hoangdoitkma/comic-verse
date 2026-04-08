@@ -10,6 +10,7 @@ import com.datn.backend.dto.response.ApiResponse;
 import com.datn.backend.security.services.UserDetailsImpl;
 import com.datn.backend.service.public_api.PublicComicService;
 import com.datn.backend.service.public_api.PublicChapterService;
+import com.datn.backend.service.public_api.RecommendationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ public class PublicComicController {
 
     private final PublicComicService publicComicService;
     private final PublicChapterService publicChapterService;
+    private final RecommendationService recommendationService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<ComicDTO>>> getComics(
@@ -39,7 +41,17 @@ public class PublicComicController {
     @GetMapping("/home")
     public ResponseEntity<ApiResponse<HomeDataResponse>> getHomeContent(
             @RequestParam(required = false) com.datn.backend.entity.enums.ContentType type) {
-        return ResponseEntity.ok(ApiResponse.success(publicComicService.getHomeContent(type)));
+        // Extract userId từ JWT token (nếu đã login)
+        Integer userId = extractUserId();
+        return ResponseEntity.ok(ApiResponse.success(publicComicService.getHomeContent(type, userId)));
+    }
+
+    @GetMapping("/recommendations")
+    public ResponseEntity<ApiResponse<List<ComicDTO>>> getRecommendations(
+            @RequestParam(required = false) com.datn.backend.entity.enums.ContentType type) {
+        Integer userId = extractUserId();
+        List<ComicDTO> recommendations = recommendationService.getRecommendedComics(userId, type);
+        return ResponseEntity.ok(ApiResponse.success(recommendations));
     }
 
     @GetMapping("/{slug}")
@@ -60,13 +72,21 @@ public class PublicComicController {
     @PostMapping("/reading-history-info")
     public ResponseEntity<ApiResponse<List<ReadingHistoryInfoDTO>>> getReadingHistoryInfo(
             @RequestBody ReadingHistoryInfoRequest request) {
-        Integer userId = null;
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
-            userId = ((UserDetailsImpl) authentication.getPrincipal()).getId();
-        }
-        
+        Integer userId = extractUserId();
         List<ReadingHistoryInfoDTO> response = publicComicService.getReadingHistoryInfo(request.getComicIds(), userId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    /**
+     * Helper: Extract userId từ SecurityContext (JWT Token).
+     * Trả về null nếu user chưa login.
+     */
+    private Integer extractUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
+            return ((UserDetailsImpl) authentication.getPrincipal()).getId();
+        }
+        return null;
+    }
 }
+

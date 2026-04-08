@@ -10,13 +10,17 @@
         </shape>
     </item>
     <item android:id="@android:id/progress">
-        <shape android:shape="ring"
-            android:innerRadiusRatio="3"
-            android:thicknessRatio="8"
-            android:useLevel="true">
-            <size android:width="48dp" android:height="48dp" />
-            <solid android:color="#4DB6F4" />
-        </shape>
+        <rotate
+            android:fromDegrees="270"
+            android:toDegrees="270">
+            <shape android:shape="ring"
+                android:innerRadiusRatio="3"
+                android:thicknessRatio="8"
+                android:useLevel="true">
+                <size android:width="48dp" android:height="48dp" />
+                <solid android:color="#4DB6F4" />
+            </shape>
+        </rotate>
     </item>
 </layer-list>
 

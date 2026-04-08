@@ -99,6 +99,7 @@
 
         <!-- Circular Progress with percentage text (bottom-right) -->
         <FrameLayout
+            android:id="@+id/frameProgress"
             android:layout_width="52dp"
             android:layout_height="52dp"
             android:layout_alignParentEnd="true"
@@ -108,7 +109,7 @@
 
             <ProgressBar
                 android:id="@+id/progressCircle"
-                style="@android:style/Widget.ProgressBar.Small"
+                style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="52dp"
                 android:layout_height="52dp"
                 android:layout_gravity="center"
@@ -130,10 +131,11 @@
 
         <!-- Likes and Views row (bottom) -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_toEndOf="@id/imageCover"
+            android:layout_toStartOf="@id/frameProgress"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="14dp"
@@ -147,9 +149,12 @@
 
             <TextView
                 android:id="@+id/textAuthor"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:layout_marginStart="4dp"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="N/A"
                 android:textColor="#9EA5B1"
                 android:textSize="13sp" />
@@ -166,6 +171,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="N/A"
                 android:textColor="#9EA5B1"
                 android:textSize="13sp" />

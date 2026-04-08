@@ -126,6 +126,16 @@ public interface ApiService {
     @GET("user/profile")
     Single<BaseResponse<com.example.comicversev1.data.model.UserProfileDTO>> getUserProfile();
 
+    @retrofit2.http.PUT("user/profile")
+    Single<BaseResponse<Object>> updateProfile(@Body com.example.comicversev1.data.model.UpdateProfileRequest request);
+
+    @retrofit2.http.Multipart
+    @retrofit2.http.POST("user/profile/avatar")
+    Single<BaseResponse<String>> uploadAvatar(@retrofit2.http.Part okhttp3.MultipartBody.Part file);
+
+    @retrofit2.http.PUT("user/password")
+    Single<BaseResponse<Object>> changePassword(@Body com.example.comicversev1.data.model.ChangePasswordRequest request);
+
     // VIP Packages
     @GET("data/vip-packages")
     Single<BaseResponse<List<com.example.comicversev1.data.model.VipPackageDTO>>> getVipPackages();
@@ -142,4 +152,10 @@ public interface ApiService {
 
     @retrofit2.http.PUT("notifications/read-all")
     Completable markAllNotificationsAsRead();
+
+    // Recommendations
+    @GET("comics/recommendations")
+    Single<BaseResponse<java.util.List<ComicDTO>>> getRecommendations(
+            @Query("type") String type
+    );
 }

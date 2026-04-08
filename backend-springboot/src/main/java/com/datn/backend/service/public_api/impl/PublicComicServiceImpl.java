@@ -9,6 +9,7 @@ import com.datn.backend.entity.ReadingHistory;
 import com.datn.backend.repository.ComicRepository;
 import com.datn.backend.repository.ReadingHistoryRepository;
 import com.datn.backend.service.public_api.PublicComicService;
+import com.datn.backend.service.public_api.RecommendationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +26,7 @@ public class PublicComicServiceImpl implements PublicComicService {
     private final ComicRepository comicRepository;
     private final ReadingHistoryRepository readingHistoryRepository;
     private final com.datn.backend.repository.ChapterRepository chapterRepository;
+    private final RecommendationService recommendationService;
 
     @Override
     public Page<ComicDTO> getComics(int page, int limit) {
@@ -68,7 +70,7 @@ public class PublicComicServiceImpl implements PublicComicService {
     }
 
     @Override
-    public HomeDataResponse getHomeContent(com.datn.backend.entity.enums.ContentType type) {
+    public HomeDataResponse getHomeContent(com.datn.backend.entity.enums.ContentType type, Integer userId) {
         List<ComicDTO> topTrending;
         List<ComicDTO> recentlyUpdated;
         List<ComicDTO> newComics;
@@ -89,11 +91,14 @@ public class PublicComicServiceImpl implements PublicComicService {
                     .stream().map(this::mapToDTO).collect(Collectors.toList());
         }
 
+        // Đề xuất dựa trên lịch sử đọc (hoặc fallback trending nếu chưa login)
+        List<ComicDTO> recommended = recommendationService.getRecommendedComics(userId, type);
+
         return HomeDataResponse.builder()
                 .topTrending(topTrending)
                 .recentlyUpdated(recentlyUpdated)
                 .newComics(newComics)
-                .recommended(topTrending) // Fallback for recommended
+                .recommended(recommended)
                 .build();
     }
 

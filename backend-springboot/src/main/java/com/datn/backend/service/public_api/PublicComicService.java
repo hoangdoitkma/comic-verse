@@ -11,6 +11,6 @@ import java.util.List;
 public interface PublicComicService {
     Page<ComicDTO> getComics(int page, int limit);
     ComicDetailDTO getComicDetail(String slug);
-    HomeDataResponse getHomeContent(com.datn.backend.entity.enums.ContentType type);
+    HomeDataResponse getHomeContent(com.datn.backend.entity.enums.ContentType type, Integer userId);
     List<ReadingHistoryInfoDTO> getReadingHistoryInfo(List<Integer> comicIds, Integer userId);
 }

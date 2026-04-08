@@ -35,6 +35,24 @@ import io.reactivex.rxjava3.core.Observable;
 import com.example.comicversev1.data.local.dao.ReadingHistoryDao;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import android.content.SharedPreferences;
+import android.content.Context;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.EditText;
+import android.widget.Switch;
+import android.widget.LinearLayout;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import com.example.comicversev1.data.model.ChangePasswordRequest;
+import com.example.comicversev1.data.model.UpdateProfileRequest;
+import com.example.comicversev1.utils.Constants;
 
 @AndroidEntryPoint
 public class ProfileFragment extends Fragment {
@@ -49,11 +67,24 @@ public class ProfileFragment extends Fragment {
 
     private FragmentProfileBinding binding;
 
+    private ActivityResultLauncher<String> openDocumentLauncher;
+    private android.net.Uri selectedImageUri = null;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
         binding = FragmentProfileBinding.inflate(inflater, container, false);
+        openDocumentLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) {
+                        selectedImageUri = uri;
+                        binding.imageAvatar.setImageURI(uri);
+                        uploadAvatar(uri);
+                    }
+                }
+        );
         return binding.getRoot();
     }
 
@@ -62,6 +93,13 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         setupBottomNav();
         setupView();
+        setupThemeMode();
+    }
+
+    private void setupThemeMode() {
+        SharedPreferences settingsPrefs = requireActivity().getSharedPreferences("SettingsPrefs", Context.MODE_PRIVATE);
+        int themeMode = settingsPrefs.getInt("theme_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        AppCompatDelegate.setDefaultNightMode(themeMode);
     }
 
     private void setupView() {
@@ -103,16 +141,53 @@ public class ProfileFragment extends Fragment {
         binding.rowWebsite.icon.setImageResource(android.R.drawable.ic_menu_info_details);
         binding.rowWebsite.getRoot().setOnClickListener(v -> openUrl("https://facebook.com/duchoang3m"));
 
+        // Feature: Theme setup
+        binding.rowTheme.textTitle.setText("Giao diện ứng dụng");
+        binding.rowTheme.textSubtitle.setText("Sáng, tối, theo hệ thống");
+        binding.rowTheme.textSubtitle.setVisibility(View.VISIBLE);
+        binding.rowTheme.icon.setImageResource(android.R.drawable.ic_menu_view);
+        binding.rowTheme.getRoot().setOnClickListener(v -> showThemePicker());
+
+        // Feature: Notification setup
+        SharedPreferences settingsPrefs = requireActivity().getSharedPreferences("SettingsPrefs", Context.MODE_PRIVATE);
+        boolean notifEnabled = settingsPrefs.getBoolean("notif_enabled", true);
+        binding.rowNotification.textTitle.setText("Nhận thông báo");
+        binding.rowNotification.icon.setImageResource(android.R.drawable.ic_popup_reminder);
+        binding.rowNotification.switchToggle.setVisibility(View.VISIBLE);
+        binding.rowNotification.switchToggle.setChecked(notifEnabled);
+        binding.rowNotification.switchToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            settingsPrefs.edit().putBoolean("notif_enabled", isChecked).apply();
+            Toast.makeText(requireContext(), isChecked ? "Đã bật thông báo" : "Đã tắt thông báo", Toast.LENGTH_SHORT).show();
+        });
+        binding.rowNotification.getRoot().setOnClickListener(v -> binding.rowNotification.switchToggle.toggle());
+
+        // Account management features
+        binding.rowAccountInfo.textTitle.setText("Thông tin tài khoản");
+        binding.rowAccountInfo.icon.setImageResource(android.R.drawable.ic_menu_edit);
+        binding.rowAccountInfo.getRoot().setOnClickListener(v -> showUpdateProfileDialog());
+
+        binding.rowChangePassword.textTitle.setText("Đổi mật khẩu");
+        binding.rowChangePassword.icon.setImageResource(android.R.drawable.ic_secure);
+        if (binding.rowChangePassword.icon.getDrawable() == null) {
+            binding.rowChangePassword.icon.setImageResource(android.R.drawable.ic_lock_idle_lock);
+        }
+        binding.rowChangePassword.getRoot().setOnClickListener(v -> showChangePasswordDialog());
+
         // Profile / Login logic
         android.content.SharedPreferences prefs = requireActivity().getSharedPreferences(
-                com.example.comicversev1.utils.Constants.PREF_AUTH, android.content.Context.MODE_PRIVATE);
-        String token = prefs.getString(com.example.comicversev1.utils.Constants.KEY_ACCESS_TOKEN, "");
-        String name = prefs.getString(com.example.comicversev1.utils.Constants.KEY_DISPLAY_NAME, "Người dùng ẩn danh");
+                Constants.PREF_AUTH, Context.MODE_PRIVATE);
+        String token = prefs.getString(Constants.KEY_ACCESS_TOKEN, "");
+        String name = prefs.getString(Constants.KEY_DISPLAY_NAME, "Người dùng ẩn danh");
 
         if (!token.isEmpty()) {
+            binding.rowAccountInfo.getRoot().setVisibility(View.VISIBLE);
+            binding.rowChangePassword.getRoot().setVisibility(View.VISIBLE);
             binding.textProfileName.setText(name);
+            binding.imageAvatar.setOnClickListener(v -> {
+                openDocumentLauncher.launch("image/*");
+            });
             binding.cardProfile.setOnClickListener(v -> {
-                new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                new AlertDialog.Builder(requireContext())
                         .setTitle("Đăng xuất")
                         .setMessage("Bạn có chắc chắn muốn đăng xuất không?")
                         .setPositiveButton("Đăng xuất", (dialog, which) -> {
@@ -147,6 +222,8 @@ public class ProfileFragment extends Fragment {
             });
             fetchUserProfile();
         } else {
+            binding.rowAccountInfo.getRoot().setVisibility(View.GONE);
+            binding.rowChangePassword.getRoot().setVisibility(View.GONE);
             binding.textProfileName.setText("Đăng nhập hoặc đăng ký");
             binding.textVipStatus.setVisibility(View.GONE);
             binding.cardProfile.setOnClickListener(v -> {
@@ -164,6 +241,11 @@ public class ProfileFragment extends Fragment {
                             if (response.isSuccess() && response.getData() != null) {
                                 com.example.comicversev1.data.model.UserProfileDTO profile = response.getData();
                                 binding.textProfileName.setText(profile.displayName);
+                                if (profile.avatarUrl != null && !profile.avatarUrl.isEmpty()) {
+                                    Glide.with(this).load(profile.avatarUrl)
+                                         .placeholder(R.mipmap.ic_launcher)
+                                         .into(binding.imageAvatar);
+                                }
                                 if (profile.vip) {
                                     binding.textVipStatus.setVisibility(View.VISIBLE);
                                     binding.textVipStatus.setTextColor(android.graphics.Color.parseColor("#FFD700"));
@@ -193,6 +275,141 @@ public class ProfileFragment extends Fragment {
                             binding.textVipStatus.setTextColor(android.graphics.Color.parseColor("#B3B3B3"));
                             binding.textVipStatus.setText("Thành viên Thường");
                         }));
+    }
+
+    private void showThemePicker() {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet_theme, null);
+        RadioGroup radioGroupTheme = view.findViewById(R.id.radioGroupTheme);
+        RadioButton radioLight = view.findViewById(R.id.radioLight);
+        RadioButton radioDark = view.findViewById(R.id.radioDark);
+        RadioButton radioSystem = view.findViewById(R.id.radioSystem);
+
+        SharedPreferences settingsPrefs = requireActivity().getSharedPreferences("SettingsPrefs", Context.MODE_PRIVATE);
+        int themeMode = settingsPrefs.getInt("theme_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+
+        if (themeMode == AppCompatDelegate.MODE_NIGHT_NO) radioLight.setChecked(true);
+        else if (themeMode == AppCompatDelegate.MODE_NIGHT_YES) radioDark.setChecked(true);
+        else radioSystem.setChecked(true);
+
+        radioGroupTheme.setOnCheckedChangeListener((group, checkedId) -> {
+            int newMode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+            if (checkedId == R.id.radioLight) newMode = AppCompatDelegate.MODE_NIGHT_NO;
+            else if (checkedId == R.id.radioDark) newMode = AppCompatDelegate.MODE_NIGHT_YES;
+
+            settingsPrefs.edit().putInt("theme_mode", newMode).apply();
+            AppCompatDelegate.setDefaultNightMode(newMode);
+            bottomSheetDialog.dismiss();
+        });
+
+        bottomSheetDialog.setContentView(view);
+        bottomSheetDialog.show();
+    }
+
+    private void showChangePasswordDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Đổi mật khẩu");
+        
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 40, 50, 10);
+        
+        final EditText oldPassInput = new EditText(requireContext());
+        oldPassInput.setHint("Mật khẩu cũ");
+        oldPassInput.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        layout.addView(oldPassInput);
+        
+        final EditText newPassInput = new EditText(requireContext());
+        newPassInput.setHint("Mật khẩu mới");
+        newPassInput.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        layout.addView(newPassInput);
+        
+        builder.setView(layout);
+        builder.setPositiveButton("Cập nhật", (dialog, which) -> {
+            String oldPass = oldPassInput.getText().toString();
+            String newPass = newPassInput.getText().toString();
+            if (oldPass.isEmpty() || newPass.isEmpty()) {
+                Toast.makeText(requireContext(), "Vui lòng nhập đủ mật khẩu", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            ChangePasswordRequest request = new ChangePasswordRequest(oldPass, newPass);
+            disposable.add(apiService.changePassword(request)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(response -> {
+                        if (response.isSuccess()) {
+                            Toast.makeText(requireContext(), "Đổi mật khẩu thành công", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(requireContext(), response.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }, error -> Toast.makeText(requireContext(), "Lỗi khi đổi mật khẩu", Toast.LENGTH_SHORT).show())
+            );
+        });
+        builder.setNegativeButton("Hủy", null);
+        builder.show();
+    }
+
+    private void showUpdateProfileDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Cập nhật tên hiển thị");
+        
+        final EditText nameInput = new EditText(requireContext());
+        nameInput.setText(binding.textProfileName.getText());
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setPadding(50, 20, 50, 10);
+        layout.addView(nameInput, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        builder.setView(layout);
+        
+        builder.setPositiveButton("Cập nhật", (dialog, which) -> {
+            String newName = nameInput.getText().toString();
+            if (newName.isEmpty()) return;
+            UpdateProfileRequest request = new UpdateProfileRequest(newName);
+            disposable.add(apiService.updateProfile(request)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(response -> {
+                        if (response.isSuccess()) {
+                            binding.textProfileName.setText(newName);
+                            SharedPreferences prefs = requireActivity().getSharedPreferences(Constants.PREF_AUTH, Context.MODE_PRIVATE);
+                            prefs.edit().putString(Constants.KEY_DISPLAY_NAME, newName).apply();
+                            Toast.makeText(requireContext(), "Đã cập nhật tên", Toast.LENGTH_SHORT).show();
+                        }
+                    }, error -> Toast.makeText(requireContext(), "Lỗi khi cập nhật tên", Toast.LENGTH_SHORT).show())
+            );
+        });
+        builder.setNegativeButton("Hủy", null);
+        builder.show();
+    }
+
+    private void uploadAvatar(android.net.Uri uri) {
+        try {
+            java.io.InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
+            if (inputStream == null) return;
+            byte[] bytes = new byte[inputStream.available()];
+            inputStream.read(bytes);
+            
+            String mimeType = requireContext().getContentResolver().getType(uri);
+            if (mimeType == null) mimeType = "image/jpeg";
+            RequestBody requestFile = RequestBody.create(MediaType.parse(mimeType), bytes);
+            MultipartBody.Part body = MultipartBody.Part.createFormData("file", "avatar.jpg", requestFile);
+            
+            Toast.makeText(requireContext(), "Đang tải ảnh lên...", Toast.LENGTH_SHORT).show();
+            disposable.add(apiService.uploadAvatar(body)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(response -> {
+                        if (response.isSuccess()) {
+                            fetchUserProfile(); // Reload profile with new avatar
+                            Toast.makeText(requireContext(), "Cập nhật ảnh đại diện thành công", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(requireContext(), "Lỗi upload: " + response.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }, error -> Toast.makeText(requireContext(), "Lỗi kết nối khi upload", Toast.LENGTH_SHORT).show())
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(requireContext(), "Lỗi đọc file ảnh", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void setupBottomNav() {

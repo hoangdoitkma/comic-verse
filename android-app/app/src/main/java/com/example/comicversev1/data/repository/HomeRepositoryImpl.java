@@ -16,6 +16,7 @@ import io.reactivex.rxjava3.core.Single;
 import com.example.comicversev1.data.api.ApiService;
 import com.example.comicversev1.data.model.HomeDataResponse;
 import java.util.Collections;
+import java.util.List;
 
 @Singleton
 public class HomeRepositoryImpl implements HomeRepository {
@@ -65,27 +66,58 @@ public class HomeRepositoryImpl implements HomeRepository {
                 });
 
         if (token.isEmpty()) {
-            return homeDataSingle.map(data -> buildHomeContent(data, type));
+            return homeDataSingle.map(data -> buildHomeContent(data, type, Collections.emptyList()));
         } else {
-            return homeDataSingle.flatMap(data -> 
-                apiService.getUserProfile()
-                    .map(profileRes -> {
-                        if (profileRes.isSuccess() && profileRes.getData() != null) {
-                            String displayName = profileRes.getData().displayName;
-                            if (displayName != null && !displayName.isEmpty()) {
-                                prefs.edit().putString(Constants.KEY_DISPLAY_NAME, displayName).apply();
-                            }
+            // Khi đã login: gọi song song home data + recommendations + user profile
+            Single<List<com.example.comicversev1.data.model.ComicDTO>> recommendationsSingle = 
+                apiService.getRecommendations(type)
+                    .map(response -> {
+                        if (response.isSuccess() && response.getData() != null) {
+                            return response.getData();
                         }
-                        return buildHomeContent(data, type);
+                        return Collections.<com.example.comicversev1.data.model.ComicDTO>emptyList();
                     })
-                    .onErrorReturnItem(buildHomeContent(data, type))
-            );
+                    .onErrorReturnItem(Collections.emptyList());
+
+            return Single.zip(homeDataSingle, recommendationsSingle, (data, recs) -> {
+                // Fetch user profile name (fire and forget style, cached in prefs)
+                fetchUserProfileAsync();
+                return buildHomeContent(data, type, recs);
+            });
         }
     }
 
-    private HomeContent buildHomeContent(HomeDataResponse data, String type) {
+    /**
+     * Fire-and-forget: Lấy user profile và cache display name vào SharedPreferences
+     */
+    private void fetchUserProfileAsync() {
+        try {
+            apiService.getUserProfile()
+                .subscribe(profileRes -> {
+                    if (profileRes.isSuccess() && profileRes.getData() != null) {
+                        String displayName = profileRes.getData().displayName;
+                        if (displayName != null && !displayName.isEmpty()) {
+                            prefs.edit().putString(Constants.KEY_DISPLAY_NAME, displayName).apply();
+                        }
+                    }
+                }, error -> { /* Silently ignore */ });
+        } catch (Exception e) {
+            // Ignore
+        }
+    }
+
+    private HomeContent buildHomeContent(HomeDataResponse data, String type,
+                                          List<com.example.comicversev1.data.model.ComicDTO> personalizedRecs) {
         String name = prefs.getString(Constants.KEY_DISPLAY_NAME, "");
         String greeting = name.isEmpty() ? "Hi, Khách!" : "Hi, " + name + "!";
+
+        // Nếu có kết quả đề xuất cá nhân hóa → dùng, nếu không → fallback sang recommended từ home API
+        List<HomeContent.ComicCard> recommendedCards;
+        if (personalizedRecs != null && !personalizedRecs.isEmpty()) {
+            recommendedCards = mapToCards(personalizedRecs);
+        } else {
+            recommendedCards = mapToCards(data.recommended);
+        }
 
         return new HomeContent(
                 greeting,
@@ -98,7 +130,7 @@ public class HomeRepositoryImpl implements HomeRepository {
                 ) : Collections.emptyList(),
                 null,
                 mapToCards(data.recentlyUpdated),
-                mapToCards(data.recommended),
+                recommendedCards,
                 mapToCards(data.recentlyUpdated),
                 mapToCards(data.topTrending),
                 Collections.emptyList(),
@@ -106,3 +138,4 @@ public class HomeRepositoryImpl implements HomeRepository {
         );
     }
 }
+
