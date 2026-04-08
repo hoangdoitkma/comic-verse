@@ -336,7 +336,9 @@ public class ProfileFragment extends Fragment {
             public void onNoUpdate() {
                 if (getActivity() == null) return;
                 getActivity().runOnUiThread(() -> {
-                    Toast.makeText(requireContext(), "Bạn đang sử dụng phiên bản mới nhất!", Toast.LENGTH_SHORT).show();
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Bạn đang sử dụng phiên bản mới nhất!", Toast.LENGTH_SHORT).show();
+                    }
                 });
             }
 
@@ -344,7 +346,9 @@ public class ProfileFragment extends Fragment {
             public void onError(String message) {
                 if (getActivity() == null) return;
                 getActivity().runOnUiThread(() -> {
-                    Toast.makeText(requireContext(), "Lỗi kiểm tra cập nhật!", Toast.LENGTH_SHORT).show();
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Lỗi kiểm tra cập nhật!", Toast.LENGTH_SHORT).show();
+                    }
                 });
             }
         });

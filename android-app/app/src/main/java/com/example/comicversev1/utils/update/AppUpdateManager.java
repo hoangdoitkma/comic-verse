@@ -45,7 +45,7 @@ public class AppUpdateManager {
     }
 
     public AppUpdateManager(Context context) {
-        this.context = context;
+        this.context = context.getApplicationContext();
         this.client = new OkHttpClient();
     }
 
@@ -106,6 +106,11 @@ public class AppUpdateManager {
     }
 
     public void startDownload(AppUpdateInfo updateInfo) {
+        if (downloadId != -1) {
+            Toast.makeText(context, "Đã có quá trình tải xuống đang diễn ra", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         try {
             downloadedApkName = updateInfo.getApkName() != null && !updateInfo.getApkName().isEmpty() 
                     ? updateInfo.getApkName() : "comicverse_update.apk";
@@ -151,6 +156,7 @@ public class AppUpdateManager {
                 } catch (Exception ignored) {}
 
                 installApk();
+                downloadId = -1;
             }
         }
     };
