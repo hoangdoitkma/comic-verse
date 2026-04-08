@@ -118,18 +118,6 @@
                     android:orientation="vertical">
 
                     <include
-                        android:id="@+id/rowAccountInfo"
-                        layout="@layout/item_setting_row" />
-                    
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/stroke_divider" />
-
-                    <include
-                        android:id="@+id/rowChangePassword"
-                        layout="@layout/item_setting_row" />
-                    
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/stroke_divider" />
-
-                    <include
                         android:id="@+id/rowTheme"
                         layout="@layout/item_setting_row" />
                     
@@ -161,6 +149,12 @@
 
                     <include
                         android:id="@+id/rowClearCache"
+                        layout="@layout/item_setting_row" />
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/stroke_divider" />
+
+                    <include
+                        android:id="@+id/rowCheckUpdate"
                         layout="@layout/item_setting_row" />
 
                 </LinearLayout>
