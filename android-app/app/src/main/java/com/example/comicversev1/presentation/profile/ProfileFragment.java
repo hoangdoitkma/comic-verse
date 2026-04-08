@@ -323,12 +323,16 @@ public class ProfileFragment extends Fragment {
         appUpdateManager.checkForUpdate(new AppUpdateManager.CheckUpdateCallback() {
             @Override
             public void onUpdateAvailable(com.example.comicversev1.data.model.AppUpdateInfo updateInfo) {
-                if (getActivity() == null) return;
+                if (getActivity() == null || getActivity().isFinishing() || getActivity().isDestroyed()) return;
                 getActivity().runOnUiThread(() -> {
-                    com.example.comicversev1.presentation.dialog.UpdateDialog dialog = com.example.comicversev1.presentation.dialog.UpdateDialog.newInstance(updateInfo, () -> {
-                        appUpdateManager.startDownload(updateInfo);
-                    });
-                    dialog.show(getParentFragmentManager(), "UpdateDialog");
+                    try {
+                        com.example.comicversev1.presentation.dialog.UpdateDialog dialog = com.example.comicversev1.presentation.dialog.UpdateDialog.newInstance(updateInfo, () -> {
+                            appUpdateManager.startDownload(updateInfo);
+                        });
+                        dialog.show(getParentFragmentManager(), "UpdateDialog");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 });
             }
 

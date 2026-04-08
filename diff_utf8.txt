@@ -1,0 +1,191 @@
+﻿diff --git a/.vscode/settings.json b/.vscode/settings.json
+index 7b016a8..e012065 100644
+--- a/.vscode/settings.json
++++ b/.vscode/settings.json
+@@ -1,3 +1,4 @@
+ {
+-    "java.compile.nullAnalysis.mode": "automatic"
++    "java.compile.nullAnalysis.mode": "automatic",
++    "java.configuration.updateBuildConfiguration": "interactive"
+ }
+\ No newline at end of file
+diff --git a/android-app/app/src/main/java/com/example/comicversev1/presentation/profile/ProfileFragment.java b/android-app/app/src/main/java/com/example/comicversev1/presentation/profile/ProfileFragment.java
+index 5d2ea8e..77dbb7c 100644
+--- a/android-app/app/src/main/java/com/example/comicversev1/presentation/profile/ProfileFragment.java
++++ b/android-app/app/src/main/java/com/example/comicversev1/presentation/profile/ProfileFragment.java
+@@ -336,7 +336,9 @@ public class ProfileFragment extends Fragment {
+             public void onNoUpdate() {
+                 if (getActivity() == null) return;
+                 getActivity().runOnUiThread(() -> {
+-                    Toast.makeText(requireContext(), "Bß║ín ─æang sß╗¡ dß╗Ñng phi├¬n bß║ún mß╗¢i nhß║Ñt!", Toast.LENGTH_SHORT).show();
++                    if (getContext() != null) {
++                        Toast.makeText(getContext(), "Bß║ín ─æang sß╗¡ dß╗Ñng phi├¬n bß║ún mß╗¢i nhß║Ñt!", Toast.LENGTH_SHORT).show();
++                    }
+                 });
+             }
+ 
+@@ -344,7 +346,9 @@ public class ProfileFragment extends Fragment {
+             public void onError(String message) {
+                 if (getActivity() == null) return;
+                 getActivity().runOnUiThread(() -> {
+-                    Toast.makeText(requireContext(), "Lß╗ùi kiß╗âm tra cß║¡p nhß║¡t!", Toast.LENGTH_SHORT).show();
++                    if (getContext() != null) {
++                        Toast.makeText(getContext(), "Lß╗ùi kiß╗âm tra cß║¡p nhß║¡t!", Toast.LENGTH_SHORT).show();
++                    }
+                 });
+             }
+         });
+diff --git a/android-app/app/src/main/java/com/example/comicversev1/utils/update/AppUpdateManager.java b/android-app/app/src/main/java/com/example/comicversev1/utils/update/AppUpdateManager.java
+index f2dfe3c..df79a46 100644
+--- a/android-app/app/src/main/java/com/example/comicversev1/utils/update/AppUpdateManager.java
++++ b/android-app/app/src/main/java/com/example/comicversev1/utils/update/AppUpdateManager.java
+@@ -45,7 +45,7 @@ public class AppUpdateManager {
+     }
+ 
+     public AppUpdateManager(Context context) {
+-        this.context = context;
++        this.context = context.getApplicationContext();
+         this.client = new OkHttpClient();
+     }
+ 
+@@ -106,6 +106,11 @@ public class AppUpdateManager {
+     }
+ 
+     public void startDownload(AppUpdateInfo updateInfo) {
++        if (downloadId != -1) {
++            Toast.makeText(context, "─É├ú c├│ qu├í tr├¼nh tß║úi xuß╗æng ─æang diß╗àn ra", Toast.LENGTH_SHORT).show();
++            return;
++        }
++
+         try {
+             downloadedApkName = updateInfo.getApkName() != null && !updateInfo.getApkName().isEmpty() 
+                     ? updateInfo.getApkName() : "comicverse_update.apk";
+@@ -151,6 +156,7 @@ public class AppUpdateManager {
+                 } catch (Exception ignored) {}
+ 
+                 installApk();
++                downloadId = -1;
+             }
+         }
+     };
+diff --git a/android-app/app/src/main/res/layout/dialog_app_update.xml b/android-app/app/src/main/res/layout/dialog_app_update.xml
+index aab43e9..959b467 100644
+--- a/android-app/app/src/main/res/layout/dialog_app_update.xml
++++ b/android-app/app/src/main/res/layout/dialog_app_update.xml
+@@ -1,17 +1,20 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+-    xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:orientation="vertical"
+     android:padding="24dp"
++    android:minWidth="340dp"
+     android:background="@drawable/bg_bottom_sheet">
+ 
+     <ImageView
+-        android:layout_width="64dp"
+-        android:layout_height="64dp"
++        android:layout_width="72dp"
++        android:layout_height="72dp"
+         android:layout_gravity="center_horizontal"
+-        android:src="@android:drawable/stat_sys_download_done"
++        android:src="@drawable/ic_download"
++        android:background="@drawable/bg_notif_icon_circle"
++        android:padding="18dp"
+         app:tint="?attr/colorPrimary"
+         android:contentDescription="Update Icon" />
+ 
+@@ -19,62 +22,73 @@
+         android:id="@+id/tvUpdateTitle"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+-        android:layout_marginTop="16dp"
++        android:layout_marginTop="20dp"
+         android:text="Bß║ún cß║¡p nhß║¡t mß╗¢i: v1.0.0"
+         android:textAlignment="center"
+-        android:textColor="?attr/colorOnSurface"
+-        android:textSize="20sp"
++        android:textColor="@color/text_primary"
++        android:textSize="22sp"
+         android:textStyle="bold" />
+ 
+     <TextView
+         android:id="@+id/tvUpdateSize"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+-        android:layout_marginTop="4dp"
++        android:layout_marginTop="6dp"
+         android:text="Dung l╞░ß╗úng: 24 MB"
+         android:textAlignment="center"
+-        android:textColor="?android:attr/textColorSecondary"
++        android:textColor="@color/text_secondary"
+         android:textSize="14sp" />
+ 
+     <View
+         android:layout_width="match_parent"
+         android:layout_height="1dp"
+-        android:layout_marginTop="16dp"
+-        android:layout_marginBottom="16dp"
+-        android:background="?attr/colorOutlineVariant" />
++        android:layout_marginTop="20dp"
++        android:layout_marginBottom="20dp"
++        android:background="@color/stroke_divider" />
+ 
+     <TextView
+-        android:id="@+id/tvReleaseNotes"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+-        android:text="Chi tiß║┐t thay ─æß╗òi:\n- Sß╗¡a lß╗ùi vß║╖t\n- T─âng hiß╗çu n─âng"
+-        android:textColor="?attr/colorOnSurface"
++        android:text="Chi tiß║┐t thay ─æß╗òi:"
++        android:textColor="@color/text_primary"
++        android:textStyle="bold"
+         android:textSize="15sp"
+-        android:lineSpacingExtra="4dp" />
++        android:layout_marginBottom="8dp" />
++
++    <TextView
++        android:id="@+id/tvReleaseNotes"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:text="- Cß║¡p nhß║¡t hß╗ç thß╗æng"
++        android:textColor="@color/text_secondary"
++        android:textSize="14sp"
++        android:lineSpacingExtra="6dp" />
+ 
+     <LinearLayout
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+-        android:layout_marginTop="24dp"
++        android:layout_marginTop="32dp"
+         android:orientation="horizontal"
+-        android:weightSum="2">
++        android:baselineAligned="false">
+ 
+         <com.google.android.material.button.MaterialButton
+             android:id="@+id/btnCancel"
+-            style="@style/Widget.Material3.Button.TextButton"
++            style="@style/Widget.MaterialComponents.Button.TextButton"
+             android:layout_width="0dp"
+-            android:layout_height="wrap_content"
++            android:layout_height="54dp"
+             android:layout_weight="1"
+             android:layout_marginEnd="8dp"
++            android:textColor="@color/text_secondary"
+             android:text="─Éß╗â sau" />
+ 
+         <com.google.android.material.button.MaterialButton
+             android:id="@+id/btnUpdate"
+             android:layout_width="0dp"
+-            android:layout_height="wrap_content"
++            android:layout_height="54dp"
+             android:layout_weight="1"
+             android:layout_marginStart="8dp"
+-            android:text="Cß║¡p nhß║¡t" />
++            app:cornerRadius="12dp"
++            android:text="Cß║¡p nhß║¡t ngay" />
+ 
+     </LinearLayout>
+ 

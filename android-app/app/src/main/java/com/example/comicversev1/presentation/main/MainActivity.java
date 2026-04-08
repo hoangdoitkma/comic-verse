@@ -39,28 +39,37 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkForAppUpdates() {
-        appUpdateManager = new AppUpdateManager(this);
-        appUpdateManager.checkForUpdate(new AppUpdateManager.CheckUpdateCallback() {
-            @Override
-            public void onUpdateAvailable(AppUpdateInfo updateInfo) {
-                runOnUiThread(() -> {
-                    UpdateDialog dialog = UpdateDialog.newInstance(updateInfo, () -> {
-                        appUpdateManager.startDownload(updateInfo);
+        try {
+            appUpdateManager = new AppUpdateManager(this);
+            appUpdateManager.checkForUpdate(new AppUpdateManager.CheckUpdateCallback() {
+                @Override
+                public void onUpdateAvailable(AppUpdateInfo updateInfo) {
+                    if (isFinishing() || isDestroyed()) return;
+                    runOnUiThread(() -> {
+                        try {
+                            UpdateDialog dialog = UpdateDialog.newInstance(updateInfo, () -> {
+                                appUpdateManager.startDownload(updateInfo);
+                            });
+                            dialog.show(getSupportFragmentManager(), "UpdateDialog");
+                        } catch (Exception e) {
+                            android.util.Log.e("AppUpdate", "Error showing update dialog", e);
+                        }
                     });
-                    dialog.show(getSupportFragmentManager(), "UpdateDialog");
-                });
-            }
+                }
 
-            @Override
-            public void onNoUpdate() {
-                // Đã là phiên bản mới nhất, không làm gì cả
-            }
+                @Override
+                public void onNoUpdate() {
+                    // Đã là phiên bản mới nhất, không làm gì cả
+                }
 
-            @Override
-            public void onError(String message) {
-                android.util.Log.e("AppUpdateCheck", "Failed to check update: " + message);
-            }
-        });
+                @Override
+                public void onError(String message) {
+                    android.util.Log.e("AppUpdateCheck", "Failed to check update: " + message);
+                }
+            });
+        } catch (Exception e) {
+            android.util.Log.e("AppUpdate", "Error initializing app update manager", e);
+        }
     }
 
     @Override
