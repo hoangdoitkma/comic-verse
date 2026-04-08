@@ -90,12 +90,10 @@ jobs:
           
           echo "Đẩy file APK lên S3..."
           aws s3 cp "$APK_PATH" s3://comicverse-storage/android-updates/ \
-            --content-type "application/vnd.android.package-archive" \
-            --acl public-read
+            --content-type "application/vnd.android.package-archive"
             
           echo "Đẩy file version.json lên S3..."
           aws s3 cp version.json s3://comicverse-storage/android-updates/ \
-            --content-type "application/json" \
-            --acl public-read
+            --content-type "application/json"
             
           echo "✨ Upload thành công!"
