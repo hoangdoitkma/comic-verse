@@ -9,6 +9,7 @@ import java.util.List;
 @Repository
 public interface ComicGenreRepository extends JpaRepository<ComicGenre, Integer> {
     boolean existsByGenreId(Integer genreId);
+    List<ComicGenre> findByComicId(Integer comicId);
     List<ComicGenre> findByComicIdIn(List<Integer> comicIds);
     List<ComicGenre> findByGenreIdIn(List<Integer> genreIds);
 }

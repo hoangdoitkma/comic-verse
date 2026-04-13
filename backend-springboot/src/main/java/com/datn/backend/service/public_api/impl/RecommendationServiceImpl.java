@@ -127,6 +127,140 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
     }
 
+    @Override
+    public List<ComicDTO> getSimilarComics(String slug, Integer userId) {
+        try {
+            Optional<Comic> optComic = comicRepository.findBySlugAndIsDeletedFalse(slug);
+            if (optComic.isEmpty()) {
+                return Collections.emptyList();
+            }
+            Comic currentComic = optComic.get();
+            Integer currentComicId = currentComic.getId();
+            Integer currentAuthorId = currentComic.getAuthor() != null ? currentComic.getAuthor().getId() : null;
+            ContentType contentType = currentComic.getContentType();
+            
+            // Get genres of the current comic
+            List<ComicGenre> currentComicGenres = comicGenreRepository.findByComicId(currentComicId);
+            List<Integer> currentGenreIds = currentComicGenres.stream()
+                    .map(cg -> cg.getGenre().getId())
+                    .collect(Collectors.toList());
+
+            // Build user preferences
+            Map<Integer, Long> userGenreFrequency = new HashMap<>();
+            Map<Integer, Long> userAuthorFrequency = new HashMap<>();
+            
+            if (userId != null) {
+                List<ReadingHistory> histories = readingHistoryRepository.findByUserId(userId);
+                List<Integer> readComicIds = histories.stream()
+                        .map(h -> h.getComic().getId())
+                        .distinct()
+                        .collect(Collectors.toList());
+                
+                if (!readComicIds.isEmpty()) {
+                    List<ComicGenre> readComicGenres = comicGenreRepository.findByComicIdIn(readComicIds);
+                    userGenreFrequency = readComicGenres.stream()
+                            .collect(Collectors.groupingBy(cg -> cg.getGenre().getId(), Collectors.counting()));
+                    
+                    histories.stream()
+                            .filter(h -> h.getComic().getAuthor() != null)
+                            .forEach(h -> userAuthorFrequency.merge(h.getComic().getAuthor().getId(), 1L, Long::sum));
+                }
+            }
+
+            Set<Integer> candidateIds = new HashSet<>();
+            
+            // Candidates from same author
+            if (currentAuthorId != null) {
+                List<Comic> sameAuthorComics = comicRepository.findByAuthorIdAndIsDeletedFalse(currentAuthorId);
+                sameAuthorComics.forEach(c -> candidateIds.add(c.getId()));
+            }
+            
+            // Candidates from same genres
+            if (!currentGenreIds.isEmpty()) {
+                List<ComicGenre> sameGenreComics = comicGenreRepository.findByGenreIdIn(currentGenreIds);
+                sameGenreComics.forEach(cg -> candidateIds.add(cg.getComic().getId()));
+            }
+            
+            // Candidates from user's favorite genres/authors
+            if (!userGenreFrequency.isEmpty()) {
+                List<Integer> favGenreIds = new ArrayList<>(userGenreFrequency.keySet());
+                comicGenreRepository.findByGenreIdIn(favGenreIds)
+                        .forEach(cg -> candidateIds.add(cg.getComic().getId()));
+            }
+            
+            candidateIds.remove(currentComicId);
+            
+            if (candidateIds.isEmpty()) {
+                return getFallbackRecommendations(contentType);
+            }
+
+            // Fetch candidates
+            List<Comic> candidates = comicRepository.findByIdInAndIsDeletedFalse(new ArrayList<>(candidateIds));
+            Map<Integer, Double> comicScores = new HashMap<>();
+            
+            for (Comic candidate : candidates) {
+                if (contentType != null && !contentType.equals(candidate.getContentType())) {
+                    continue; 
+                }
+                
+                double score = 0;
+                Integer candAuthorId = candidate.getAuthor() != null ? candidate.getAuthor().getId() : null;
+                
+                // Rule 1: Same author
+                if (candAuthorId != null && candAuthorId.equals(currentAuthorId)) {
+                    score += 10.0;
+                }
+                
+                // Rule 2: Shared genres
+                List<Integer> candGenreIds = candidate.getComicGenres().stream()
+                        .map(cg -> cg.getGenre().getId())
+                        .collect(Collectors.toList());
+                long sharedGenresCount = candGenreIds.stream().filter(currentGenreIds::contains).count();
+                score += (sharedGenresCount * 5.0);
+                
+                // Rule 3: User preference
+                if (userId != null) {
+                    if (candAuthorId != null && userAuthorFrequency.containsKey(candAuthorId)) {
+                        score += (userAuthorFrequency.get(candAuthorId) * 5.0);
+                    }
+                    for (Integer candGenreId : candGenreIds) {
+                        if (userGenreFrequency.containsKey(candGenreId)) {
+                            score += (userGenreFrequency.get(candGenreId) * 2.0);
+                        }
+                    }
+                }
+                
+                if (score > 0) {
+                    comicScores.put(candidate.getId(), score);
+                }
+            }
+            
+            if (comicScores.isEmpty()) {
+                return getFallbackRecommendations(contentType);
+            }
+
+            // Sort and return top 10
+            return candidates.stream()
+                    .filter(c -> comicScores.containsKey(c.getId()))
+                    .sorted((a, b) -> {
+                        double scoreA = comicScores.getOrDefault(a.getId(), 0.0);
+                        double scoreB = comicScores.getOrDefault(b.getId(), 0.0);
+                        int cmp = Double.compare(scoreB, scoreA); 
+                        if (cmp != 0) return cmp;
+                        int viewA = a.getViewCount() != null ? a.getViewCount() : 0;
+                        int viewB = b.getViewCount() != null ? b.getViewCount() : 0;
+                        return Integer.compare(viewB, viewA);
+                    })
+                    .limit(MAX_RECOMMENDATIONS)
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("Error generating similar comics for slug={}: {}", slug, e.getMessage());
+            return getFallbackRecommendations(null);
+        }
+    }
+
     /**
      * Fallback: Trả về truyện trending (view count cao nhất) khi chưa có đủ dữ liệu đề xuất
      */

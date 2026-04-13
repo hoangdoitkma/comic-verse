@@ -17,6 +17,7 @@ public interface ComicRepository extends JpaRepository<Comic, Integer> {
     List<Comic> findByCreatedByIdAndIsDeletedFalse(Integer createdById);
     List<Comic> findByIdInAndIsDeletedFalse(List<Integer> ids);
     boolean existsByAuthorIdAndIsDeletedFalse(Integer authorId);
+    List<Comic> findByAuthorIdAndIsDeletedFalse(Integer authorId);
     long countByCreatedAtBetweenAndIsDeletedFalse(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
 
     List<Comic> findTop5ByIsDeletedFalseOrderByViewCountDesc();

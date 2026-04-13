@@ -15,4 +15,10 @@ public interface RecommendationService {
      * @return Danh sách truyện đề xuất (tối đa 10)
      */
     List<ComicDTO> getRecommendedComics(Integer userId, ContentType type);
+
+    /**
+     * Lấy danh sách truyện đề xuất cho màn hình chi tiết truyện hiện tại.
+     * Dựa theo tác giả, thể loại của truyện hiện tại và lịch sử đọc của người dùng.
+     */
+    List<ComicDTO> getSimilarComics(String slug, Integer userId);
 }

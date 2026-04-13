@@ -54,6 +54,13 @@ public class PublicComicController {
         return ResponseEntity.ok(ApiResponse.success(recommendations));
     }
 
+    @GetMapping("/{slug}/similar")
+    public ResponseEntity<ApiResponse<List<ComicDTO>>> getSimilarComics(@PathVariable String slug) {
+        Integer userId = extractUserId();
+        List<ComicDTO> similarComics = recommendationService.getSimilarComics(slug, userId);
+        return ResponseEntity.ok(ApiResponse.success(similarComics));
+    }
+
     @GetMapping("/{slug}")
     public ResponseEntity<ApiResponse<ComicDetailDTO>> getComicDetail(@PathVariable String slug) {
         return ResponseEntity.ok(ApiResponse.success(publicComicService.getComicDetail(slug)));

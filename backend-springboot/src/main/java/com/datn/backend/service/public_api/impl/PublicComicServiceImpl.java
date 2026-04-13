@@ -35,6 +35,7 @@ public class PublicComicServiceImpl implements PublicComicService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ComicDetailDTO getComicDetail(String slug) {
         Comic comic = comicRepository.findBySlugAndIsDeletedFalse(slug)
                 .orElseThrow(() -> new com.datn.backend.exception.ResourceNotFoundException("Comic", "slug", slug));
@@ -63,8 +64,16 @@ public class PublicComicServiceImpl implements PublicComicService {
         if (comic.getAgeRating() != null) {
             dto.setAgeRating(comic.getAgeRating().getLabel());
         }
-        // Assuming genres mapping is complex or missing, we skip it for now or set empty
-        dto.setGenres(List.of());
+        
+        // Fetch actual genres from DB
+        if (comic.getComicGenres() != null) {
+            List<String> genres = comic.getComicGenres().stream()
+                    .map(cg -> cg.getGenre().getName())
+                    .collect(Collectors.toList());
+            dto.setGenres(genres);
+        } else {
+            dto.setGenres(List.of());
+        }
 
         return dto;
     }
