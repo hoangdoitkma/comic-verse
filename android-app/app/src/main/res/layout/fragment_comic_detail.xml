@@ -218,22 +218,16 @@
             </LinearLayout>
 
             <!-- Tags (Genres) -->
-            <HorizontalScrollView
-                android:id="@+id/scrollTags"
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/layoutTags"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/margin_xlarge"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/layoutMetaInfo"
-                android:scrollbars="none">
-                
-                <LinearLayout
-                    android:id="@+id/layoutTags"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal" />
-            </HorizontalScrollView>
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp" />
 
             <!-- Synopsis Section -->
             <View
@@ -244,7 +238,7 @@
                 android:background="#1AFFFFFF"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/scrollTags" />
+                app:layout_constraintTop_toBottomOf="@id/layoutTags" />
 
             <ImageView
                 android:id="@+id/icSynopsisStar"

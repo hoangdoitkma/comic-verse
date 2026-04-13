@@ -309,12 +309,12 @@ public class NovelDetailFragment extends Fragment implements CommentAdapter.OnCo
         // Tags
         binding.layoutTags.removeAllViews();
         if (comic.getGenres() != null && !comic.getGenres().isEmpty()) {
+            binding.layoutTags.setVisibility(View.VISIBLE);
             for (String genre : comic.getGenres()) {
                 addTag(genre);
             }
         } else {
-            addTag("#Tiên Hiệp"); // Dummy if empty
-            addTag("#Kiếm Hiệp");
+            binding.layoutTags.setVisibility(View.GONE);
         }
         
         // Synopsis
@@ -332,21 +332,19 @@ public class NovelDetailFragment extends Fragment implements CommentAdapter.OnCo
     }
 
     private void addTag(String text) {
-        TextView tv = new TextView(requireContext());
-        tv.setText(text.startsWith("#") ? text : "#" + text);
-        tv.setTextColor(Color.parseColor("#E0E0E0"));
-        tv.setTextSize(14f);
-        tv.setBackgroundResource(R.drawable.bg_icon_rounded); // Reuse a rounded background
-        tv.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#1C1E26")));
+        com.google.android.material.chip.Chip chip = new com.google.android.material.chip.Chip(requireContext());
+        chip.setText(text.startsWith("#") ? text : "#" + text);
+        chip.setTextColor(Color.parseColor("#E0E0E0"));
+        chip.setTextSize(14f);
         
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        params.setMargins(0, 0, 16, 0); // 16px right margin
-        tv.setLayoutParams(params);
-        tv.setPadding(32, 16, 32, 16);
+        chip.setCheckable(false);
+        chip.setClickable(false);
         
-        binding.layoutTags.addView(tv);
+        chip.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("#1C1E26")));
+        chip.setChipStrokeWidth(0f);
+        chip.setShapeAppearanceModel(chip.getShapeAppearanceModel().withCornerSize(16f)); 
+        
+        binding.layoutTags.addView(chip);
     }
 
     private void bindChapters(List<ChapterItem> chapters, int comicId, String comicTitle) {
