@@ -208,6 +208,18 @@ public class NovelDetailFragment extends Fragment implements CommentAdapter.OnCo
                 String title = state.getComic() != null ? state.getComic().getTitle() : null;
                 bindChapters(state.getChapters(), state.getComic() != null ? state.getComic().getId() : args.getComicId(), title);
             }
+            if (state.getSimilarComics() != null && !state.getSimilarComics().isEmpty()) {
+                similarAdapter.submitList(state.getSimilarComics());
+                binding.recyclerSimilar.setVisibility(View.VISIBLE);
+                binding.icSimilar.setVisibility(View.VISIBLE);
+                binding.txtSimilarTitle.setVisibility(View.VISIBLE);
+                binding.dividerSimilar.setVisibility(View.VISIBLE);
+            } else {
+                binding.recyclerSimilar.setVisibility(View.GONE);
+                binding.icSimilar.setVisibility(View.GONE);
+                binding.txtSimilarTitle.setVisibility(View.GONE);
+                binding.dividerSimilar.setVisibility(View.GONE);
+            }
 
             if (state.getError() != null) {
                 Toast.makeText(requireContext(), state.getError(), Toast.LENGTH_SHORT).show();

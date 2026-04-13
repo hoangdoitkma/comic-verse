@@ -158,4 +158,7 @@ public interface ApiService {
     Single<BaseResponse<java.util.List<ComicDTO>>> getRecommendations(
             @Query("type") String type
     );
+
+    @GET("comics/{slug}/similar")
+    Single<BaseResponse<List<ComicDTO>>> getSimilarComics(@Path("slug") String slug);
 }

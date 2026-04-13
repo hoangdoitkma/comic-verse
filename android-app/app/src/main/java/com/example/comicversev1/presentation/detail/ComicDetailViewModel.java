@@ -32,6 +32,7 @@ public class ComicDetailViewModel extends ViewModel {
 
     private final GetComicDetailUseCase getComicDetailUseCase;
     private final GetChaptersUseCase getChaptersUseCase;
+    private final com.example.comicversev1.domain.usecase.GetSimilarComicsUseCase getSimilarComicsUseCase;
     private final ReadingHistoryDao readingHistoryDao;
     private final ComicCacheDao comicCacheDao;
     private final CompositeDisposable disposables = new CompositeDisposable();
@@ -53,12 +54,14 @@ public class ComicDetailViewModel extends ViewModel {
     @Inject
     public ComicDetailViewModel(GetComicDetailUseCase getComicDetailUseCase,
                                 GetChaptersUseCase getChaptersUseCase,
+                                com.example.comicversev1.domain.usecase.GetSimilarComicsUseCase getSimilarComicsUseCase,
                                 ReadingHistoryDao readingHistoryDao,
                                 ComicCacheDao comicCacheDao,
                                 FavoriteComicDao favoriteComicDao,
                                 SavedStateHandle savedStateHandle) {
         this.getComicDetailUseCase = getComicDetailUseCase;
         this.getChaptersUseCase = getChaptersUseCase;
+        this.getSimilarComicsUseCase = getSimilarComicsUseCase;
         this.readingHistoryDao = readingHistoryDao;
         this.comicCacheDao = comicCacheDao;
         this.favoriteComicDao = favoriteComicDao;
@@ -116,16 +119,24 @@ public class ComicDetailViewModel extends ViewModel {
     }
 
     private void onComicLoaded(ComicDetailEntity comic) {
-        // Load chapters
+        // Load chapters and similar comics in parallel
+        io.reactivex.rxjava3.core.Single<java.util.List<ChapterItem>> chaptersSingle = getChaptersUseCase.execute(slug)
+                .onErrorReturnItem(Collections.emptyList());
+        
+        io.reactivex.rxjava3.core.Single<java.util.List<com.example.comicversev1.domain.entity.HomeContent.ComicCard>> similarSingle = 
+                getSimilarComicsUseCase.execute(slug)
+                .onErrorReturnItem(Collections.emptyList());
+
         disposables.add(
-                getChaptersUseCase.execute(slug)
+                io.reactivex.rxjava3.core.Single.zip(chaptersSingle, similarSingle, (chapters, similarComics) -> 
+                        ComicDetailUiState.success(comic, chapters, similarComics))
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(chapters -> {
-                            _uiState.setValue(ComicDetailUiState.success(comic, chapters));
+                        .subscribe(state -> {
+                            _uiState.setValue(state);
                             // Load saved reading progress for this comic
                             loadSavedProgress(comic.getId());
-                        }, throwable -> _uiState.setValue(ComicDetailUiState.success(comic, Collections.emptyList())))
+                        }, throwable -> _uiState.setValue(ComicDetailUiState.success(comic, Collections.emptyList(), Collections.emptyList())))
         );
     }
 

@@ -55,6 +55,18 @@ public class HomeRepositoryImpl implements HomeRepository {
     public Single<HomeContent> loadNovelContent() {
         return fetchContent("NOVEL");
     }
+    
+    @Override
+    public Single<List<HomeContent.ComicCard>> getSimilarComics(String slug) {
+        return apiService.getSimilarComics(slug)
+                .map(response -> {
+                    if (response.isSuccess() && response.getData() != null) {
+                        return mapToCards(response.getData());
+                    }
+                    return Collections.<HomeContent.ComicCard>emptyList();
+                })
+                .onErrorReturnItem(Collections.<HomeContent.ComicCard>emptyList());
+    }
 
     private Single<HomeContent> fetchContent(String type) {
         String token = prefs.getString(Constants.KEY_ACCESS_TOKEN, "");

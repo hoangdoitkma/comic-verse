@@ -9,21 +9,26 @@ public class ComicDetailUiState {
     private final boolean loading;
     private final ComicDetailEntity comic;
     private final List<ChapterItem> chapters;
+    private final List<com.example.comicversev1.domain.entity.HomeContent.ComicCard> similarComics;
     private final String error;
 
-    private ComicDetailUiState(boolean loading, ComicDetailEntity comic, List<ChapterItem> chapters, String error) {
+    private ComicDetailUiState(boolean loading, ComicDetailEntity comic, List<ChapterItem> chapters, List<com.example.comicversev1.domain.entity.HomeContent.ComicCard> similarComics, String error) {
         this.loading = loading;
         this.comic = comic;
         this.chapters = chapters;
+        this.similarComics = similarComics;
         this.error = error;
     }
 
-    public static ComicDetailUiState loading() { return new ComicDetailUiState(true, null, null, null); }
-    public static ComicDetailUiState success(ComicDetailEntity comic, List<ChapterItem> chapters) { return new ComicDetailUiState(false, comic, chapters, null); }
-    public static ComicDetailUiState error(String msg) { return new ComicDetailUiState(false, null, null, msg); }
+    public static ComicDetailUiState loading() { return new ComicDetailUiState(true, null, null, null, null); }
+    public static ComicDetailUiState success(ComicDetailEntity comic, List<ChapterItem> chapters, List<com.example.comicversev1.domain.entity.HomeContent.ComicCard> similarComics) { 
+        return new ComicDetailUiState(false, comic, chapters, similarComics, null); 
+    }
+    public static ComicDetailUiState error(String msg) { return new ComicDetailUiState(false, null, null, null, msg); }
 
     public boolean isLoading() { return loading; }
     public ComicDetailEntity getComic() { return comic; }
     public List<ChapterItem> getChapters() { return chapters; }
+    public List<com.example.comicversev1.domain.entity.HomeContent.ComicCard> getSimilarComics() { return similarComics; }
     public String getError() { return error; }
 }
