@@ -46,20 +46,16 @@ public class UpdateDialog extends DialogFragment {
 
         TextView tvTitle = view.findViewById(R.id.tvUpdateTitle);
         TextView tvSize = view.findViewById(R.id.tvUpdateSize);
-        TextView tvReleaseNotes = view.findViewById(R.id.tvReleaseNotes);
         Button btnUpdate = view.findViewById(R.id.btnUpdate);
         Button btnCancel = view.findViewById(R.id.btnCancel);
 
         if (appUpdateInfo != null) {
-            tvTitle.setText("Bản cập nhật mới: v" + appUpdateInfo.getVersionName());
+            tvTitle.setText("Phiên bản " + appUpdateInfo.getVersionName());
             if (appUpdateInfo.getApkSize() > 0) {
                 tvSize.setText(String.format("Dung lượng: %.2f MB", appUpdateInfo.getApkSize() / (1024.0 * 1024.0)));
             } else {
                 tvSize.setText("Dung lượng: Không rõ");
             }
-            
-            String notes = appUpdateInfo.getReleaseNotes();
-            tvReleaseNotes.setText(notes != null && !notes.isEmpty() ? notes : "Bản cập nhật giúp trải nghiệm ổn định hơn.");
 
             if (appUpdateInfo.isForceUpdate()) {
                 btnCancel.setVisibility(View.GONE);
