@@ -153,6 +153,32 @@ public class ReaderFragment extends Fragment {
                 });
             }
         }
+
+        if (chapterListAdapter != null && currentVisibleChapterId != -1) {
+            chapterListAdapter.setCurrentChapterId(currentVisibleChapterId);
+            RecyclerView rv = chapterListSheet.findViewById(R.id.rv_chapter_list);
+            if (rv != null && chapterListAdapter.getChapters() != null) {
+                int currentIndex = -1;
+                for (int i = 0; i < chapterListAdapter.getChapters().size(); i++) {
+                    if (chapterListAdapter.getChapters().get(i).getId() == currentVisibleChapterId) {
+                        currentIndex = i;
+                        break;
+                    }
+                }
+                if (currentIndex != -1) {
+                    final int finalIndex = currentIndex;
+                    rv.post(() -> {
+                        RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
+                        if (layoutManager instanceof LinearLayoutManager) {
+                            ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(finalIndex, rv.getHeight() / 3);
+                        } else {
+                            rv.scrollToPosition(finalIndex);
+                        }
+                    });
+                }
+            }
+        }
+
         chapterListSheet.show();
     }
 

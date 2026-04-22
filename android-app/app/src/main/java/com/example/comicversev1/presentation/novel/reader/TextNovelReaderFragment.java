@@ -468,6 +468,38 @@ public class TextNovelReaderFragment extends Fragment {
                 });
             }
         }
+
+        if (chapterListAdapter != null) {
+            int currentId = currentlyTrackedChapterId;
+            if (currentId <= 0 && viewModel.currentChapterEvent().getValue() != null) {
+                currentId = viewModel.currentChapterEvent().getValue().getId();
+            }
+            if (currentId > 0) {
+                chapterListAdapter.setCurrentChapterId(currentId);
+                RecyclerView rv = chapterListSheet.findViewById(R.id.rv_chapter_list);
+                if (rv != null && chapterListAdapter.getChapters() != null) {
+                    int currentIndex = -1;
+                    for (int i = 0; i < chapterListAdapter.getChapters().size(); i++) {
+                        if (chapterListAdapter.getChapters().get(i).getId() == currentId) {
+                            currentIndex = i;
+                            break;
+                        }
+                    }
+                    if (currentIndex != -1) {
+                        final int finalIndex = currentIndex;
+                        rv.post(() -> {
+                            RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
+                            if (layoutManager instanceof LinearLayoutManager) {
+                                ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(finalIndex, rv.getHeight() / 3);
+                            } else {
+                                rv.scrollToPosition(finalIndex);
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
         chapterListSheet.show();
     }
 

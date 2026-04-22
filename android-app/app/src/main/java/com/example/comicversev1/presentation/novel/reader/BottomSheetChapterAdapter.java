@@ -39,6 +39,10 @@ public class BottomSheetChapterAdapter extends RecyclerView.Adapter<BottomSheetC
         notifyDataSetChanged();
     }
 
+    public List<ChapterItem> getChapters() {
+        return mChapterListFull;
+    }
+
     @NonNull
     @Override
     public ChapterViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
