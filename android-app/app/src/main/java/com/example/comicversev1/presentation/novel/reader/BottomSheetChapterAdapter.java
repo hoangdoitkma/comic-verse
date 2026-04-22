@@ -26,10 +26,17 @@ public class BottomSheetChapterAdapter extends RecyclerView.Adapter<BottomSheetC
         void onChapterClick(int chapterId);
     }
 
+    private int currentChapterId = -1;
+
     public BottomSheetChapterAdapter(List<ChapterItem> chapters, OnChapterClickListener listener) {
         this.mChapterListFull = new ArrayList<>(chapters);
         this.mChapterList = new ArrayList<>(chapters);
         this.mListener = listener;
+    }
+
+    public void setCurrentChapterId(int chapterId) {
+        this.currentChapterId = chapterId;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -51,6 +58,12 @@ public class BottomSheetChapterAdapter extends RecyclerView.Adapter<BottomSheetC
         holder.tvTitle.setText(chapTitle);
         // Date placeholder
         holder.tvDate.setText("Vừa cập nhật");
+
+        if (chapter.getId() == currentChapterId) {
+            holder.tvTitle.setTextColor(android.graphics.Color.parseColor("#4CAF50")); // Highlight color
+        } else {
+            holder.tvTitle.setTextColor(holder.itemView.getContext().getResources().getColor(android.R.color.white));
+        }
 
         holder.itemView.setOnClickListener(v -> {
             if (mListener != null) {

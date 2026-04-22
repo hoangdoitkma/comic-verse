@@ -58,9 +58,9 @@ public class ComicServiceImpl implements ComicService {
 
     private void notifyAdmins(Comic comic, User uploader) {
         List<User> admins = userRepository.findByRole(com.datn.backend.entity.enums.Role.ADMIN);
-        String message = "Uploader " + uploader.getDisplayName() + " vừa tạo truyện mới: " + comic.getTitle() + ". Vui lòng kiểm tra.";
+        String message = String.format(com.datn.backend.constant.NotificationConstants.MSG_NEW_COMIC, uploader.getDisplayName(), comic.getTitle());
         for (User admin : admins) {
-            notificationService.sendSystemNotification(admin, "Có truyện mới được tạo", message, com.datn.backend.entity.enums.NotificationType.SYSTEM, "/admin");
+            notificationService.sendSystemNotification(admin, com.datn.backend.constant.NotificationConstants.TITLE_NEW_COMIC, message, com.datn.backend.entity.enums.NotificationType.SYSTEM, "/admin");
         }
     }
 

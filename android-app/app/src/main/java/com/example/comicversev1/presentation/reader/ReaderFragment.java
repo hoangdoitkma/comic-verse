@@ -411,9 +411,29 @@ public class ReaderFragment extends Fragment {
                     chapterListSheet.dismiss();
                     viewModel.loadSpecificChapter(chapterId);
                 });
+                chapterListAdapter.setCurrentChapterId(currentVisibleChapterId);
                 RecyclerView rv = chapterListSheet.findViewById(R.id.rv_chapter_list);
                 if (rv != null) {
                     rv.setAdapter(chapterListAdapter);
+                    
+                    int currentIndex = -1;
+                    for (int i = 0; i < chapters.size(); i++) {
+                        if (chapters.get(i).getId() == currentVisibleChapterId) {
+                            currentIndex = i;
+                            break;
+                        }
+                    }
+                    if (currentIndex != -1) {
+                        final int finalIndex = currentIndex;
+                        rv.post(() -> {
+                            RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
+                            if (layoutManager instanceof LinearLayoutManager) {
+                                ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(finalIndex, rv.getHeight() / 3);
+                            } else {
+                                rv.scrollToPosition(finalIndex);
+                            }
+                        });
+                    }
                 }
             }
         });
