@@ -49,18 +49,20 @@ public class PublicAuthServiceImpl implements PublicAuthService {
 
     @Override
     public TokenResponse refreshToken(String refreshToken) {
-        // Simple implementation for Android client
-        // In a real app, you would validate the refreshToken against a DB
-        // Here we assume the refresh token is just a valid jwt or we just return a new one
+        // Validate the incoming refresh token
         if (refreshToken != null && jwtUtils.validateJwtToken(refreshToken)) {
-            // Validation passed
+            // Lấy username (email) từ token cũ đang còn hạn
+            String username = jwtUtils.getUserNameFromJwtToken(refreshToken);
+            
+            // Sinh ra 1 cặp token mới toanh (thời gian sống được refresh về 24h tiếp theo)
+            String newToken = jwtUtils.generateTokenFromUsername(username);
+            
+            return TokenResponse.builder()
+                    .token(newToken)
+                    .refreshToken(newToken)
+                    .build();
         }
         
-        // This is a minimal stub to satisfy the Retrofit interface.
-        // It returns the same token to avoid complex DB refresh token entities at this stage.
-        return TokenResponse.builder()
-                .token(refreshToken)
-                .refreshToken(refreshToken)
-                .build();
+        throw new RuntimeException("Refresh token is invalid or expired!");
     }
 }
