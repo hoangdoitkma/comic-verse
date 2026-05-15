@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import DataTable from '../../components/DataTable';
 import ActionModal from '../../components/ActionModal';
 import adminService from '../../services/adminService';
+
+const PAGE_SIZE = 6;
 
 export default function AuthorsPage() {
   const { addToast } = useOutletContext();
@@ -11,6 +13,7 @@ export default function AuthorsPage() {
   const [authors, setAuthors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
+  const [page, setPage] = useState(0);
 
   // Form modal
   const [modal, setModal] = useState({ open: false, mode: 'create', author: null });
@@ -155,6 +158,20 @@ export default function AuthorsPage() {
     },
   ];
 
+  // Client-side pagination
+  const totalPages = Math.ceil(authors.length / PAGE_SIZE);
+  const paginatedAuthors = useMemo(() => {
+    const start = page * PAGE_SIZE;
+    return authors.slice(start, start + PAGE_SIZE);
+  }, [authors, page]);
+
+  // Reset page nếu vượt quá totalPages (ví dụ sau khi xoá)
+  useEffect(() => {
+    if (page > 0 && page >= totalPages) {
+      setPage(Math.max(0, totalPages - 1));
+    }
+  }, [authors, page, totalPages]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -177,10 +194,16 @@ export default function AuthorsPage() {
 
       <DataTable
         columns={columns}
-        data={authors}
+        data={paginatedAuthors}
         isLoading={isLoading}
         isError={isError}
         emptyMessage="Chưa có tác giả nào."
+        pagination={{
+          page,
+          totalPages,
+          totalElements: authors.length,
+          onPageChange: setPage,
+        }}
       />
 
       {/* Create/Edit Modal */}

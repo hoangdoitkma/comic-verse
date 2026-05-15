@@ -9,10 +9,13 @@ import com.datn.backend.exception.ResourceNotFoundException;
 import com.datn.backend.repository.NotificationRepository;
 import com.datn.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +36,8 @@ public class NotificationService {
                 .type(type)
                 .isRead(false)
                 .redirectUrl(redirectUrl)
+                .isBroadcast(false)
+                .batchId(UUID.randomUUID().toString())
                 .build();
                 
         notificationRepository.save(notification);
@@ -42,6 +47,7 @@ public class NotificationService {
     public void sendBroadcastNotification(String title, String message, NotificationType type) {
         // Send to everyone (could be optimized with a batch insert)
         List<User> allUsers = userRepository.findAll();
+        String batchId = UUID.randomUUID().toString();
         List<Notification> notifications = allUsers.stream().map(u -> 
             Notification.builder()
                 .user(u)
@@ -49,6 +55,8 @@ public class NotificationService {
                 .message(message)
                 .type(type)
                 .isRead(false)
+                .isBroadcast(true)
+                .batchId(batchId)
                 .build()
         ).collect(Collectors.toList());
         
@@ -101,11 +109,10 @@ public class NotificationService {
     }
     
     @Transactional(readOnly = true)
-    public List<NotificationResponse> getAllSentNotifications() {
-        return notificationRepository.findAll().stream()
-                .map(this::mapToResponse)
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt())) // Desc
-                .collect(Collectors.toList());
+    public Page<NotificationResponse> getAdminHistory(NotificationType type, Boolean isBroadcast, Pageable pageable) {
+        String typeStr = (type != null) ? type.name() : null;
+        return notificationRepository.findAdminGroupedHistory(typeStr, isBroadcast, pageable)
+                .map(this::mapToResponse);
     }
 
     private NotificationResponse mapToResponse(Notification n) {
@@ -117,8 +124,8 @@ public class NotificationService {
                 .isRead(n.getIsRead())
                 .redirectUrl(n.getRedirectUrl())
                 .createdAt(n.getCreatedAt())
-                .targetUserId(n.getUser() != null ? n.getUser().getId() : null)
-                .targetUserName(n.getUser() != null ? n.getUser().getDisplayName() : "Broadcast")
+                .targetUserId((n.getIsBroadcast() != null && n.getIsBroadcast()) ? null : (n.getUser() != null ? n.getUser().getId() : null))
+                .targetUserName((n.getIsBroadcast() != null && n.getIsBroadcast()) ? "Broadcast" : (n.getUser() != null ? n.getUser().getDisplayName() : "Unknown"))
                 .build();
     }
 }

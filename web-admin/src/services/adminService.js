@@ -145,6 +145,9 @@ const adminService = {
   // ==================== TRANSACTIONS ====================
 
   /**
+   * Lấy danh sách giao dịch (phân trang)
+   * GET /api/admin/transactions?page=0&size=10
+   */
   getTransactions: async (params = {}) => {
     const response = await axiosClient.get('/admin/transactions', { params });
     return response.data;

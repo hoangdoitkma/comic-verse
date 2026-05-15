@@ -1,0 +1,20 @@
+@startuml
+left to right direction
+
+actor "Độc giả\n(Guest/User)" as User
+
+usecase "Đọc truyện (Tranh/Chữ)" as MainUC
+
+usecase "Tải nội dung từ AWS S3" as UC_Download
+usecase "Lưu tiến độ đọc ẩn danh (Local)" as UC_SaveLocal
+usecase "Đồng bộ tiến độ lên Server" as UC_Sync
+
+User --> MainUC
+
+MainUC ..> UC_Download : <<include>>
+MainUC ..> UC_SaveLocal : <<include>>
+
+MainUC ..> UC_Sync : <<include>>
+
+
+@enduml

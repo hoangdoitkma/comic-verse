@@ -1,0 +1,41 @@
+@startuml
+autonumber
+skinparam sequenceMessageAlign center
+
+actor "Quản trị viên\n(Admin)" as Admin
+participant "Web Admin" as Web
+participant "AdminApprovalController" as Controller
+participant "NotificationService" as Notify
+database "MySQL DB" as DB
+
+Admin -> Web: Mở trang "Truyện chờ duyệt"
+activate Web
+Web -> Controller: GET /api/admin/comics/pending
+activate Controller
+Controller -> DB: SELECT * FROM comics WHERE status = 'PENDING'
+DB --> Controller: Danh sách truyện
+Controller --> Web: Danh sách truyện
+Web --> Admin: Hiển thị danh sách
+
+Admin -> Web: Nhấn nút "Phê duyệt" (Approve) trên 1 truyện
+Web -> Controller: PUT /api/admin/comics/{id}/approve
+activate Controller
+
+Controller -> DB: UPDATE comics SET status = 'PUBLISHED'
+activate DB
+DB --> Controller: success
+deactivate DB
+
+Controller -> Notify: createNotification(uploader_id, "Truyện đã duyệt")
+activate Notify
+Notify -> DB: INSERT INTO notifications
+DB --> Notify: success
+Notify --> Controller: success
+deactivate Notify
+
+Controller --> Web: 200 OK (Thành công)
+deactivate Controller
+
+Web --> Admin: Xóa dòng đó khỏi danh sách chờ\nvà báo thành công
+deactivate Web
+@enduml

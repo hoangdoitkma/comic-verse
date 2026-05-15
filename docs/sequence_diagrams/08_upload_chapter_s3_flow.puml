@@ -1,0 +1,43 @@
+@startuml
+autonumber
+skinparam sequenceMessageAlign center
+
+actor "Uploader" as Uploader
+participant "Web Admin" as Web
+participant "ChapterController" as Controller
+participant "AWS S3" as S3
+database "MySQL DB" as DB
+
+Uploader -> Web: Chọn truyện & Vào "Thêm chương mới"
+Uploader -> Web: Kéo thả hàng loạt file ảnh
+activate Web
+Uploader -> Web: Nhấn "Tải lên"
+
+Web -> Controller: POST /api/admin/chapters\n(comicId, chapterNumber, List<MultipartFile>)
+activate Controller
+
+Controller -> Controller: Validate (Trùng số chương?)
+Controller -> DB: INSERT INTO chapters
+activate DB
+DB --> Controller: success (chapter_id)
+deactivate DB
+
+loop Duyệt qua từng file ảnh
+    Controller -> S3: Upload Image File lên S3 Bucket
+    activate S3
+    S3 --> Controller: image_url
+    deactivate S3
+    
+    Controller -> DB: INSERT INTO chapter_pages\n(chapter_id, image_url, page_number)
+    activate DB
+    DB --> Controller: success
+    deactivate DB
+end
+
+Controller -> DB: UPDATE comics SET updated_at = NOW()
+Controller --> Web: 200 OK (Upload thành công)
+deactivate Controller
+
+Web --> Uploader: Ẩn thanh progress và báo Thành công
+deactivate Web
+@enduml

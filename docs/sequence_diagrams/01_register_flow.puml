@@ -1,0 +1,59 @@
+@startuml
+autonumber
+skinparam sequenceMessageAlign center
+
+actor "Khách (Guest)" as Guest
+participant "Android App" as App
+participant "AuthController" as Controller
+participant "UserService" as Service
+participant "UserRepository" as Repo
+database "MySQL DB" as DB
+
+Guest -> App: Nhập thông tin đăng ký\n(Username, Email, Password)
+activate App
+Guest -> App: Nhấn "Đăng ký"
+App -> App: Validate dữ liệu cục bộ\n(Email format, Confirm password)
+alt Dữ liệu không hợp lệ
+    App --> Guest: Hiển thị lỗi báo đỏ trên UI
+else Dữ liệu hợp lệ
+    App -> Controller: POST /api/auth/register\n(RegisterRequest)
+    activate Controller
+    
+    Controller -> Service: registerUser(request)
+    activate Service
+    
+    Service -> Repo: existsByEmail(email)
+    activate Repo
+    Repo -> DB: SELECT count(*) FROM users WHERE email=?
+    activate DB
+    DB --> Repo: result
+    deactivate DB
+    Repo --> Service: boolean
+    deactivate Repo
+    
+    alt Email hoặc Username đã tồn tại
+        Service --> Controller: throw CustomException("Email/Username already exists")
+        Controller --> App: 400 Bad Request
+        App --> Guest: Thông báo "Tài khoản đã tồn tại"
+    else Hợp lệ
+        Service -> Service: Mã hóa mật khẩu (BCrypt)
+        Service -> Repo: save(newUser)
+        activate Repo
+        Repo -> DB: INSERT INTO users (...)
+        activate DB
+        DB --> Repo: success
+        deactivate DB
+        Repo --> Service: User entity
+        deactivate Repo
+        
+        Service --> Controller: RegisterResponse(success)
+        deactivate Service
+        
+        Controller --> App: 200 OK (Message: Đăng ký thành công)
+        deactivate Controller
+        
+        App --> Guest: Chuyển hướng sang màn hình Đăng nhập
+    end
+end
+deactivate App
+@enduml

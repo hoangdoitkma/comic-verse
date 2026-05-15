@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+
+actor "Quản trị viên\n(Admin)" as Admin
+
+usecase "Quản lý Thể loại & Tác giả" as MainUC
+
+usecase "Thêm mới" as UC_Add
+usecase "Cập nhật thông tin" as UC_Edit
+usecase "Xóa" as UC_Delete
+
+Admin --> MainUC
+
+MainUC ..> UC_Add : <<include>>
+MainUC ..> UC_Edit : <<include>>
+MainUC ..> UC_Delete : <<include>>
+
+@enduml

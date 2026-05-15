@@ -37,7 +37,7 @@ export default function UsersPage() {
     setIsLoading(true);
     setIsError(false);
     try {
-      const params = { page, size: 10 };
+      const params = { page, size: 6 };
       if (roleFilter) params.role = roleFilter;
       if (statusFilter) params.status = statusFilter;
       const data = await adminService.getUsers(params);

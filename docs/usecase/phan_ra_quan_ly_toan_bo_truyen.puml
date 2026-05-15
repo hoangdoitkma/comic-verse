@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+
+actor "Quản trị viên\n(Admin)" as Admin
+
+usecase "Quản lý toàn bộ Truyện\n(Admin Comics)" as MainUC
+
+usecase "Xem danh sách toàn bộ truyện" as UC_List
+usecase "Xóa/Gỡ bỏ truyện vi phạm" as UC_Delete
+usecase "Khóa/Mở khóa trạng thái truyện" as UC_ToggleStatus
+
+Admin --> MainUC
+
+MainUC ..> UC_List : <<include>>
+MainUC ..> UC_Delete : <<include>>
+MainUC ..> UC_ToggleStatus : <<include>>
+
+@enduml

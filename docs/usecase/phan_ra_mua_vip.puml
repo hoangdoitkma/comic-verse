@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+
+actor "Thành viên\n(User)" as User
+
+usecase "Mua gói VIP" as MainUC
+
+usecase "Chọn gói VIP" as UC_Select
+usecase "Thanh toán qua PayOS/VietQR" as UC_Pay
+usecase "Nhận xác nhận giao dịch" as UC_Confirm
+
+User --> MainUC
+
+MainUC ..> UC_Select : <<include>>
+MainUC ..> UC_Pay : <<include>>
+MainUC ..> UC_Confirm : <<include>>
+
+@enduml

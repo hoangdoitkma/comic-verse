@@ -1,0 +1,20 @@
+@startuml
+left to right direction
+
+actor "Khách\n(Guest)" as Guest
+actor "Thành viên\n(User)" as User
+
+usecase "Khám phá & Xem chi tiết truyện" as MainUC
+
+usecase "Xem trang chủ (Top xu hướng, Mới cập nhật)" as UC_Home
+usecase "Xem thông tin truyện (Tác giả, Thể loại, Lượt xem)" as UC_Info
+usecase "Đánh dấu truyện yêu thích" as UC_Favorite
+
+Guest --> MainUC
+User --> MainUC
+
+MainUC ..> UC_Home : <<include>>
+MainUC ..> UC_Info : <<include>>
+MainUC ..> UC_Favorite : <<include>>
+
+@enduml

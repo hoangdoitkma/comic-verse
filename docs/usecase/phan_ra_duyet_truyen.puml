@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+
+actor "Quản trị viên\n(Admin)" as Admin
+
+usecase "Duyệt truyện chờ" as MainUC
+
+usecase "Xem chi tiết nội dung chờ" as UC_View
+usecase "Chấp nhận phê duyệt" as UC_Approve
+usecase "Từ chối phê duyệt" as UC_Reject
+
+Admin --> MainUC
+
+MainUC ..> UC_View : <<include>>
+MainUC ..> UC_Approve : <<include>>
+MainUC ..> UC_Reject : <<include>>
+
+@enduml

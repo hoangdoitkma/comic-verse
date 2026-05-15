@@ -1,0 +1,46 @@
+@startuml
+autonumber
+skinparam sequenceMessageAlign center
+
+actor "Quản trị viên" as Admin
+participant "Web Admin" as Web
+participant "DashboardController" as Controller
+participant "StatisticsService" as Service
+database "MySQL DB" as DB
+
+Admin -> Web: Truy cập màn hình Dashboard
+activate Web
+
+Web -> Controller: GET /api/admin/dashboard/stats
+activate Controller
+
+Controller -> Service: getDashboardStatistics()
+activate Service
+
+par Lấy dữ liệu song song
+    Service -> DB: COUNT(users) WHERE created_at = TODAY
+    activate DB
+    DB --> Service: Số lượng User mới
+    deactivate DB
+    
+    Service -> DB: SUM(amount) FROM transactions WHERE status='SUCCESS'
+    activate DB
+    DB --> Service: Tổng doanh thu
+    deactivate DB
+    
+    Service -> DB: SUM(view_count) FROM comics
+    activate DB
+    DB --> Service: Tổng số lượt xem
+    deactivate DB
+end
+
+Service --> Controller: DashboardStatsDTO
+deactivate Service
+
+Controller --> Web: 200 OK (JSON Data)
+deactivate Controller
+
+Web -> Web: Parse JSON và Render Biểu đồ (ChartJS/Recharts)
+Web --> Admin: Hiển thị các Biểu đồ thống kê trực quan
+deactivate Web
+@enduml

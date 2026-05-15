@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+
+actor "Quản trị viên\n(Admin)" as Admin
+
+usecase "Quản lý Thông báo" as MainUC
+
+usecase "Tạo nội dung thông báo" as UC_Create
+usecase "Gửi cho toàn hệ thống (Broadcast)" as UC_Broadcast
+usecase "Gửi cho cá nhân/nhóm cụ thể" as UC_Specific
+
+Admin --> MainUC
+
+MainUC ..> UC_Create : <<include>>
+MainUC ..> UC_Broadcast : <<include>>
+MainUC ..> UC_Specific : <<include>>
+
+@enduml

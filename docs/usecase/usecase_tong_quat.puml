@@ -1,0 +1,92 @@
+@startuml
+skinparam actorStyle awesome
+left to right direction
+skinparam packageStyle rectangle
+' Tối ưu khoảng cách
+skinparam nodesep 10
+skinparam ranksep 40
+
+' Dùng đường thẳng
+skinparam linetype polyline
+
+actor "Quản trị viên\n(Admin)" as Admin
+actor "Người đăng truyện\n(Uploader)" as Uploader
+actor "Thành viên\n(User)" as User
+actor "Khách\n(Guest)" as Guest
+
+Uploader <|-- Admin : "Kế thừa quyền"
+
+package "Hệ thống ComicVerse" {
+
+    usecase "Đăng nhập" as UC_Login
+
+    package "Phân hệ Quản trị" {
+        usecase "Xem thống kê tổng quan" as UC_ViewDashboard
+        usecase "QL toàn bộ truyện" as UC_ManageAllComic
+        usecase "Duyệt truyện chờ" as UC_ApproveComic
+        usecase "QL Thể loại/Tác giả" as UC_ManageCategory
+        usecase "QL Người dùng" as UC_ManageUser
+        usecase "QL Thông báo" as UC_ManageNotify
+        usecase "QL VIP & Giao dịch" as UC_ManagePayment
+        usecase "QL Truyện (Cá nhân)" as UC_ManageOwnComic
+        usecase "QL Chương truyện" as UC_ManageChapter
+        usecase "Xử lý báo cáo lỗi" as UC_ProcessReport
+    }
+
+    package "Phân hệ Người dùng" {
+        usecase "Đăng ký tài khoản" as UC_Register
+        usecase "Khám phá & Xem chi tiết" as UC_ComicDetail
+        usecase "Tìm kiếm và Lọc" as UC_Search
+        usecase "Đọc truyện" as UC_Read
+        usecase "Lưu lịch sử ẩn danh" as UC_GuestHistory
+        
+        usecase "Đồng bộ lịch sử" as UC_SyncHistory
+        usecase "Đánh dấu yêu thích" as UC_Favorite
+        usecase "Cập nhật hồ sơ" as UC_Profile
+        usecase "Bình luận truyện" as UC_Comment
+        usecase "Báo cáo lỗi chương" as UC_ReportChapter
+        usecase "Xem thông báo" as UC_ViewNotify
+        usecase "Mua gói VIP" as UC_BuyVip
+    }
+}
+
+
+
+' ==========================================
+' LIÊN KẾT CỦA UPLOADER & ADMIN (Bên trái)
+' ==========================================
+Admin --> UC_ViewDashboard
+Admin --> UC_ManageAllComic
+Admin --> UC_ApproveComic
+Admin --> UC_ManageCategory
+Admin --> UC_ManageUser
+Admin --> UC_ManageNotify
+Admin --> UC_ManagePayment
+
+Uploader --> UC_ManageOwnComic
+Uploader --> UC_ManageChapter
+Uploader --> UC_ProcessReport
+Uploader --> UC_Profile
+
+' ==========================================
+' LIÊN KẾT CỦA KHÁCH & USER (Bên phải)
+' ==========================================
+UC_ComicDetail <-- Guest
+UC_Search <-- Guest
+UC_Read <-- Guest
+UC_GuestHistory <-- Guest
+UC_Register <-- Guest
+
+UC_ComicDetail <-- User
+UC_Search <-- User
+UC_Read <-- User
+UC_Login <-- User
+UC_SyncHistory <-- User
+UC_Favorite <-- User
+UC_Profile <-- User
+UC_Comment <-- User
+UC_ReportChapter <-- User
+UC_ViewNotify <-- User
+UC_BuyVip <-- User
+
+@enduml

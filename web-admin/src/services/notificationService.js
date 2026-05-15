@@ -28,8 +28,8 @@ const notificationService = {
     return response;
   },
 
-  getNotificationHistory: async () => {
-    const response = await axiosClient.get('/admin/notifications/history');
+  getNotificationHistory: async (params) => {
+    const response = await axiosClient.get('/admin/notifications/history', { params });
     return response;
   }
 };

@@ -1,0 +1,16 @@
+@startuml
+left to right direction
+
+actor "Thành viên\n(User)" as User
+
+usecase "Báo cáo lỗi chương" as MainUC
+
+usecase "Chọn loại lỗi (Hình hỏng, sai text...)" as UC_Select
+usecase "Gửi thông tin về Server" as UC_Send
+
+User --> MainUC
+
+MainUC ..> UC_Select : <<include>>
+MainUC ..> UC_Send : <<include>>
+
+@enduml

@@ -1,0 +1,16 @@
+@startuml
+left to right direction
+
+actor "Thành viên\n(User)" as User
+
+usecase "Xem thông báo" as MainUC
+
+usecase "Xem danh sách thông báo cá nhân/hệ thống" as UC_List
+usecase "Đánh dấu đã đọc" as UC_MarkRead
+
+User --> MainUC
+
+MainUC ..> UC_List : <<include>>
+MainUC ..> UC_MarkRead : <<include>>
+
+@enduml

@@ -1,0 +1,52 @@
+@startuml
+autonumber
+skinparam sequenceMessageAlign center
+
+actor "Người dùng" as User
+participant "Android App" as App
+participant "ComicController" as Controller
+participant "ComicService" as Service
+database "MySQL DB" as DB
+
+User -> App: Mở ứng dụng (Vào Trang chủ)
+activate App
+App -> Controller: GET /api/comics/home
+activate Controller
+
+Controller -> Service: getHomeComics()
+activate Service
+
+Service -> DB: SELECT truyện đề xuất, truyện mới cập nhật
+activate DB
+DB --> Service: Danh sách Comics
+deactivate DB
+
+Service --> Controller: ComicResponseList
+deactivate Service
+
+Controller --> App: 200 OK (Danh sách truyện)
+deactivate Controller
+
+App --> User: Hiển thị màn hình Trang chủ (Home)
+
+User -> App: Nhấn vào 1 bìa truyện
+App -> Controller: GET /api/comics/{id}
+activate Controller
+
+Controller -> Service: getComicDetails(id)
+activate Service
+
+Service -> DB: Lấy thông tin Comic + Danh sách Chapter
+activate DB
+DB --> Service: Chi tiết truyện & Chapters
+deactivate DB
+
+Service --> Controller: ComicDetailResponse
+deactivate Service
+
+Controller --> App: 200 OK (Dữ liệu chi tiết)
+deactivate Controller
+
+App --> User: Hiển thị màn hình Chi tiết truyện
+deactivate App
+@enduml

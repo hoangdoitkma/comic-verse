@@ -1,0 +1,19 @@
+@startuml
+left to right direction
+
+actor "Độc giả\n(Guest/User)" as User
+
+usecase "Đăng nhập" as MainUC
+
+usecase "Nhập Email/Mật khẩu" as UC_Input
+usecase "Xác thực với Backend (JWT)" as UC_Auth
+usecase "Quên mật khẩu" as UC_Forgot
+
+User --> MainUC
+
+MainUC ..> UC_Input : <<include>>
+MainUC ..> UC_Auth : <<include>>
+
+MainUC ..> UC_Forgot : <<include>>
+
+@enduml

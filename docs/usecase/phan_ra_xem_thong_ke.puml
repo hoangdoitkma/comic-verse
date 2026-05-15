@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+
+actor "Quản trị viên\n(Admin)" as Admin
+
+usecase "Xem thống kê tổng quan\n(Dashboard)" as MainUC
+
+usecase "Xem thống kê doanh thu" as UC_Revenue
+usecase "Xem thống kê người dùng mới" as UC_UserStats
+usecase "Xem số liệu tương tác (View/Vote)" as UC_Interactions
+
+Admin --> MainUC
+
+MainUC ..> UC_Revenue : <<include>>
+MainUC ..> UC_UserStats : <<include>>
+MainUC ..> UC_Interactions : <<include>>
+
+@enduml
