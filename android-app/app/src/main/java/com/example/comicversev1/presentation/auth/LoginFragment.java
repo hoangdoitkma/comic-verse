@@ -23,7 +23,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.example.comicversev1.BuildConfig;
 import com.example.comicversev1.R;
 import com.example.comicversev1.databinding.FragmentLoginBinding;
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 
 import java.util.concurrent.ExecutorService;
@@ -115,10 +115,7 @@ public class LoginFragment extends Fragment {
             return;
         }
 
-        GetGoogleIdOption googleIdOption = new GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
-                .setAutoSelectEnabled(false)
+        GetSignInWithGoogleOption googleIdOption = new GetSignInWithGoogleOption.Builder(BuildConfig.GOOGLE_WEB_CLIENT_ID)
                 .build();
 
         GetCredentialRequest request = new GetCredentialRequest.Builder()
