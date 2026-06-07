@@ -15,8 +15,8 @@ android {
         applicationId "com.example.comicversev1"
         minSdk 24
         targetSdk 35
-        versionCode 18
-        versionName "1.1.18"
+        versionCode 19
+        versionName "1.1.19"
 
         buildConfigField "String", "BASE_URL", '"http://3.1.207.156:8080/api/"'
         buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", "\"${googleWebClientId}\""
