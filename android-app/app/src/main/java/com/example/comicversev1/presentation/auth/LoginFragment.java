@@ -2,6 +2,7 @@ package com.example.comicversev1.presentation.auth;
 
 import android.os.CancellationSignal;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,7 @@ import androidx.credentials.CredentialManagerCallback;
 import androidx.credentials.CustomCredential;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
+import androidx.credentials.exceptions.GetCredentialCancellationException;
 import androidx.credentials.exceptions.GetCredentialException;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -33,6 +35,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class LoginFragment extends Fragment {
+
+    private static final String TAG = "LoginFragment";
 
     private FragmentLoginBinding binding;
     private LoginViewModel viewModel;
@@ -135,6 +139,12 @@ public class LoginFragment extends Fragment {
 
                     @Override
                     public void onError(@NonNull GetCredentialException e) {
+                        if (e instanceof GetCredentialCancellationException) {
+                            Log.d(TAG, "Google sign-in was cancelled by the user");
+                            return;
+                        }
+
+                        Log.w(TAG, "Google sign-in failed: " + e.getClass().getSimpleName(), e);
                         if (getActivity() == null) return;
                         requireActivity().runOnUiThread(() ->
                                 Toast.makeText(requireContext(), "Không thể đăng nhập Google: " + e.getMessage(), Toast.LENGTH_SHORT).show());
