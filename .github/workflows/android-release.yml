@@ -31,6 +31,36 @@ jobs:
       - name: Grant execution permission for gradlew
         run: chmod +x gradlew
 
+      - name: Print release signing certificate SHA-1
+        shell: bash
+        env:
+          SIGNING_KEY_BASE64: ${{ secrets.SIGNING_KEY }}
+          ANDROID_RELEASE_KEYSTORE_BASE64: ${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          ANDROID_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEYSTORE_PASSWORD }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          KEYSTORE_BASE64="${SIGNING_KEY_BASE64:-${ANDROID_RELEASE_KEYSTORE_BASE64:-${ANDROID_KEYSTORE_BASE64:-}}}"
+          ALIAS="${KEY_ALIAS:-${ANDROID_RELEASE_KEY_ALIAS:-${ANDROID_KEY_ALIAS:-}}}"
+          STORE_PASSWORD="${KEY_STORE_PASSWORD:-${ANDROID_RELEASE_KEYSTORE_PASSWORD:-${ANDROID_KEYSTORE_PASSWORD:-}}}"
+
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$ALIAS" ] || [ -z "$STORE_PASSWORD" ]; then
+            echo "Missing release signing secrets. Check SIGNING_KEY/KEY_ALIAS/KEY_STORE_PASSWORD or ANDROID_RELEASE_* equivalents."
+            exit 1
+          fi
+
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > release-signing-key.jks
+          echo "Release signing certificate fingerprints:"
+          keytool -list -v \
+            -keystore release-signing-key.jks \
+            -storepass "$STORE_PASSWORD" \
+            -alias "$ALIAS" | grep -E 'SHA1:|SHA-256:'
+          rm -f release-signing-key.jks
+
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
