@@ -23,12 +23,20 @@
         <action
             android:id="@+id/action_login_to_register"
             app:destination="@id/registerFragment" />
+        <action
+            android:id="@+id/action_login_to_forgotPassword"
+            app:destination="@id/forgotPasswordFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/registerFragment"
         android:name="com.example.comicversev1.presentation.auth.RegisterFragment"
         android:label="Register" />
+
+    <fragment
+        android:id="@+id/forgotPasswordFragment"
+        android:name="com.example.comicversev1.presentation.auth.ForgotPasswordFragment"
+        android:label="Forgot Password" />
 
     <fragment
         android:id="@+id/discoverFragment"

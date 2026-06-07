@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.comicversev1.R;
+import com.example.comicversev1.utils.ReaderSettings;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import android.text.Editable;
@@ -72,9 +73,9 @@ public class TextNovelReaderFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        prefs = requireActivity().getSharedPreferences("NovelReaderPrefs", Context.MODE_PRIVATE);
-        currentTextSize = prefs.getFloat("text_size", 18f);
-        currentTheme = prefs.getInt("theme", 0);
+        prefs = requireActivity().getSharedPreferences(ReaderSettings.PREF_NOVEL, Context.MODE_PRIVATE);
+        currentTextSize = prefs.getFloat(ReaderSettings.KEY_NOVEL_TEXT_SIZE, ReaderSettings.DEFAULT_NOVEL_TEXT_SIZE);
+        currentTheme = prefs.getInt(ReaderSettings.KEY_NOVEL_THEME, ReaderSettings.DEFAULT_NOVEL_THEME);
 
         viewModel = new ViewModelProvider(this).get(TextNovelViewModel.class);
 
@@ -117,23 +118,6 @@ public class TextNovelReaderFragment extends Fragment {
             viewModel.fetchChapterList();
         });
         
-        ImageButton btnComments = view.findViewById(R.id.btn_comments);
-        if (btnComments != null) {
-            btnComments.setOnClickListener(v -> {
-                int chapterId = currentlyTrackedChapterId;
-                if (chapterId <= 0) {
-                    com.example.comicversev1.domain.entity.ChapterEntity current = viewModel.currentChapterEvent().getValue();
-                    if (current != null) chapterId = current.getId();
-                }
-                if (chapterId > 0) {
-                    com.example.comicversev1.presentation.comments.CommentsBottomSheetDialogFragment.newInstance(chapterId)
-                            .show(getChildFragmentManager(), "CommentsBottomSheet");
-                } else {
-                    Toast.makeText(requireContext(), "Đang tải chương...", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-
         
         btnNext.setOnClickListener(v -> {
             Integer nextId = viewModel.getPendingNextChapterId();
@@ -153,7 +137,15 @@ public class TextNovelReaderFragment extends Fragment {
         autoScrollManager = new AutoScrollManager(requireContext(), recyclerView);
         autoScrollManager.setListener(isScrolling -> {
             // Callback when auto-scroll state changes (e.g. paused by touch in Mode A)
+            prefs.edit().putBoolean(ReaderSettings.KEY_NOVEL_AUTO_SCROLL_ENABLED, isScrolling).apply();
         });
+        autoScrollManager.applySettings(
+                prefs.getInt(ReaderSettings.KEY_NOVEL_SCROLL_SPEED, ReaderSettings.DEFAULT_NOVEL_SCROLL_SPEED),
+                prefs.getInt(ReaderSettings.KEY_NOVEL_SCROLL_CONFLICT_MODE, ReaderSettings.DEFAULT_NOVEL_SCROLL_CONFLICT_MODE)
+        );
+        if (prefs.getBoolean(ReaderSettings.KEY_NOVEL_AUTO_SCROLL_ENABLED, ReaderSettings.DEFAULT_NOVEL_AUTO_SCROLL_ENABLED)) {
+            autoScrollManager.toggle(true);
+        }
 
         applyTheme(); // Áp dụng theme ban đầu (Background của FrameLayout)
 
@@ -548,11 +540,11 @@ public class TextNovelReaderFragment extends Fragment {
             switchAutoScroll.setChecked(autoScrollManager.isAutoScrolling());
             layoutAutoScrollSettings.setVisibility(switchAutoScroll.isChecked() ? View.VISIBLE : View.GONE);
             
-            int currentSpeed = prefs.getInt("scroll_speed", 2);
+            int currentSpeed = prefs.getInt(ReaderSettings.KEY_NOVEL_SCROLL_SPEED, ReaderSettings.DEFAULT_NOVEL_SCROLL_SPEED);
             seekBarSpeed.setProgress(currentSpeed);
             tvScrollSpeedLbl.setText("Tốc độ cuộn: " + currentSpeed);
 
-            int conflictMode = prefs.getInt("scroll_conflict_mode", 1);
+            int conflictMode = prefs.getInt(ReaderSettings.KEY_NOVEL_SCROLL_CONFLICT_MODE, ReaderSettings.DEFAULT_NOVEL_SCROLL_CONFLICT_MODE);
             if (conflictMode == 0) {
                 rgConflictMode.check(R.id.rbStop);
                 if (tvAutoScrollHint != null) tvAutoScrollHint.setText("Lưu ý: Bất kỳ thao tác chạm nào trên trang đọc cũng sẽ tắt hẳn chức năng tự động cuộn.");
@@ -563,6 +555,7 @@ public class TextNovelReaderFragment extends Fragment {
 
             switchAutoScroll.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 layoutAutoScrollSettings.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+                prefs.edit().putBoolean(ReaderSettings.KEY_NOVEL_AUTO_SCROLL_ENABLED, isChecked).apply();
                 autoScrollManager.toggle(isChecked);
                 // Ẩn thanh công cụ và Settings Dialog để đọc luôn với Auto-scroll
                 if (isChecked && isUiVisible) {
@@ -576,7 +569,7 @@ public class TextNovelReaderFragment extends Fragment {
                 public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
                     int speed = Math.max(1, progress); // Tốc độ tối thiểu là 1
                     tvScrollSpeedLbl.setText("Tốc độ cuộn: " + speed);
-                    autoScrollManager.applySettings(speed, prefs.getInt("scroll_conflict_mode", 1));
+                    autoScrollManager.applySettings(speed, prefs.getInt(ReaderSettings.KEY_NOVEL_SCROLL_CONFLICT_MODE, ReaderSettings.DEFAULT_NOVEL_SCROLL_CONFLICT_MODE));
                 }
                 @Override
                 public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
@@ -586,7 +579,7 @@ public class TextNovelReaderFragment extends Fragment {
 
             rgConflictMode.setOnCheckedChangeListener((group, checkedId) -> {
                 int mode = checkedId == R.id.rbStop ? 0 : 1;
-                autoScrollManager.applySettings(prefs.getInt("scroll_speed", 2), mode);
+                autoScrollManager.applySettings(prefs.getInt(ReaderSettings.KEY_NOVEL_SCROLL_SPEED, ReaderSettings.DEFAULT_NOVEL_SCROLL_SPEED), mode);
                 if (tvAutoScrollHint != null) {
                     if (mode == 0) {
                         tvAutoScrollHint.setText("Lưu ý: Bất kỳ thao tác chạm nào trên trang đọc cũng sẽ tắt hẳn chức năng tự động cuộn.");
@@ -602,8 +595,8 @@ public class TextNovelReaderFragment extends Fragment {
 
     private void saveSettings() {
         prefs.edit()
-            .putFloat("text_size", currentTextSize)
-            .putInt("theme", currentTheme)
+            .putFloat(ReaderSettings.KEY_NOVEL_TEXT_SIZE, currentTextSize)
+            .putInt(ReaderSettings.KEY_NOVEL_THEME, currentTheme)
             .apply();
         applyTheme();
     }

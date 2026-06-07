@@ -2,14 +2,14 @@ package com.example.comicversev1.presentation.profile;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -18,16 +18,23 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.bumptech.glide.Glide;
 import com.example.comicversev1.R;
-import com.example.comicversev1.data.api.ApiService;
 import com.example.comicversev1.data.model.ChangePasswordRequest;
 import com.example.comicversev1.data.model.UpdateProfileRequest;
 import com.example.comicversev1.data.model.UserProfileDTO;
+import com.example.comicversev1.data.repository.UserDataRepository;
+import com.example.comicversev1.data.repository.UserProfileRepository;
 import com.example.comicversev1.databinding.FragmentProfileDetailBinding;
+import com.example.comicversev1.presentation.home.HomeViewModel;
+import com.example.comicversev1.presentation.novel.NovelViewModel;
 import com.example.comicversev1.utils.Constants;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.io.InputStream;
 import java.time.LocalDateTime;
@@ -48,23 +55,26 @@ import okhttp3.RequestBody;
 @AndroidEntryPoint
 public class ProfileDetailFragment extends Fragment {
 
+    private static final String TAG = "ProfileDetail";
+
     @Inject
-    ApiService apiService;
+    UserProfileRepository userProfileRepository;
 
+    @Inject
+    UserDataRepository userDataRepository;
+
+    private final CompositeDisposable disposable = new CompositeDisposable();
     private FragmentProfileDetailBinding binding;
-    private CompositeDisposable disposable = new CompositeDisposable();
-
-    private boolean isEditMode = false;
     private Uri pendingAvatarUri = null;
     private UserProfileDTO currentUserProfile = null;
-
     private ActivityResultLauncher<String> openDocumentLauncher;
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         binding = FragmentProfileDetailBinding.inflate(inflater, container, false);
-
         openDocumentLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
                 uri -> {
@@ -72,9 +82,7 @@ public class ProfileDetailFragment extends Fragment {
                         pendingAvatarUri = uri;
                         binding.imageAvatar.setImageURI(uri);
                     }
-                }
-        );
-
+                });
         return binding.getRoot();
     }
 
@@ -88,91 +96,77 @@ public class ProfileDetailFragment extends Fragment {
 
     private void setupListeners() {
         binding.btnBack.setOnClickListener(v -> NavHostFragment.findNavController(this).navigateUp());
-        
-        binding.fabEdit.setOnClickListener(v -> {
-            toggleEditMode(true);
-        });
-
-        binding.btnSave.setOnClickListener(v -> {
-            saveChanges();
-        });
-
+        binding.fabEdit.setOnClickListener(v -> toggleEditMode(true));
+        binding.btnSave.setOnClickListener(v -> saveChanges());
         binding.btnChangePassword.setOnClickListener(v -> showChangePasswordDialog());
-
         binding.btnLogout.setOnClickListener(v -> logout());
-
-        binding.btnUpdateAvatar.setOnClickListener(v -> {
-            openDocumentLauncher.launch("image/*");
-        });
+        binding.btnUpdateAvatar.setOnClickListener(v -> openDocumentLauncher.launch("image/*"));
     }
 
     private void toggleEditMode(boolean enable) {
-        isEditMode = enable;
         if (enable) {
             binding.layoutViewMode.setVisibility(View.GONE);
             binding.fabEdit.setVisibility(View.GONE);
             binding.layoutEditMode.setVisibility(View.VISIBLE);
             binding.btnSave.setVisibility(View.VISIBLE);
-            
             if (currentUserProfile != null) {
                 binding.editEmail.setText(currentUserProfile.email);
                 binding.editDisplayName.setText(currentUserProfile.displayName);
             }
-        } else {
-            binding.layoutViewMode.setVisibility(View.VISIBLE);
-            binding.fabEdit.setVisibility(View.VISIBLE);
-            binding.layoutEditMode.setVisibility(View.GONE);
-            binding.btnSave.setVisibility(View.GONE);
-            
-            // if we cancel edit, we revert the avatar visually
-            if (pendingAvatarUri != null) {
-                pendingAvatarUri = null;
-                if (currentUserProfile != null && currentUserProfile.avatarUrl != null) {
-                    Glide.with(this).load(currentUserProfile.avatarUrl).into(binding.imageAvatar);
-                } else {
-                    binding.imageAvatar.setImageResource(R.mipmap.ic_launcher);
-                }
+            return;
+        }
+
+        binding.layoutViewMode.setVisibility(View.VISIBLE);
+        binding.fabEdit.setVisibility(View.VISIBLE);
+        binding.layoutEditMode.setVisibility(View.GONE);
+        binding.btnSave.setVisibility(View.GONE);
+
+        if (pendingAvatarUri != null) {
+            pendingAvatarUri = null;
+            if (currentUserProfile != null && currentUserProfile.avatarUrl != null) {
+                Glide.with(this).load(currentUserProfile.avatarUrl).into(binding.imageAvatar);
+            } else {
+                binding.imageAvatar.setImageResource(R.mipmap.ic_launcher);
             }
         }
     }
 
     private void fetchUserProfile() {
-        disposable.add(
-                apiService.getUserProfile()
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(response -> {
-                            if (response.isSuccess() && response.getData() != null) {
-                                currentUserProfile = response.getData();
-                                updateUI(currentUserProfile);
-                            } else {
-                                Toast.makeText(requireContext(), "Lỗi tải thông tin", Toast.LENGTH_SHORT).show();
-                            }
-                        }, error -> {
-                            Log.e("ProfileDetailFragment", "Error fetching profile", error);
-                            // Fallback from SharedPreferences
-                            SharedPreferences prefs = requireActivity().getSharedPreferences(Constants.PREF_AUTH, Context.MODE_PRIVATE);
-                            currentUserProfile = new UserProfileDTO();
-                            currentUserProfile.email = prefs.getString(Constants.KEY_EMAIL, "Unknown");
-                            currentUserProfile.displayName = prefs.getString(Constants.KEY_DISPLAY_NAME, "Unknown");
-                            updateUI(currentUserProfile);
-                        })
-        );
+        disposable.add(userProfileRepository.getUserProfile()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(profile -> {
+                    currentUserProfile = profile;
+                    updateUI(profile);
+                }, error -> {
+                    Log.e(TAG, "Error fetching profile", error);
+                    SharedPreferences prefs = requireActivity().getSharedPreferences(Constants.PREF_AUTH, Context.MODE_PRIVATE);
+                    currentUserProfile = new UserProfileDTO();
+                    currentUserProfile.email = prefs.getString(Constants.KEY_EMAIL, "Unknown");
+                    currentUserProfile.displayName = prefs.getString(Constants.KEY_DISPLAY_NAME, "Unknown");
+                    updateUI(currentUserProfile);
+                }));
     }
 
     private void updateUI(UserProfileDTO profile) {
         binding.textProfileName.setText(profile.displayName);
+        SharedPreferences prefs = requireActivity().getSharedPreferences(Constants.PREF_AUTH, Context.MODE_PRIVATE);
+        if (profile.displayName != null && !profile.displayName.trim().isEmpty()) {
+            prefs.edit().putString(Constants.KEY_DISPLAY_NAME, profile.displayName.trim()).apply();
+        }
         if (profile.avatarUrl != null && !profile.avatarUrl.isEmpty() && pendingAvatarUri == null) {
-            Glide.with(this).load(profile.avatarUrl)
-                 .placeholder(R.mipmap.ic_launcher)
-                 .into(binding.imageAvatar);
+            prefs.edit().putString(Constants.KEY_AVATAR_URL, profile.avatarUrl).apply();
+            Glide.with(this)
+                    .load(profile.avatarUrl)
+                    .placeholder(R.mipmap.ic_launcher)
+                    .into(binding.imageAvatar);
         }
 
         binding.viewEmail.setText(profile.email);
         binding.viewDisplayName.setText(profile.displayName);
 
+        binding.textVipStatus.setVisibility(View.VISIBLE);
         if (profile.vip) {
-            binding.textVipStatus.setVisibility(View.VISIBLE);
             binding.textVipStatus.setTextColor(android.graphics.Color.parseColor("#FFD700"));
             if (profile.vipEndDate != null && !profile.vipEndDate.isEmpty()) {
                 try {
@@ -190,7 +184,6 @@ public class ProfileDetailFragment extends Fragment {
                 binding.viewAccountType.setText("Thành viên VIP Trọn đời");
             }
         } else {
-            binding.textVipStatus.setVisibility(View.VISIBLE);
             binding.textVipStatus.setTextColor(android.graphics.Color.parseColor("#B3B3B3"));
             binding.textVipStatus.setText("Thành viên Thường");
             binding.viewAccountType.setText("Bình thường");
@@ -198,8 +191,9 @@ public class ProfileDetailFragment extends Fragment {
     }
 
     private void saveChanges() {
-        String newName = binding.editDisplayName.getText() != null ? 
-                         binding.editDisplayName.getText().toString().trim() : "";
+        String newName = binding.editDisplayName.getText() != null
+                ? binding.editDisplayName.getText().toString().trim()
+                : "";
 
         if (newName.isEmpty()) {
             Toast.makeText(requireContext(), "Tên hiển thị không được để trống", Toast.LENGTH_SHORT).show();
@@ -213,108 +207,159 @@ public class ProfileDetailFragment extends Fragment {
         Completable updateAvatarCompletable = Completable.complete();
 
         if (currentUserProfile != null && !newName.equals(currentUserProfile.displayName)) {
-            UpdateProfileRequest request = new UpdateProfileRequest(newName);
-            updateNameCompletable = apiService.updateProfile(request)
-                    .flatMapCompletable(response -> {
-                        if (response.isSuccess()) {
-                            SharedPreferences prefs = requireActivity().getSharedPreferences(Constants.PREF_AUTH, Context.MODE_PRIVATE);
-                            prefs.edit().putString(Constants.KEY_DISPLAY_NAME, newName).apply();
-                            return Completable.complete();
-                        } else {
-                            return Completable.error(new Exception("Update Name Failed: " + response.getMessage()));
-                        }
+            updateNameCompletable = userProfileRepository.updateProfile(new UpdateProfileRequest(newName))
+                    .doOnComplete(() -> {
+                        SharedPreferences prefs = requireActivity().getSharedPreferences(Constants.PREF_AUTH, Context.MODE_PRIVATE);
+                        prefs.edit().putString(Constants.KEY_DISPLAY_NAME, newName).apply();
                     });
         }
 
         if (pendingAvatarUri != null) {
-            updateAvatarCompletable = Single.defer(() -> {
-                try {
-                    InputStream inputStream = requireContext().getContentResolver().openInputStream(pendingAvatarUri);
-                    if (inputStream == null) return Single.error(new Exception("Null InputStream"));
-                    byte[] bytes = new byte[inputStream.available()];
-                    inputStream.read(bytes);
-
-                    String mimeType = requireContext().getContentResolver().getType(pendingAvatarUri);
-                    if (mimeType == null) mimeType = "image/jpeg";
-                    RequestBody requestFile = RequestBody.create(MediaType.parse(mimeType), bytes);
-                    MultipartBody.Part body = MultipartBody.Part.createFormData("file", "avatar.jpg", requestFile);
-
-                    return apiService.uploadAvatar(body);
-                } catch (Exception e) {
-                    return Single.error(e);
-                }
-            }).flatMapCompletable(responseObj -> {
-                com.example.comicversev1.data.model.BaseResponse<String> response = (com.example.comicversev1.data.model.BaseResponse<String>) responseObj;
-                if (response.isSuccess()) {
-                    return Completable.complete();
-                } else {
-                    return Completable.error(new Exception("Upload Avatar Failed: " + response.getMessage()));
-                }
-            });
+            updateAvatarCompletable = createAvatarPart(pendingAvatarUri)
+                    .flatMapCompletable(userProfileRepository::uploadAvatar);
         }
 
-        disposable.add(
-            updateAvatarCompletable.andThen(updateNameCompletable)
+        disposable.add(updateAvatarCompletable.andThen(updateNameCompletable)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    () -> {
-                        Toast.makeText(requireContext(), "Đã lưu thay đổi", Toast.LENGTH_SHORT).show();
-                        pendingAvatarUri = null;
-                        binding.btnSave.setEnabled(true);
-                        toggleEditMode(false);
-                        fetchUserProfile();
-                    },
-                    error -> {
-                        Toast.makeText(requireContext(), "Lỗi khi lưu thay đổi", Toast.LENGTH_SHORT).show();
-                        Log.e("ProfileDetailFragment", "Save error", error);
-                        binding.btnSave.setEnabled(true);
-                    }
-                )
-        );
+                .subscribe(() -> {
+                    Toast.makeText(requireContext(), "Đã lưu thay đổi", Toast.LENGTH_SHORT).show();
+                    pendingAvatarUri = null;
+                    binding.btnSave.setEnabled(true);
+                    toggleEditMode(false);
+                    fetchUserProfile();
+                }, error -> {
+                    Toast.makeText(requireContext(), "Lỗi khi lưu thay đổi", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Save error", error);
+                    binding.btnSave.setEnabled(true);
+                }));
+    }
+
+    private Single<MultipartBody.Part> createAvatarPart(Uri avatarUri) {
+        return Single.fromCallable(() -> {
+            try (InputStream inputStream = requireContext().getContentResolver().openInputStream(avatarUri)) {
+                if (inputStream == null) {
+                    throw new Exception("Null InputStream");
+                }
+                byte[] bytes = new byte[inputStream.available()];
+                int read = inputStream.read(bytes);
+                if (read <= 0) {
+                    throw new Exception("Empty avatar file");
+                }
+
+                String mimeType = requireContext().getContentResolver().getType(avatarUri);
+                if (mimeType == null) {
+                    mimeType = "image/jpeg";
+                }
+                RequestBody requestFile = RequestBody.create(MediaType.parse(mimeType), bytes);
+                return MultipartBody.Part.createFormData("file", "avatar.jpg", requestFile);
+            }
+        });
     }
 
     private void showChangePasswordDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Đổi mật khẩu");
+        View view = getLayoutInflater().inflate(R.layout.dialog_change_password, null);
+        TextInputLayout oldPassLayout = view.findViewById(R.id.layoutOldPassword);
+        TextInputLayout newPassLayout = view.findViewById(R.id.layoutNewPassword);
+        TextInputLayout confirmPassLayout = view.findViewById(R.id.layoutConfirmPassword);
+        TextInputEditText oldPassInput = view.findViewById(R.id.editOldPassword);
+        TextInputEditText newPassInput = view.findViewById(R.id.editNewPassword);
+        TextInputEditText confirmPassInput = view.findViewById(R.id.editConfirmPassword);
+        MaterialButton cancelButton = view.findViewById(R.id.btnCancelChangePassword);
+        MaterialButton submitButton = view.findViewById(R.id.btnSubmitChangePassword);
 
-        LinearLayout layout = new LinearLayout(requireContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(50, 40, 50, 10);
+        AlertDialog dialog = new AlertDialog.Builder(requireContext()).create();
+        dialog.setView(view);
+        dialog.setOnShowListener(d -> {
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            }
+        });
 
-        final EditText oldPassInput = new EditText(requireContext());
-        oldPassInput.setHint("Mật khẩu cũ");
-        oldPassInput.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        layout.addView(oldPassInput);
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+        submitButton.setOnClickListener(v -> {
+            String oldPass = readPasswordInput(oldPassInput);
+            String newPass = readPasswordInput(newPassInput);
+            String confirmPass = readPasswordInput(confirmPassInput);
 
-        final EditText newPassInput = new EditText(requireContext());
-        newPassInput.setHint("Mật khẩu mới");
-        newPassInput.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        layout.addView(newPassInput);
-
-        builder.setView(layout);
-        builder.setPositiveButton("Cập nhật", (dialog, which) -> {
-            String oldPass = oldPassInput.getText().toString();
-            String newPass = newPassInput.getText().toString();
-            if (oldPass.isEmpty() || newPass.isEmpty()) {
-                Toast.makeText(requireContext(), "Vui lòng nhập đủ mật khẩu", Toast.LENGTH_SHORT).show();
+            if (!validateChangePasswordForm(
+                    oldPassLayout,
+                    newPassLayout,
+                    confirmPassLayout,
+                    oldPass,
+                    newPass,
+                    confirmPass
+            )) {
                 return;
             }
-            ChangePasswordRequest request = new ChangePasswordRequest(oldPass, newPass);
-            disposable.add(apiService.changePassword(request)
+
+            submitButton.setEnabled(false);
+            cancelButton.setEnabled(false);
+            submitButton.setText("Đang cập nhật...");
+
+            disposable.add(userProfileRepository.changePassword(new ChangePasswordRequest(oldPass, newPass))
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(response -> {
-                        if (response.isSuccess()) {
-                            Toast.makeText(requireContext(), "Đổi mật khẩu thành công", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(requireContext(), response.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    }, error -> Toast.makeText(requireContext(), "Lỗi khi đổi mật khẩu", Toast.LENGTH_SHORT).show())
-            );
+                    .subscribe(
+                            message -> {
+                                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                                dialog.dismiss();
+                            },
+                            error -> {
+                                String message = error.getMessage();
+                                if (message == null || message.trim().isEmpty()) {
+                                    message = "Không thể đổi mật khẩu. Vui lòng thử lại.";
+                                }
+                                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                                submitButton.setEnabled(true);
+                                cancelButton.setEnabled(true);
+                                submitButton.setText("Cập nhật");
+                            }
+                    ));
         });
-        builder.setNegativeButton("Hủy", null);
-        builder.show();
+
+        dialog.show();
+    }
+
+    private String readPasswordInput(TextInputEditText input) {
+        return input.getText() != null ? input.getText().toString().trim() : "";
+    }
+
+    private boolean validateChangePasswordForm(TextInputLayout oldPassLayout,
+                                               TextInputLayout newPassLayout,
+                                               TextInputLayout confirmPassLayout,
+                                               String oldPass,
+                                               String newPass,
+                                               String confirmPass) {
+        oldPassLayout.setError(null);
+        newPassLayout.setError(null);
+        confirmPassLayout.setError(null);
+
+        if (oldPass.isEmpty()) {
+            oldPassLayout.setError("Vui lòng nhập mật khẩu hiện tại");
+            return false;
+        }
+        if (newPass.isEmpty()) {
+            newPassLayout.setError("Vui lòng nhập mật khẩu mới");
+            return false;
+        }
+        if (newPass.length() < 6) {
+            newPassLayout.setError("Mật khẩu mới cần tối thiểu 6 ký tự");
+            return false;
+        }
+        if (newPass.equals(oldPass)) {
+            newPassLayout.setError("Mật khẩu mới phải khác mật khẩu hiện tại");
+            return false;
+        }
+        if (confirmPass.isEmpty()) {
+            confirmPassLayout.setError("Vui lòng xác nhận mật khẩu mới");
+            return false;
+        }
+        if (!newPass.equals(confirmPass)) {
+            confirmPassLayout.setError("Mật khẩu xác nhận không khớp");
+            return false;
+        }
+        return true;
     }
 
     private void logout() {
@@ -322,27 +367,29 @@ public class ProfileDetailFragment extends Fragment {
                 .setTitle("Đăng xuất")
                 .setMessage("Bạn có chắc chắn muốn đăng xuất không?")
                 .setPositiveButton("Đăng xuất", (dialog, which) -> {
+                    disposable.add(userDataRepository.clearLocalUserData()
+                            .subscribeOn(Schedulers.io())
+                            .subscribe(
+                                    () -> Log.d(TAG, "Cleared local user data on logout"),
+                                    error -> Log.e(TAG, "Failed to clear local user data on logout", error)
+                            ));
+
                     SharedPreferences prefs = requireActivity().getSharedPreferences(Constants.PREF_AUTH, Context.MODE_PRIVATE);
                     prefs.edit()
                             .remove(Constants.KEY_ACCESS_TOKEN)
                             .remove(Constants.KEY_REFRESH_TOKEN)
                             .remove(Constants.KEY_DISPLAY_NAME)
                             .remove(Constants.KEY_EMAIL)
+                            .remove(Constants.KEY_AVATAR_URL)
                             .apply();
                     Toast.makeText(requireContext(), "Đã đăng xuất", Toast.LENGTH_SHORT).show();
 
                     try {
-                        new androidx.lifecycle.ViewModelProvider(requireActivity())
-                                .get(com.example.comicversev1.presentation.home.HomeViewModel.class)
-                                .refresh();
-                        new androidx.lifecycle.ViewModelProvider(requireActivity())
-                                .get(com.example.comicversev1.presentation.novel.NovelViewModel.class)
-                                .refresh();
-                    } catch (Exception e) {
-                        // ignore
+                        new ViewModelProvider(requireActivity()).get(HomeViewModel.class).refresh();
+                        new ViewModelProvider(requireActivity()).get(NovelViewModel.class).refresh();
+                    } catch (Exception ignored) {
                     }
 
-                    // Navigate back to home or pop entirely
                     NavHostFragment.findNavController(this).popBackStack(R.id.profileFragment, false);
                 })
                 .setNegativeButton("Hủy", null)
@@ -351,8 +398,8 @@ public class ProfileDetailFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        super.onDestroyView();
         disposable.clear();
         binding = null;
+        super.onDestroyView();
     }
 }

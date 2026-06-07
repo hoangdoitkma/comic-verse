@@ -1,6 +1,7 @@
 package com.datn.backend.service.public_api.impl;
 
 import com.datn.backend.dto.public_api.response.ComicDTO;
+import com.datn.backend.entity.Chapter;
 import com.datn.backend.entity.Comic;
 import com.datn.backend.entity.ComicGenre;
 import com.datn.backend.entity.ReadingHistory;
@@ -27,7 +28,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     private final ComicRepository comicRepository;
     private final ChapterRepository chapterRepository;
 
-    private static final int MAX_RECOMMENDATIONS = 10;
+    private static final int MAX_RECOMMENDATIONS = 5;
 
     @Override
     public List<ComicDTO> getRecommendedComics(Integer userId, ContentType type) {
@@ -65,13 +66,13 @@ public class RecommendationServiceImpl implements RecommendationService {
             // 3. Tìm tất cả truyện thuộc các genre yêu thích
             List<ComicGenre> candidateComicGenres = comicGenreRepository.findByGenreIdIn(favoriteGenreIds);
 
-            // 4. Lọc bỏ truyện đã đọc, tính điểm cho truyện còn lại
-            Set<Integer> readComicIdSet = new HashSet<>(readComicIds);
+            // 4. Loai truyen da doc het, truyen doc do van duoc tinh diem
+            Set<Integer> completedComicIdSet = getCompletedComicIds(histories);
             Map<Integer, Double> comicScores = new HashMap<>();
 
             for (ComicGenre cg : candidateComicGenres) {
                 Integer comicId = cg.getComic().getId();
-                if (readComicIdSet.contains(comicId)) continue; // Bỏ qua truyện đã đọc
+                if (completedComicIdSet.contains(comicId)) continue;
 
                 Integer genreId = cg.getGenre().getId();
                 // Score = tổng frequency của genre chung (genre user đọc nhiều → weight cao hơn)
@@ -112,9 +113,12 @@ public class RecommendationServiceImpl implements RecommendationService {
                 return Integer.compare(viewB, viewA);
             });
 
-            // 9. Lấy top N và map sang DTO
-            List<ComicDTO> result = candidateComics.stream()
+            // 9. Lay top N va bu trending neu chua du
+            List<Comic> rankedComics = candidateComics.stream()
                     .limit(MAX_RECOMMENDATIONS)
+                    .collect(Collectors.toList());
+
+            List<ComicDTO> result = fillWithTrending(rankedComics, type, completedComicIdSet).stream()
                     .map(this::mapToDTO)
                     .collect(Collectors.toList());
 
@@ -272,6 +276,62 @@ public class RecommendationServiceImpl implements RecommendationService {
             fallbackComics = comicRepository.findTop5ByIsDeletedFalseOrderByViewCountDesc();
         }
         return fallbackComics.stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
+
+    private Set<Integer> getCompletedComicIds(List<ReadingHistory> histories) {
+        Set<Integer> completedComicIds = new HashSet<>();
+
+        for (ReadingHistory history : histories) {
+            Comic comic = history.getComic();
+            Chapter lastReadChapter = history.getChapter();
+            if (comic == null || comic.getId() == null || lastReadChapter == null || lastReadChapter.getId() == null) {
+                continue;
+            }
+
+            List<Chapter> chapters = chapterRepository.findByComicIdOrderBySortOrderAsc(comic.getId());
+            if (chapters.isEmpty()) {
+                continue;
+            }
+
+            Chapter latestChapter = chapters.get(chapters.size() - 1);
+            if (latestChapter.getId().equals(lastReadChapter.getId())) {
+                completedComicIds.add(comic.getId());
+            }
+        }
+
+        return completedComicIds;
+    }
+
+    private List<Comic> fillWithTrending(List<Comic> rankedComics, ContentType type, Set<Integer> excludedComicIds) {
+        List<Comic> result = new ArrayList<>(rankedComics);
+        if (result.size() >= MAX_RECOMMENDATIONS) {
+            return result;
+        }
+
+        Set<Integer> resultIds = result.stream()
+                .map(Comic::getId)
+                .collect(Collectors.toSet());
+
+        List<Comic> trendingComics = type != null
+                ? comicRepository.findTop5ByContentTypeAndIsDeletedFalseOrderByViewCountDesc(type)
+                : comicRepository.findTop5ByIsDeletedFalseOrderByViewCountDesc();
+
+        for (Comic comic : trendingComics) {
+            if (comic == null || comic.getId() == null) {
+                continue;
+            }
+            if (resultIds.contains(comic.getId()) || excludedComicIds.contains(comic.getId())) {
+                continue;
+            }
+
+            result.add(comic);
+            resultIds.add(comic.getId());
+            if (result.size() >= MAX_RECOMMENDATIONS) {
+                break;
+            }
+        }
+
+        return result;
     }
 
     private ComicDTO mapToDTO(Comic comic) {

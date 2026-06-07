@@ -29,11 +29,18 @@ import dagger.hilt.android.AndroidEntryPoint;
 @AndroidEntryPoint
 public class CommentsBottomSheetDialogFragment extends BottomSheetDialogFragment implements CommentAdapter.OnCommentInteractionListener {
 
+    public static final String REQUEST_COMMENTS_CHANGED = "comments_changed";
+
     private static final String ARG_CHAPTER_ID = "chapter_id";
+    private static final String ARG_TARGET_TYPE = "target_type";
+    private static final String ARG_TARGET_ID = "target_id";
+    private static final String ARG_TITLE = "title";
 
     private CommentViewModel viewModel;
     private CommentAdapter adapter;
-    private int chapterId;
+    private int targetId;
+    private CommentTargetType targetType = CommentTargetType.CHAPTER;
+    private String title = "Bình luận";
 
     private RecyclerView rvComments;
     private ProgressBar progressBar;
@@ -41,6 +48,7 @@ public class CommentsBottomSheetDialogFragment extends BottomSheetDialogFragment
     private EditText etComment;
     private ImageButton btnSend;
     private ImageButton btnClose;
+    private TextView tvCommentCount;
 
     // Track replying state
     private Integer replyingToCommentId = null;
@@ -48,9 +56,15 @@ public class CommentsBottomSheetDialogFragment extends BottomSheetDialogFragment
     private TextView tvCurrentPage;
 
     public static CommentsBottomSheetDialogFragment newInstance(int chapterId) {
+        return newInstance(CommentTargetType.CHAPTER, chapterId, "Bình luận chương");
+    }
+
+    public static CommentsBottomSheetDialogFragment newInstance(CommentTargetType targetType, int targetId, String title) {
         CommentsBottomSheetDialogFragment fragment = new CommentsBottomSheetDialogFragment();
         Bundle args = new Bundle();
-        args.putInt(ARG_CHAPTER_ID, chapterId);
+        args.putString(ARG_TARGET_TYPE, targetType.name());
+        args.putInt(ARG_TARGET_ID, targetId);
+        args.putString(ARG_TITLE, title);
         fragment.setArguments(args);
         return fragment;
     }
@@ -59,7 +73,20 @@ public class CommentsBottomSheetDialogFragment extends BottomSheetDialogFragment
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            chapterId = getArguments().getInt(ARG_CHAPTER_ID);
+            String rawTargetType = getArguments().getString(ARG_TARGET_TYPE);
+            if (rawTargetType != null) {
+                try {
+                    targetType = CommentTargetType.valueOf(rawTargetType);
+                } catch (IllegalArgumentException ignored) {
+                    targetType = CommentTargetType.CHAPTER;
+                }
+                targetId = getArguments().getInt(ARG_TARGET_ID, getArguments().getInt(ARG_CHAPTER_ID));
+                title = getArguments().getString(ARG_TITLE, title);
+            } else {
+                targetId = getArguments().getInt(ARG_CHAPTER_ID);
+                targetType = CommentTargetType.CHAPTER;
+                title = "Bình luận chương";
+            }
         }
         viewModel = new ViewModelProvider(this).get(CommentViewModel.class);
     }
@@ -80,6 +107,13 @@ public class CommentsBottomSheetDialogFragment extends BottomSheetDialogFragment
         etComment = view.findViewById(R.id.etComment);
         btnSend = view.findViewById(R.id.btnSend);
         btnClose = view.findViewById(R.id.btnClose);
+        tvCommentCount = view.findViewById(R.id.tvCommentCount);
+        btnPrevPage = view.findViewById(R.id.btnPrevPage);
+        btnNextPage = view.findViewById(R.id.btnNextPage);
+        tvCurrentPage = view.findViewById(R.id.tvCurrentPage);
+        layoutCommentPagination = view.findViewById(R.id.layoutCommentPagination);
+
+        tvCommentCount.setText(title);
 
         adapter = new CommentAdapter(requireContext(), this);
         rvComments.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -90,25 +124,14 @@ public class CommentsBottomSheetDialogFragment extends BottomSheetDialogFragment
         btnSend.setOnClickListener(v -> {
             String content = etComment.getText().toString().trim();
             if (!content.isEmpty()) {
-                viewModel.postComment(chapterId, content, replyingToCommentId);
-                etComment.setText("");
-                etComment.setHint("Write a comment...");
-                replyingToCommentId = null;
-                // Hide keyboard
-                InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                if (imm != null) imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                viewModel.postComment(content, replyingToCommentId);
             }
         });
 
         observeViewModel();
         
         // Initial load
-        viewModel.loadComments(chapterId, 0, 5);
-
-        btnPrevPage = view.findViewById(R.id.btnPrevPage);
-        btnNextPage = view.findViewById(R.id.btnNextPage);
-        tvCurrentPage = view.findViewById(R.id.tvCurrentPage);
-        layoutCommentPagination = view.findViewById(R.id.layoutCommentPagination);
+        viewModel.loadComments(targetType, targetId, 0, 5);
 
         btnPrevPage.setOnClickListener(v -> {
             Integer current = viewModel.getCurrentPage().getValue();
@@ -129,7 +152,7 @@ public class CommentsBottomSheetDialogFragment extends BottomSheetDialogFragment
     private void observeViewModel() {
         viewModel.getComments().observe(getViewLifecycleOwner(), comments -> {
             adapter.setComments(comments);
-            if (comments.isEmpty()) {
+            if (comments == null || comments.isEmpty()) {
                 tvEmpty.setVisibility(View.VISIBLE);
                 layoutCommentPagination.setVisibility(View.GONE);
             } else {
@@ -152,6 +175,12 @@ public class CommentsBottomSheetDialogFragment extends BottomSheetDialogFragment
             progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         });
 
+        viewModel.getIsPosting().observe(getViewLifecycleOwner(), isPosting -> {
+            btnSend.setEnabled(!isPosting);
+            btnSend.setAlpha(isPosting ? 0.5f : 1.0f);
+            etComment.setEnabled(!isPosting);
+        });
+
         viewModel.getError().observe(getViewLifecycleOwner(), error -> {
             if (error != null) {
                 Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
@@ -160,10 +189,17 @@ public class CommentsBottomSheetDialogFragment extends BottomSheetDialogFragment
 
         viewModel.getCommentPosted().observe(getViewLifecycleOwner(), comment -> {
             if (comment != null) {
-                adapter.addComment(comment);
-                tvEmpty.setVisibility(View.GONE);
-                Toast.makeText(requireContext(), "Comment posted", Toast.LENGTH_SHORT).show();
-                rvComments.smoothScrollToPosition(0);
+                boolean wasReply = replyingToCommentId != null;
+                etComment.setText("");
+                etComment.setHint("Viết bình luận...");
+                replyingToCommentId = null;
+                Toast.makeText(requireContext(), wasReply ? "Đã đăng phản hồi" : "Đã đăng bình luận", Toast.LENGTH_SHORT).show();
+                getParentFragmentManager().setFragmentResult(REQUEST_COMMENTS_CHANGED, new Bundle());
+                if (!wasReply) {
+                    rvComments.smoothScrollToPosition(0);
+                }
+                InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) imm.hideSoftInputFromWindow(etComment.getWindowToken(), 0);
             }
         });
     }
@@ -183,7 +219,7 @@ public class CommentsBottomSheetDialogFragment extends BottomSheetDialogFragment
     @Override
     public void onReplyClick(CommentDTO comment) {
         replyingToCommentId = comment.getId();
-        etComment.setHint("Replying to " + comment.getUserDisplayName() + "...");
+        etComment.setHint("Trả lời " + comment.getUserDisplayName() + "...");
         etComment.requestFocus();
         InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) imm.showSoftInput(etComment, InputMethodManager.SHOW_IMPLICIT);

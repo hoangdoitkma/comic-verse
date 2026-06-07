@@ -7,6 +7,7 @@ import com.example.comicversev1.data.model.BaseResponse;
 import com.example.comicversev1.data.model.ChapterDetailDTO;
 import com.example.comicversev1.data.model.ComicDTO;
 import com.example.comicversev1.data.model.ComicDetailDTO;
+import com.example.comicversev1.data.model.GenreDTO;
 import com.example.comicversev1.data.model.ChapterItemDTO;
 import com.example.comicversev1.domain.entity.ChapterEntity;
 import com.example.comicversev1.domain.entity.ComicEntity;
@@ -37,7 +38,17 @@ public class ComicRepositoryImpl implements ComicRepository {
 
     @Override
     public Single<List<ComicEntity>> getComics(int page, int limit) {
-        return apiService.getComics(page, limit)
+        return getComics(page, limit, null, null);
+    }
+
+    @Override
+    public Single<List<ComicEntity>> getComics(int page, int limit, String keyword, String type) {
+        return getComics(page, limit, keyword, type, null, null, null);
+    }
+
+    @Override
+    public Single<List<ComicEntity>> getComics(int page, int limit, String keyword, String type, String country, Integer genreId, String status) {
+        return apiService.getComics(page, limit, keyword, type, country, genreId, status)
                 .flatMap(response -> {
                     List<ComicEntity> comics = mapComics(response.getData());
                     return cacheComics(comics).andThen(Single.just(comics));
@@ -65,6 +76,15 @@ public class ComicRepositoryImpl implements ComicRepository {
     @Override
     public Single<List<ChapterItem>> getChapters(String slug) {
         return apiService.getChapters(slug).map(resp -> mapChapterItems(resp.getData()));
+    }
+
+    @Override
+    public Single<List<GenreDTO>> getGenres() {
+        return apiService.getGenres()
+                .map(response -> response.isSuccess() && response.getData() != null
+                        ? response.getData()
+                        : java.util.Collections.<GenreDTO>emptyList())
+                .onErrorReturnItem(java.util.Collections.emptyList());
     }
 
     @Override

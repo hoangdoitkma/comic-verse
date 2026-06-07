@@ -1,10 +1,13 @@
 package com.example.comicversev1.presentation.reader;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,6 +21,7 @@ import com.example.comicversev1.databinding.FragmentReaderBinding;
 import com.example.comicversev1.domain.entity.ChapterEntity;
 import com.example.comicversev1.domain.entity.ChapterItem;
 import com.example.comicversev1.presentation.novel.reader.BottomSheetChapterAdapter;
+import com.example.comicversev1.utils.ReaderSettings;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -45,6 +49,7 @@ public class ReaderFragment extends Fragment {
 
     private BottomSheetDialog chapterListSheet;
     private BottomSheetChapterAdapter chapterListAdapter;
+    private boolean autoLoadNextChapter = ReaderSettings.DEFAULT_COMIC_AUTO_LOAD_NEXT;
 
     @Nullable
     @Override
@@ -63,6 +68,7 @@ public class ReaderFragment extends Fragment {
 
         binding.recyclerView.setLayoutManager(layoutManager);
         binding.recyclerView.setAdapter(adapter);
+        applyReaderSettings();
 
         adapter.setOnPageLongClickListener(chapterId -> {
             com.example.comicversev1.presentation.shared.ReportChapterBottomSheet sheet = new com.example.comicversev1.presentation.shared.ReportChapterBottomSheet();
@@ -74,7 +80,6 @@ public class ReaderFragment extends Fragment {
 
         setupToolbar();
         setupBackButton();
-        setupCommentsButton();
         setupNavigationButtons();
         setupScrollListener();
         setupTouchZones();
@@ -180,17 +185,6 @@ public class ReaderFragment extends Fragment {
         }
 
         chapterListSheet.show();
-    }
-
-    private void setupCommentsButton() {
-        binding.btnComments.setOnClickListener(v -> {
-            if (currentVisibleChapterId > 0) {
-                com.example.comicversev1.presentation.comments.CommentsBottomSheetDialogFragment.newInstance(currentVisibleChapterId)
-                        .show(getChildFragmentManager(), "CommentsBottomSheet");
-            } else {
-                android.widget.Toast.makeText(requireContext(), "Đang tải chương...", android.widget.Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     private void setupTouchZones() {
@@ -307,11 +301,38 @@ public class ReaderFragment extends Fragment {
                 }
 
                 // Trigger load next chapter when near the end (5 items from bottom)
-                if (lastVisiblePosition >= totalItemCount - 5 && totalItemCount > 0) {
+                if (autoLoadNextChapter && lastVisiblePosition >= totalItemCount - 5 && totalItemCount > 0) {
                     viewModel.loadNextChapterIfNeeded();
                 }
             }
         });
+    }
+
+    private void applyReaderSettings() {
+        SharedPreferences prefs = requireActivity().getSharedPreferences(ReaderSettings.PREF_COMIC, Context.MODE_PRIVATE);
+        int imageSpacingDp = prefs.getInt(
+                ReaderSettings.KEY_COMIC_IMAGE_SPACING_DP,
+                ReaderSettings.DEFAULT_COMIC_IMAGE_SPACING_DP
+        );
+        boolean fitWidth = prefs.getBoolean(
+                ReaderSettings.KEY_COMIC_FIT_WIDTH,
+                ReaderSettings.DEFAULT_COMIC_FIT_WIDTH
+        );
+        boolean keepScreenOn = prefs.getBoolean(
+                ReaderSettings.KEY_COMIC_KEEP_SCREEN_ON,
+                ReaderSettings.DEFAULT_COMIC_KEEP_SCREEN_ON
+        );
+        autoLoadNextChapter = prefs.getBoolean(
+                ReaderSettings.KEY_COMIC_AUTO_LOAD_NEXT,
+                ReaderSettings.DEFAULT_COMIC_AUTO_LOAD_NEXT
+        );
+
+        adapter.applyReaderSettings(imageSpacingDp, fitWidth);
+        if (keepScreenOn) {
+            requireActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else {
+            requireActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
     }
 
     /**
@@ -555,6 +576,7 @@ public class ReaderFragment extends Fragment {
         if (viewTrackingTimer != null) {
             viewTrackingTimer.cancelTimer();
         }
+        requireActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.onDestroyView();
         binding = null;
     }

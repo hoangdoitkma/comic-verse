@@ -1,6 +1,7 @@
 package com.datn.backend.service.public_api.impl;
 
 import com.datn.backend.dto.public_api.request.ReadingHistoryRequest;
+import com.datn.backend.dto.public_api.response.ReadingHistorySyncDTO;
 import com.datn.backend.entity.Chapter;
 import com.datn.backend.entity.Comic;
 import com.datn.backend.entity.ReadingHistory;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -67,5 +69,36 @@ public class PublicUserActionServiceImpl implements PublicUserActionService {
                 System.err.println("Error syncing history for comicId: " + request.getComicId() + " - " + e.getMessage());
             }
         }
+    }
+
+    @Override
+    public List<ReadingHistorySyncDTO> getReadingHistory(Integer userId) {
+        if (userId == null) return List.of();
+
+        return readingHistoryRepository.findByUserIdOrderByUpdatedAtDesc(userId).stream()
+                .filter(history -> history.getComic() != null && history.getChapter() != null)
+                .map(this::mapToSyncDTO)
+                .collect(Collectors.toList());
+    }
+
+    private ReadingHistorySyncDTO mapToSyncDTO(ReadingHistory history) {
+        Comic comic = history.getComic();
+        Chapter chapter = history.getChapter();
+
+        return ReadingHistorySyncDTO.builder()
+                .comicId(comic.getId())
+                .slug(comic.getSlug())
+                .title(comic.getTitle())
+                .thumbnailUrl(comic.getThumbnailUrl())
+                .authorName(comic.getAuthor() != null ? comic.getAuthor().getName() : null)
+                .viewCount(comic.getViewCount() != null ? comic.getViewCount().longValue() : 0L)
+                .contentType(comic.getContentType() != null ? comic.getContentType().name() : null)
+                .chapterId(chapter.getId())
+                .chapterTitle(chapter.getTitle())
+                .lastPage(history.getLastPage() != null ? history.getLastPage() : 0)
+                .updatedAtMillis(history.getUpdatedAt() != null
+                        ? history.getUpdatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                        : 0L)
+                .build();
     }
 }

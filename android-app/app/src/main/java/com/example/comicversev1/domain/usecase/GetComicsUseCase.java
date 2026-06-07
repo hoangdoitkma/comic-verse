@@ -20,5 +20,13 @@ public class GetComicsUseCase {
     public Single<List<ComicEntity>> execute(int page, int limit) {
         return repository.getComics(page, limit);
     }
+
+    public Single<List<ComicEntity>> execute(int page, int limit, String keyword, String type) {
+        return repository.getComics(page, limit, keyword, type);
+    }
+
+    public Single<List<ComicEntity>> execute(int page, int limit, String keyword, String type, String country, Integer genreId, String status) {
+        return repository.getComics(page, limit, keyword, type, country, genreId, status);
+    }
 }
 

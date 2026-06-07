@@ -83,6 +83,23 @@ public class NovelUiState {
                 Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), message);
     }
 
+    public NovelUiState withError(String message) {
+        return new NovelUiState(false,
+                greetingTitle,
+                greetingSubtitle,
+                heroes,
+                quickActions,
+                continueSubtitle,
+                continueProgress,
+                recentlyRead,
+                recommendations,
+                newUpdates,
+                hotComics,
+                completed,
+                newComics,
+                message);
+    }
+
     public boolean isLoading() { return isLoading; }
     public String getGreetingTitle() { return greetingTitle; }
     public String getGreetingSubtitle() { return greetingSubtitle; }

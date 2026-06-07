@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,8 +31,19 @@ public class PublicComicServiceImpl implements PublicComicService {
 
     @Override
     public Page<ComicDTO> getComics(int page, int limit) {
-        Pageable pageable = PageRequest.of(page, limit);
-        return comicRepository.findAll(pageable).map(this::mapToDTO);
+        return searchComics(page, limit, null, null, null, null, null);
+    }
+
+    @Override
+    public Page<ComicDTO> searchComics(int page, int limit,
+                                       String keyword,
+                                       com.datn.backend.entity.enums.ContentType type,
+                                       com.datn.backend.entity.enums.OriginCountry country,
+                                       Integer genreId,
+                                       com.datn.backend.entity.enums.ComicStatus status) {
+        String normalizedKeyword = keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null;
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "updatedAt"));
+        return comicRepository.searchPublicComics(normalizedKeyword, type, country, genreId, status, pageable).map(this::mapToDTO);
     }
 
     @Override

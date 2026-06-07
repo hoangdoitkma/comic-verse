@@ -14,14 +14,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:hint="Tìm truyện tranh">
+        android:hint="Tìm truyện tranh"
+        app:boxStrokeColor="@color/search_box_stroke"
+        app:boxStrokeWidth="1dp"
+        app:boxStrokeWidthFocused="2dp"
+        app:hintTextColor="@color/search_box_stroke">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/inputSearch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:drawableStart="@android:drawable/ic_menu_search"
-            android:inputType="text" />
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:singleLine="true" />
     </com.google.android.material.textfield.TextInputLayout>
 
 </LinearLayout>

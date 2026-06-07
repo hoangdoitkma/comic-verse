@@ -12,8 +12,12 @@ public class LoginResponse {
     @SerializedName("email")
     private String email;
 
+    @SerializedName("avatarUrl")
+    private String avatarUrl;
+
     public String getToken() { return token; }
     public String getDisplayName() { return displayName; }
     public String getEmail() { return email; }
+    public String getAvatarUrl() { return avatarUrl; }
 }
 

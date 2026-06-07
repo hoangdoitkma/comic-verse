@@ -6,7 +6,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.comicversev1.data.local.dao.FavoriteComicDao;
+import com.example.comicversev1.data.repository.FavoriteSyncRepository;
 import com.example.comicversev1.domain.entity.HomeContent;
 
 import java.util.ArrayList;
@@ -22,53 +22,71 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 @HiltViewModel
 public class FavoriteViewModel extends ViewModel {
 
-    private final FavoriteComicDao favoriteComicDao;
+    private static final String TAG = "FavoriteVM";
+
+    private final FavoriteSyncRepository favoriteSyncRepository;
     private final CompositeDisposable disposables = new CompositeDisposable();
 
-    private final MutableLiveData<List<HomeContent.ComicCard>> _comicFavorites = new MutableLiveData<>(new ArrayList<>());
-    public LiveData<List<HomeContent.ComicCard>> comicFavorites() { return _comicFavorites; }
-
-    private final MutableLiveData<List<HomeContent.ComicCard>> _novelFavorites = new MutableLiveData<>(new ArrayList<>());
-    public LiveData<List<HomeContent.ComicCard>> novelFavorites() { return _novelFavorites; }
+    private final MutableLiveData<List<HomeContent.ComicCard>> comicFavorites = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<List<HomeContent.ComicCard>> novelFavorites = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<Boolean> refreshing = new MutableLiveData<>(false);
 
     @Inject
-    public FavoriteViewModel(FavoriteComicDao favoriteComicDao) {
-        this.favoriteComicDao = favoriteComicDao;
+    public FavoriteViewModel(FavoriteSyncRepository favoriteSyncRepository) {
+        this.favoriteSyncRepository = favoriteSyncRepository;
         loadFavorites();
+        syncFavorites();
+    }
+
+    public LiveData<List<HomeContent.ComicCard>> comicFavorites() {
+        return comicFavorites;
+    }
+
+    public LiveData<List<HomeContent.ComicCard>> novelFavorites() {
+        return novelFavorites;
+    }
+
+    public LiveData<Boolean> refreshing() {
+        return refreshing;
+    }
+
+    public void refresh() {
+        refreshing.setValue(true);
+        syncFavorites(true);
     }
 
     private void loadFavorites() {
-        // Observe Comic Favorites
-        disposables.add(
-                favoriteComicDao.getAllFavoritesByType("COMIC")
-                        .subscribeOn(Schedulers.io())
-                        .map(entities -> {
-                            List<HomeContent.ComicCard> cards = new ArrayList<>();
-                            for (com.example.comicversev1.data.local.entity.FavoriteComicEntity e : entities) {
-                                cards.add(new HomeContent.ComicCard(e.slug, e.comicTitle, "", e.coverUrl, 0, 0, 0, "", "FREE", ""));
-                            }
-                            return cards;
-                        })
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(_comicFavorites::setValue,
-                                throwable -> Log.e("FavoriteVM", "Error loading comic favorites", throwable))
-        );
+        disposables.add(favoriteSyncRepository.observeFavoriteCards("COMIC")
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(comicFavorites::setValue,
+                        throwable -> Log.e(TAG, "Error loading comic favorites", throwable)));
 
-        // Observe Novel Favorites
-        disposables.add(
-                favoriteComicDao.getAllFavoritesByType("NOVEL")
-                        .subscribeOn(Schedulers.io())
-                        .map(entities -> {
-                            List<HomeContent.ComicCard> cards = new ArrayList<>();
-                            for (com.example.comicversev1.data.local.entity.FavoriteComicEntity e : entities) {
-                                cards.add(new HomeContent.ComicCard(e.slug, e.comicTitle, "", e.coverUrl, 0, 0, 0, "", "FREE", ""));
-                            }
-                            return cards;
-                        })
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(_novelFavorites::setValue,
-                                throwable -> Log.e("FavoriteVM", "Error loading novel favorites", throwable))
-        );
+        disposables.add(favoriteSyncRepository.observeFavoriteCards("NOVEL")
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(novelFavorites::setValue,
+                        throwable -> Log.e(TAG, "Error loading novel favorites", throwable)));
+    }
+
+    private void syncFavorites() {
+        syncFavorites(false);
+    }
+
+    private void syncFavorites(boolean trackRefresh) {
+        disposables.add(favoriteSyncRepository.syncWithServer()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        () -> {
+                            Log.d(TAG, "Favorite sync completed");
+                            if (trackRefresh) refreshing.setValue(false);
+                        },
+                        throwable -> {
+                            Log.e(TAG, "Favorite sync skipped/failed", throwable);
+                            if (trackRefresh) refreshing.setValue(false);
+                        }
+                ));
     }
 
     @Override

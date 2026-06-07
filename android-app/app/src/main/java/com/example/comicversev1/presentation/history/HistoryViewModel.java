@@ -6,7 +6,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.comicversev1.data.local.dao.ReadingHistoryDao;
+import com.example.comicversev1.data.repository.ReadingHistoryRepository;
+import com.example.comicversev1.data.repository.ReadingHistorySyncRepository;
 import com.example.comicversev1.domain.entity.HomeContent;
 
 import java.util.ArrayList;
@@ -22,68 +23,75 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 @HiltViewModel
 public class HistoryViewModel extends ViewModel {
 
-    private final ReadingHistoryDao historyDao;
+    private static final String TAG = "HistoryVM";
+
+    private final ReadingHistoryRepository readingHistoryRepository;
+    private final ReadingHistorySyncRepository historySyncRepository;
     private final CompositeDisposable disposables = new CompositeDisposable();
 
-    private final MutableLiveData<List<HomeContent.ComicCard>> _comicHistory = new MutableLiveData<>(new ArrayList<>());
-    public LiveData<List<HomeContent.ComicCard>> comicHistory() { return _comicHistory; }
-
-    private final MutableLiveData<List<HomeContent.ComicCard>> _novelHistory = new MutableLiveData<>(new ArrayList<>());
-    public LiveData<List<HomeContent.ComicCard>> novelHistory() { return _novelHistory; }
+    private final MutableLiveData<List<HomeContent.ComicCard>> comicHistory = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<List<HomeContent.ComicCard>> novelHistory = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<Boolean> refreshing = new MutableLiveData<>(false);
 
     @Inject
-    public HistoryViewModel(ReadingHistoryDao historyDao) {
-        this.historyDao = historyDao;
+    public HistoryViewModel(ReadingHistoryRepository readingHistoryRepository,
+                            ReadingHistorySyncRepository historySyncRepository) {
+        this.readingHistoryRepository = readingHistoryRepository;
+        this.historySyncRepository = historySyncRepository;
         loadHistory();
     }
 
-    private void loadHistory() {
-        // Observe Comic History
-        disposables.add(
-                historyDao.getAllHistoryByType("COMIC")
-                        .subscribeOn(Schedulers.io())
-                        .map(entities -> {
-                            List<HomeContent.ComicCard> cards = new ArrayList<>();
-                            for (com.example.comicversev1.data.local.entity.ReadingHistoryEntity e : entities) {
-                                String subtitle = e.chapterTitle != null ? e.chapterTitle : "Chương " + e.chapterId;
-                                cards.add(new HomeContent.ComicCard(e.slug, e.comicTitle, subtitle, e.coverUrl, 0, e.viewCount, e.percent, "", "FREE", e.authorName));
-                            }
-                            return cards;
-                        })
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(_comicHistory::setValue,
-                                throwable -> Log.e("HistoryVM", "Error loading comic history", throwable))
-        );
+    public LiveData<List<HomeContent.ComicCard>> comicHistory() {
+        return comicHistory;
+    }
 
-        // Observe Novel History
-        disposables.add(
-                historyDao.getAllHistoryByType("NOVEL")
-                        .subscribeOn(Schedulers.io())
-                        .map(entities -> {
-                            List<HomeContent.ComicCard> cards = new ArrayList<>();
-                            for (com.example.comicversev1.data.local.entity.ReadingHistoryEntity e : entities) {
-                                String subtitle = e.chapterTitle != null ? e.chapterTitle : "Chương " + e.chapterId;
-                                cards.add(new HomeContent.ComicCard(e.slug, e.comicTitle, subtitle, e.coverUrl, 0, e.viewCount, e.percent, "", "FREE", e.authorName));
-                            }
-                            return cards;
-                        })
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(_novelHistory::setValue,
-                                throwable -> Log.e("HistoryVM", "Error loading novel history", throwable))
-        );
+    public LiveData<List<HomeContent.ComicCard>> novelHistory() {
+        return novelHistory;
+    }
+
+    public LiveData<Boolean> refreshing() {
+        return refreshing;
+    }
+
+    public void refresh() {
+        refreshing.setValue(true);
+        disposables.add(historySyncRepository.syncWithServer()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        () -> {
+                            Log.d(TAG, "Reading history sync completed");
+                            refreshing.setValue(false);
+                        },
+                        throwable -> {
+                            Log.e(TAG, "Reading history sync skipped/failed", throwable);
+                            refreshing.setValue(false);
+                        }
+                ));
+    }
+
+    private void loadHistory() {
+        disposables.add(readingHistoryRepository.observeAllCards("COMIC")
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(comicHistory::setValue,
+                        throwable -> Log.e(TAG, "Error loading comic history", throwable)));
+
+        disposables.add(readingHistoryRepository.observeAllCards("NOVEL")
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(novelHistory::setValue,
+                        throwable -> Log.e(TAG, "Error loading novel history", throwable)));
     }
 
     public void clearAllHistory() {
-        disposables.add(
-                historyDao.deleteAllHistory()
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(() -> {
-                            Log.d("HistoryVM", "All reading history cleared");
-                        }, throwable -> {
-                            Log.e("HistoryVM", "Failed to clear history", throwable);
-                        })
-        );
+        disposables.add(readingHistoryRepository.clearAll()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        () -> Log.d(TAG, "All reading history cleared"),
+                        throwable -> Log.e(TAG, "Failed to clear history", throwable)
+                ));
     }
 
     @Override

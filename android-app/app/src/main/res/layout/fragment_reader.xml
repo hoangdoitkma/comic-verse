@@ -125,14 +125,6 @@
                         android:ellipsize="end" />
                 </LinearLayout>
 
-                <ImageButton
-                    android:id="@+id/btnComments"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_comment"
-                    android:contentDescription="Bình luận"
-                    app:tint="@color/text_primary" />
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>

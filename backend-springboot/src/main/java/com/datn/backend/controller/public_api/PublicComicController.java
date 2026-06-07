@@ -33,8 +33,13 @@ public class PublicComicController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<ComicDTO>>> getComics(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit) {
-        Page<ComicDTO> comicsPage = publicComicService.getComics(page, limit);
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) com.datn.backend.entity.enums.ContentType type,
+            @RequestParam(required = false) com.datn.backend.entity.enums.OriginCountry country,
+            @RequestParam(required = false) Integer genreId,
+            @RequestParam(required = false) com.datn.backend.entity.enums.ComicStatus status) {
+        Page<ComicDTO> comicsPage = publicComicService.searchComics(page, limit, keyword, type, country, genreId, status);
         return ResponseEntity.ok(ApiResponse.success(comicsPage.getContent()));
     }
 
@@ -96,4 +101,3 @@ public class PublicComicController {
         return null;
     }
 }
-

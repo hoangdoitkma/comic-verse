@@ -26,8 +26,7 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
-import com.example.comicversev1.data.api.ApiService;
-import com.example.comicversev1.data.model.ViewTrackingRequest;
+import com.example.comicversev1.data.repository.ReaderActionRepository;
 
 import java.util.concurrent.TimeUnit;
 
@@ -39,7 +38,7 @@ public class ReaderViewModel extends ViewModel {
     private final GetChapterDetailUseCase getChapterDetailUseCase;
     private final ReadingHistoryDao readingHistoryDao;
     private final ComicCacheDao comicCacheDao;
-    private final ApiService apiService;
+    private final ReaderActionRepository readerActionRepository;
     private final CompositeDisposable disposables = new CompositeDisposable();
 
     private final int initialChapterId;
@@ -99,11 +98,11 @@ public class ReaderViewModel extends ViewModel {
                            ReadingHistoryDao readingHistoryDao,
                            ComicCacheDao comicCacheDao,
                            SavedStateHandle handle,
-                           ApiService apiService) {
+                           ReaderActionRepository readerActionRepository) {
         this.getChapterDetailUseCase = getChapterDetailUseCase;
         this.readingHistoryDao = readingHistoryDao;
         this.comicCacheDao = comicCacheDao;
-        this.apiService = apiService;
+        this.readerActionRepository = readerActionRepository;
         this.initialChapterId = handle.get("chapterId");
         this.comicId = handle.get("comicId");
 
@@ -132,7 +131,8 @@ public class ReaderViewModel extends ViewModel {
                 saveProgressSubject
                         .throttleLatest(1000, TimeUnit.MILLISECONDS) // Prevent rapid DB spam
                         .observeOn(Schedulers.io())
-                        .flatMapCompletable(entity -> readingHistoryDao.insertOrUpdate(entity))
+                        .flatMapCompletable(entity -> readingHistoryDao.insertOrUpdate(entity)
+                                .andThen(syncHistoryToServer(entity)))
                         .subscribe(
                                 () -> Log.d(TAG, ">>> DEBOUNCED SAVE OK"),
                                 throwable -> Log.e(TAG, ">>> DEBOUNCED SAVE FAILED: " + throwable.getMessage())
@@ -276,18 +276,12 @@ public class ReaderViewModel extends ViewModel {
         if (isChapterListLoaded) return;
         
         disposables.add(
-            apiService.getChaptersById(comicId)
+            readerActionRepository.getChaptersByComicId(comicId)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(response -> {
-                    if (response != null && response.getData() != null) {
-                        List<com.example.comicversev1.domain.entity.ChapterItem> list = new ArrayList<>();
-                        for (com.example.comicversev1.data.model.ChapterItemDTO dto : response.getData()) {
-                            list.add(new com.example.comicversev1.domain.entity.ChapterItem(dto.getId(), dto.getTitle(), dto.getAccessType()));
-                        }
-                        _chapterListEvent.setValue(list);
-                        isChapterListLoaded = true;
-                    }
+                .subscribe(list -> {
+                    _chapterListEvent.setValue(list);
+                    isChapterListLoaded = true;
                 }, throwable -> {
                     // Xử lý lỗi lấy danh sách chương nếu cần thiết
                     Log.e(TAG, "Lỗi fetch chapter list: " + throwable.getMessage());
@@ -402,6 +396,7 @@ public class ReaderViewModel extends ViewModel {
 
         // Fire and forget - not added to disposables so it completes even if ViewModel is cleared
         readingHistoryDao.insertOrUpdate(entity)
+                .andThen(syncHistoryToServer(entity))
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         () -> Log.d(TAG, ">>> ASYNC SAVED OK: comicId=" + entity.comicId + ", page=" + pageIndex),
@@ -409,10 +404,14 @@ public class ReaderViewModel extends ViewModel {
                 );
     }
 
+    private io.reactivex.rxjava3.core.Completable syncHistoryToServer(ReadingHistoryEntity entity) {
+        return readerActionRepository.syncReadingHistory(entity);
+    }
+
     public void trackChapterView(int chapterId) {
         if (comicId <= 0 || chapterId <= 0) return;
         disposables.add(
-                apiService.trackView(new ViewTrackingRequest(comicId, chapterId))
+                readerActionRepository.trackView(comicId, chapterId)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
@@ -424,7 +423,7 @@ public class ReaderViewModel extends ViewModel {
 
     public void reportChapter(int chapterId, com.example.comicversev1.data.model.ChapterReportRequest request) {
         disposables.add(
-                apiService.reportChapter(chapterId, request)
+                readerActionRepository.reportChapter(chapterId, request)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(

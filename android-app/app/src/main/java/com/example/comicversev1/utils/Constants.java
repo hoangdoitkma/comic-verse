@@ -10,5 +10,6 @@ public final class Constants {
     public static final String KEY_REFRESH_TOKEN = "refresh_token";
     public static final String KEY_DISPLAY_NAME = "display_name";
     public static final String KEY_EMAIL = "email";
+    public static final String KEY_AVATAR_URL = "avatar_url";
 }
 

@@ -1,5 +1,7 @@
 package com.example.comicversev1.presentation.novel;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,8 +18,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.comicversev1.R;
-import com.example.comicversev1.data.api.ApiService;
+import com.example.comicversev1.data.repository.NotificationRepository;
 import com.example.comicversev1.databinding.FragmentNovelBinding;
+import com.example.comicversev1.utils.Constants;
+import com.bumptech.glide.Glide;
 import com.example.comicversev1.presentation.home.HomeHeroAdapter;
 import com.example.comicversev1.presentation.home.HomeQuickActionAdapter;
 import com.example.comicversev1.presentation.home.HotAdapter;
@@ -41,7 +45,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 public class NovelFragment extends Fragment {
 
     @Inject
-    ApiService apiService;
+    NotificationRepository notificationRepository;
 
     private FragmentNovelBinding binding;
     private NovelViewModel viewModel;
@@ -118,7 +122,7 @@ public class NovelFragment extends Fragment {
         });
 
         // Initialize wrapper section adapters
-        AdSearchSectionAdapter adSearchSection = new AdSearchSectionAdapter();
+        AdSearchSectionAdapter adSearchSection = new AdSearchSectionAdapter(query -> navigateToSearch(query, "NOVEL"));
         HeroSectionAdapter heroSection = new HeroSectionAdapter(heroAdapter);
         QuickActionSectionAdapter quickActionSection = new QuickActionSectionAdapter(quickActionAdapter);
         continueSection = new ContinueReadingSectionAdapter();
@@ -148,8 +152,26 @@ public class NovelFragment extends Fragment {
         binding.recyclerMain.setAdapter(concatAdapter);
     }
 
+    private void setupPullToRefresh() {
+        binding.swipeRefresh.setColorSchemeResources(R.color.brand_primary, R.color.brand_secondary);
+        binding.swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.bg_dark_surface_elevated);
+        binding.swipeRefresh.setOnRefreshListener(() -> {
+            viewModel.refresh();
+            fetchUnreadCount();
+        });
+    }
+
+    private void navigateToSearch(String query, String type) {
+        Bundle args = new Bundle();
+        args.putString("initialQuery", query);
+        args.putString("contentType", type);
+        NavHostFragment.findNavController(this).navigate(R.id.discoverFragment, args);
+    }
+
     private void observeState() {
         viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
+            binding.swipeRefresh.setRefreshing(false);
+            renderUserAvatar();
             binding.textGreetingTitle.setText(state.getGreetingTitle());
             binding.textGreetingSubtitle.setText(state.getGreetingSubtitle());
             
@@ -208,6 +230,32 @@ public class NovelFragment extends Fragment {
         fetchUnreadCount();
     }
 
+    private void setupAvatarAction() {
+        binding.imageAvatar.setOnClickListener(v -> {
+            SharedPreferences prefs = requireActivity().getSharedPreferences(Constants.PREF_AUTH, Context.MODE_PRIVATE);
+            String token = prefs.getString(Constants.KEY_ACCESS_TOKEN, "");
+            if (token == null || token.isEmpty()) {
+                NavHostFragment.findNavController(this).navigate(R.id.loginFragment);
+            } else {
+                NavHostFragment.findNavController(this).navigate(R.id.profileDetailFragment);
+            }
+        });
+    }
+
+    private void renderUserAvatar() {
+        SharedPreferences prefs = requireActivity().getSharedPreferences(Constants.PREF_AUTH, Context.MODE_PRIVATE);
+        String avatarUrl = prefs.getString(Constants.KEY_AVATAR_URL, "");
+        if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
+            Glide.with(this)
+                    .load(avatarUrl)
+                    .placeholder(R.mipmap.ic_launcher)
+                    .error(R.mipmap.ic_launcher)
+                    .into(binding.imageAvatar);
+        } else {
+            binding.imageAvatar.setImageResource(R.mipmap.ic_launcher);
+        }
+    }
+
     private void fetchUnreadCount() {
         android.content.SharedPreferences prefs = requireActivity().getSharedPreferences(
                 com.example.comicversev1.utils.Constants.PREF_AUTH, android.content.Context.MODE_PRIVATE);
@@ -219,18 +267,15 @@ public class NovelFragment extends Fragment {
         }
 
         disposables.add(
-                apiService.getUnreadNotificationCount()
+                notificationRepository.getUnreadCount()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(response -> {
-                            if (response.isSuccess() && response.getData() != null) {
-                                long count = response.getData();
-                                if (count > 0) {
-                                    binding.textBadge.setVisibility(View.VISIBLE);
-                                    binding.textBadge.setText(count > 99 ? "99+" : String.valueOf(count));
-                                } else {
-                                    binding.textBadge.setVisibility(View.GONE);
-                                }
+                        .subscribe(count -> {
+                            if (count > 0) {
+                                binding.textBadge.setVisibility(View.VISIBLE);
+                                binding.textBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+                            } else {
+                                binding.textBadge.setVisibility(View.GONE);
                             }
                         }, error -> binding.textBadge.setVisibility(View.GONE))
         );
@@ -241,9 +286,20 @@ public class NovelFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(NovelViewModel.class);
         setupRecyclerView();
+        setupPullToRefresh();
         setupBottomNav();
         setupNotificationBell();
+        setupAvatarAction();
+        renderUserAvatar();
         observeState();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (binding != null) {
+            renderUserAvatar();
+        }
     }
 
     @Override

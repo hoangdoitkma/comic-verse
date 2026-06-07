@@ -40,6 +40,8 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private OnImageLoadStateListener imageLoadStateListener;
     private OnPageLongClickListener onPageLongClickListener;
+    private int imageSpacingPx = 0;
+    private boolean fitWidth = true;
 
     public void setOnImageLoadStateListener(OnImageLoadStateListener listener) {
         this.imageLoadStateListener = listener;
@@ -47,6 +49,12 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public void setOnPageLongClickListener(OnPageLongClickListener listener) {
         this.onPageLongClickListener = listener;
+    }
+
+    public void applyReaderSettings(int imageSpacingDp, boolean fitWidth) {
+        this.imageSpacingPx = (int) (imageSpacingDp * Resources.getSystem().getDisplayMetrics().density);
+        this.fitWidth = fitWidth;
+        notifyDataSetChanged();
     }
 
     private static final int TYPE_PAGE = 0;
@@ -194,6 +202,8 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             // Ngăn chặn việc RecyclerView tưởng tất cả các trang đều vừa màn hình và ghim anchor về Item 0!
             int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
             pageHolder.imageView.setMinimumHeight(screenHeight / 2);
+            pageHolder.itemView.setPadding(0, 0, 0, imageSpacingPx);
+            pageHolder.imageView.setScaleType(fitWidth ? ImageView.ScaleType.FIT_CENTER : ImageView.ScaleType.CENTER_INSIDE);
 
             // Tối ưu Glide: 
             // 1. override SIZE_ORIGINAL chặn resize bậy bạ

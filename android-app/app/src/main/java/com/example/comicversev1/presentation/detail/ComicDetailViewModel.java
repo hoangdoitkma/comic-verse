@@ -1,6 +1,5 @@
 package com.example.comicversev1.presentation.detail;
 
-import com.example.comicversev1.data.local.dao.FavoriteComicDao;
 import com.example.comicversev1.data.local.entity.FavoriteComicEntity;
 
 import android.util.Log;
@@ -11,8 +10,9 @@ import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
 import com.example.comicversev1.data.local.dao.ComicCacheDao;
-import com.example.comicversev1.data.local.dao.ReadingHistoryDao;
 import com.example.comicversev1.data.local.entity.ReadingHistoryEntity;
+import com.example.comicversev1.data.repository.FavoriteSyncRepository;
+import com.example.comicversev1.data.repository.ReadingHistoryRepository;
 import com.example.comicversev1.domain.entity.ChapterItem;
 import com.example.comicversev1.domain.entity.ComicDetailEntity;
 import com.example.comicversev1.domain.usecase.GetChaptersUseCase;
@@ -33,7 +33,7 @@ public class ComicDetailViewModel extends ViewModel {
     private final GetComicDetailUseCase getComicDetailUseCase;
     private final GetChaptersUseCase getChaptersUseCase;
     private final com.example.comicversev1.domain.usecase.GetSimilarComicsUseCase getSimilarComicsUseCase;
-    private final ReadingHistoryDao readingHistoryDao;
+    private final ReadingHistoryRepository readingHistoryRepository;
     private final ComicCacheDao comicCacheDao;
     private final CompositeDisposable disposables = new CompositeDisposable();
     private final String slug;
@@ -42,6 +42,9 @@ public class ComicDetailViewModel extends ViewModel {
     private final MutableLiveData<ComicDetailUiState> _uiState = new MutableLiveData<>(ComicDetailUiState.loading());
     public LiveData<ComicDetailUiState> uiState() { return _uiState; }
 
+    private final MutableLiveData<Boolean> _refreshing = new MutableLiveData<>(false);
+    public LiveData<Boolean> refreshing() { return _refreshing; }
+
     // Saved reading progress for this comic (chapterId, or -1 if none)
     private final MutableLiveData<ReadingHistoryEntity> _savedProgress = new MutableLiveData<>(null);
     public LiveData<ReadingHistoryEntity> savedProgress() { return _savedProgress; }
@@ -49,35 +52,37 @@ public class ComicDetailViewModel extends ViewModel {
     private final MutableLiveData<Boolean> _isFavorite = new MutableLiveData<>(false);
     public LiveData<Boolean> isFavorite() { return _isFavorite; }
 
-    private final FavoriteComicDao favoriteComicDao;
+    private final FavoriteSyncRepository favoriteSyncRepository;
 
     @Inject
     public ComicDetailViewModel(GetComicDetailUseCase getComicDetailUseCase,
                                 GetChaptersUseCase getChaptersUseCase,
                                 com.example.comicversev1.domain.usecase.GetSimilarComicsUseCase getSimilarComicsUseCase,
-                                ReadingHistoryDao readingHistoryDao,
+                                ReadingHistoryRepository readingHistoryRepository,
                                 ComicCacheDao comicCacheDao,
-                                FavoriteComicDao favoriteComicDao,
+                                FavoriteSyncRepository favoriteSyncRepository,
                                 SavedStateHandle savedStateHandle) {
         this.getComicDetailUseCase = getComicDetailUseCase;
         this.getChaptersUseCase = getChaptersUseCase;
         this.getSimilarComicsUseCase = getSimilarComicsUseCase;
-        this.readingHistoryDao = readingHistoryDao;
+        this.readingHistoryRepository = readingHistoryRepository;
         this.comicCacheDao = comicCacheDao;
-        this.favoriteComicDao = favoriteComicDao;
+        this.favoriteSyncRepository = favoriteSyncRepository;
         this.slug = savedStateHandle.get("slug");
         
         Integer cId = savedStateHandle.get("comicId");
         this.comicId = cId != null ? cId : 0;
         
-        loadData();
+        loadData(false);
         checkFavoriteStatus();
     }
 
 
     private void checkFavoriteStatus() {
         disposables.add(
-                favoriteComicDao.checkIsFavorite(slug)
+                favoriteSyncRepository.syncWithServer()
+                        .onErrorComplete()
+                        .andThen(favoriteSyncRepository.isFavorite(slug))
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(isFav -> _isFavorite.setValue(isFav),
@@ -90,7 +95,7 @@ public class ComicDetailViewModel extends ViewModel {
         if (current != null && current) {
             // Remove
             disposables.add(
-                    favoriteComicDao.deleteFavoriteBySlug(slug)
+                    favoriteSyncRepository.removeFavorite(slug)
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(() -> _isFavorite.setValue(false),
@@ -100,7 +105,7 @@ public class ComicDetailViewModel extends ViewModel {
             // Add
             FavoriteComicEntity entity = new FavoriteComicEntity(slug, title, coverUrl, type, System.currentTimeMillis());
             disposables.add(
-                    favoriteComicDao.insertOrUpdate(entity)
+                    favoriteSyncRepository.addFavorite(entity)
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(() -> _isFavorite.setValue(true),
@@ -109,16 +114,29 @@ public class ComicDetailViewModel extends ViewModel {
         }
     }
 
-    private void loadData() {
+    public void refresh() {
+        loadData(true);
+        checkFavoriteStatus();
+    }
+
+    private void loadData(boolean trackRefresh) {
+        if (trackRefresh) {
+            _refreshing.setValue(true);
+        }
         disposables.add(
                 getComicDetailUseCase.execute(slug)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(this::onComicLoaded, this::onError)
+                        .subscribe(comic -> onComicLoaded(comic, trackRefresh), throwable -> {
+                            if (trackRefresh) {
+                                _refreshing.setValue(false);
+                            }
+                            onError(throwable);
+                        })
         );
     }
 
-    private void onComicLoaded(ComicDetailEntity comic) {
+    private void onComicLoaded(ComicDetailEntity comic, boolean trackRefresh) {
         // Load chapters and similar comics in parallel
         io.reactivex.rxjava3.core.Single<java.util.List<ChapterItem>> chaptersSingle = getChaptersUseCase.execute(slug)
                 .onErrorReturnItem(Collections.emptyList());
@@ -134,9 +152,17 @@ public class ComicDetailViewModel extends ViewModel {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(state -> {
                             _uiState.setValue(state);
+                            if (trackRefresh) {
+                                _refreshing.setValue(false);
+                            }
                             // Load saved reading progress for this comic
                             loadSavedProgress(comic.getId());
-                        }, throwable -> _uiState.setValue(ComicDetailUiState.success(comic, Collections.emptyList(), Collections.emptyList())))
+                        }, throwable -> {
+                            _uiState.setValue(ComicDetailUiState.success(comic, Collections.emptyList(), Collections.emptyList()));
+                            if (trackRefresh) {
+                                _refreshing.setValue(false);
+                            }
+                        })
         );
     }
 
@@ -145,7 +171,7 @@ public class ComicDetailViewModel extends ViewModel {
      */
     public void loadSavedProgress(int comicId) {
         disposables.add(
-                readingHistoryDao.getHistoryForComic(comicId)
+                readingHistoryRepository.getHistoryForComic(comicId)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
@@ -173,13 +199,35 @@ public class ComicDetailViewModel extends ViewModel {
             Log.d("ComicDetailVM", "Comic not found. Deleting stale local data.");
             disposables.add(comicCacheDao.deleteBySlug(slug).subscribeOn(Schedulers.io()).subscribe());
             if (comicId > 0) {
-                disposables.add(readingHistoryDao.deleteHistoryByComicId(comicId).subscribeOn(Schedulers.io()).subscribe());
+                disposables.add(readingHistoryRepository.deleteByComicId(comicId).subscribeOn(Schedulers.io()).subscribe());
             }
             _uiState.setValue(ComicDetailUiState.error("COMIC_DELETED"));
             return;
         }
         
-        _uiState.setValue(ComicDetailUiState.error(throwable.getMessage()));
+        _uiState.setValue(ComicDetailUiState.error(toUserMessage(throwable)));
+    }
+
+    private String toUserMessage(Throwable throwable) {
+        if (throwable instanceof com.example.comicversev1.data.model.NetworkException) {
+            String message = throwable.getMessage();
+            return message != null && !message.trim().isEmpty()
+                    ? message
+                    : "Khong the tai du lieu truyen. Vui long thu lai.";
+        }
+        String message = throwable != null ? throwable.getMessage() : null;
+        if (message == null || message.trim().isEmpty()) {
+            return "Khong the tai du lieu truyen. Vui long thu lai.";
+        }
+        String lower = message.toLowerCase();
+        if (message.length() > 140
+                || message.contains("{")
+                || lower.contains("payload")
+                || lower.contains("jwt")
+                || lower.contains("token")) {
+            return "Phien dang nhap hoac du lieu tai lai khong hop le. Vui long thu lai.";
+        }
+        return message;
     }
 
     @Override

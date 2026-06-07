@@ -19,6 +19,9 @@ public interface FavoriteComicDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     Completable insertOrUpdate(FavoriteComicEntity entity);
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    Completable insertOrUpdateAll(List<FavoriteComicEntity> entities);
+
     @Query("DELETE FROM favorite_comics WHERE slug = :slug")
     Completable deleteFavoriteBySlug(String slug);
 
@@ -27,4 +30,10 @@ public interface FavoriteComicDao {
 
     @Query("SELECT * FROM favorite_comics WHERE comic_type = :comicType ORDER BY added_at DESC")
     Flowable<List<FavoriteComicEntity>> getAllFavoritesByType(String comicType);
+
+    @Query("SELECT * FROM favorite_comics")
+    Single<List<FavoriteComicEntity>> getAllFavorites();
+
+    @Query("DELETE FROM favorite_comics")
+    Completable deleteAllFavorites();
 }

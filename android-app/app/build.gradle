@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+def googleWebClientId = project.findProperty("GOOGLE_WEB_CLIENT_ID") ?: System.getenv("GOOGLE_WEB_CLIENT_ID") ?: ""
+
 android {
     namespace 'com.example.comicversev1'
     compileSdk 35
@@ -13,10 +15,11 @@ android {
         applicationId "com.example.comicversev1"
         minSdk 24
         targetSdk 35
-        versionCode 16
-        versionName "1.1.16"
+        versionCode 18
+        versionName "1.1.18"
 
         buildConfigField "String", "BASE_URL", '"http://3.1.207.156:8080/api/"'
+        buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", "\"${googleWebClientId}\""
     }
 
     buildTypes {
@@ -64,6 +67,9 @@ dependencies {
     implementation libs.paging.rxjava3
     implementation libs.glide
     annotationProcessor libs.glide.compiler
+    implementation libs.credentials
+    implementation libs.credentials.play.services.auth
+    implementation libs.googleid
 
     // SwipeRefreshLayout for pull-to-refresh
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'

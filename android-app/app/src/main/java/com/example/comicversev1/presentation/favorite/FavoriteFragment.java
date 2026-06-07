@@ -46,8 +46,15 @@ public class FavoriteFragment extends Fragment {
         viewModel = new ViewModelProvider(this).get(FavoriteViewModel.class);
 
         setupRecyclerView();
+        setupPullToRefresh();
         setupBottomNav();
         observeViewModel();
+    }
+
+    private void setupPullToRefresh() {
+        binding.swipeRefresh.setColorSchemeResources(R.color.brand_primary, R.color.brand_secondary);
+        binding.swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.bg_dark_surface_elevated);
+        binding.swipeRefresh.setOnRefreshListener(() -> viewModel.refresh());
     }
 
     private void setupBottomNav() {
@@ -114,6 +121,9 @@ public class FavoriteFragment extends Fragment {
             novelAdapter.submitList(favorites);
             checkEmptyState();
         });
+
+        viewModel.refreshing().observe(getViewLifecycleOwner(), refreshing ->
+                binding.swipeRefresh.setRefreshing(Boolean.TRUE.equals(refreshing)));
     }
 
     private void checkEmptyState() {

@@ -56,18 +56,39 @@ public class ChapterListAdapter extends RecyclerView.Adapter<ChapterListAdapter.
     static class ChapterViewHolder extends RecyclerView.ViewHolder {
         private final TextView title;
         private final TextView date;
+        private final TextView index;
+        private final TextView access;
 
         ChapterViewHolder(@NonNull View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.txtChapterTitle);
             date = itemView.findViewById(R.id.txtChapterDate);
+            index = itemView.findViewById(R.id.txtChapterIndex);
+            access = itemView.findViewById(R.id.txtChapterAccess);
         }
 
         void bind(ChapterItem item, OnChapterClickListener listener) {
-            title.setText(item.getTitle());
+            title.setText(formatChapterTitle(item.getTitle()));
+            index.setText(String.valueOf(getBindingAdapterPosition() + 1));
             // Mocking date format since it doesn't exist in entity yet. Normally uses item.getCreatedAt()
-            date.setText("14/05/2026 07:04");
+            date.setText("Vừa cập nhật");
+            boolean isVip = item.getAccessType() != null && "VIP".equalsIgnoreCase(item.getAccessType());
+            access.setText(isVip ? "VIP" : "FREE");
+            access.setTextColor(itemView.getContext().getColor(isVip ? R.color.icon_yellow : R.color.icon_green));
+            access.setBackgroundResource(isVip ? R.drawable.bg_detail_access_vip : R.drawable.bg_detail_access_free);
             itemView.setOnClickListener(v -> listener.onChapterClick(item));
+        }
+
+        private String formatChapterTitle(String rawTitle) {
+            if (rawTitle == null || rawTitle.trim().isEmpty()) {
+                return "Chương ?";
+            }
+            String title = rawTitle.trim();
+            String lower = title.toLowerCase();
+            if (lower.contains("chương") || lower.contains("chap")) {
+                return title;
+            }
+            return "Chương " + title;
         }
     }
 }

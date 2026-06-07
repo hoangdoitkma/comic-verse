@@ -3,20 +3,19 @@ package com.example.comicversev1.data.repository;
 import android.content.SharedPreferences;
 
 import com.example.comicversev1.R;
+import com.example.comicversev1.data.api.ApiService;
+import com.example.comicversev1.data.model.HomeDataResponse;
 import com.example.comicversev1.domain.entity.HomeContent;
 import com.example.comicversev1.utils.Constants;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.rxjava3.core.Single;
-
-import com.example.comicversev1.data.api.ApiService;
-import com.example.comicversev1.data.model.HomeDataResponse;
-import java.util.Collections;
-import java.util.List;
 
 @Singleton
 public class HomeRepositoryImpl implements HomeRepository {
@@ -30,19 +29,19 @@ public class HomeRepositoryImpl implements HomeRepository {
         this.prefs = prefs;
     }
 
-    private java.util.List<HomeContent.ComicCard> mapToCards(java.util.List<com.example.comicversev1.data.model.ComicDTO> dtos) {
+    private List<HomeContent.ComicCard> mapToCards(List<com.example.comicversev1.data.model.ComicDTO> dtos) {
         if (dtos == null) return Collections.emptyList();
         return dtos.stream().map(dto -> new HomeContent.ComicCard(
                 dto.getSlug() != null ? dto.getSlug() : "",
                 dto.getTitle() != null ? dto.getTitle() : "",
                 dto.getTotalChapters() > 0 ? "Chương " + dto.getTotalChapters() : "Đang cập nhật",
                 dto.getCoverImage(),
-                0, // fallback likes
+                0,
                 dto.getViewCount(),
-                0, // fallback progress
-                "", // fallback timeLabel
+                0,
+                "",
                 dto.getAccessType() != null ? dto.getAccessType() : "FREE",
-                "" // fallback authorName
+                ""
         )).collect(java.util.stream.Collectors.toList());
     }
 
@@ -55,7 +54,7 @@ public class HomeRepositoryImpl implements HomeRepository {
     public Single<HomeContent> loadNovelContent() {
         return fetchContent("NOVEL");
     }
-    
+
     @Override
     public Single<List<HomeContent.ComicCard>> getSimilarComics(String slug) {
         return apiService.getSimilarComics(slug)
@@ -72,58 +71,58 @@ public class HomeRepositoryImpl implements HomeRepository {
         String token = prefs.getString(Constants.KEY_ACCESS_TOKEN, "");
 
         Single<HomeDataResponse> homeDataSingle = apiService.getHomeContent(type)
-                .map(response -> {
-                    if (response.getData() != null) return response.getData();
-                    return new HomeDataResponse();
-                });
+                .map(response -> response.getData() != null ? response.getData() : new HomeDataResponse());
 
-        if (token.isEmpty()) {
-            return homeDataSingle.map(data -> buildHomeContent(data, type, Collections.emptyList()));
-        } else {
-            // Khi đã login: gọi song song home data + recommendations + user profile
-            Single<List<com.example.comicversev1.data.model.ComicDTO>> recommendationsSingle = 
-                apiService.getRecommendations(type)
-                    .map(response -> {
-                        if (response.isSuccess() && response.getData() != null) {
-                            return response.getData();
-                        }
-                        return Collections.<com.example.comicversev1.data.model.ComicDTO>emptyList();
-                    })
-                    .onErrorReturnItem(Collections.emptyList());
-
-            return Single.zip(homeDataSingle, recommendationsSingle, (data, recs) -> {
-                // Fetch user profile name (fire and forget style, cached in prefs)
-                fetchUserProfileAsync();
-                return buildHomeContent(data, type, recs);
-            });
+        if (token == null || token.isEmpty()) {
+            return homeDataSingle.map(data -> buildHomeContent(data, type, Collections.emptyList(), ""));
         }
+
+        Single<List<com.example.comicversev1.data.model.ComicDTO>> recommendationsSingle =
+                apiService.getRecommendations(type)
+                        .map(response -> {
+                            if (response.isSuccess() && response.getData() != null) {
+                                return response.getData();
+                            }
+                            return Collections.<com.example.comicversev1.data.model.ComicDTO>emptyList();
+                        })
+                        .onErrorReturnItem(Collections.emptyList());
+
+        Single<String> displayNameSingle = fetchUserDisplayName();
+
+        return Single.zip(homeDataSingle, recommendationsSingle, displayNameSingle,
+                (data, recs, displayName) -> buildHomeContent(data, type, recs, displayName));
     }
 
-    /**
-     * Fire-and-forget: Lấy user profile và cache display name vào SharedPreferences
-     */
-    private void fetchUserProfileAsync() {
-        try {
-            apiService.getUserProfile()
-                .subscribe(profileRes -> {
+    private Single<String> fetchUserDisplayName() {
+        String cachedName = prefs.getString(Constants.KEY_DISPLAY_NAME, "");
+        return apiService.getUserProfile()
+                .map(profileRes -> {
                     if (profileRes.isSuccess() && profileRes.getData() != null) {
                         String displayName = profileRes.getData().displayName;
-                        if (displayName != null && !displayName.isEmpty()) {
-                            prefs.edit().putString(Constants.KEY_DISPLAY_NAME, displayName).apply();
+                        String avatarUrl = profileRes.getData().avatarUrl;
+                        if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
+                            prefs.edit().putString(Constants.KEY_AVATAR_URL, avatarUrl.trim()).apply();
+                        }
+                        if (displayName != null && !displayName.trim().isEmpty()) {
+                            String normalizedName = displayName.trim();
+                            prefs.edit().putString(Constants.KEY_DISPLAY_NAME, normalizedName).apply();
+                            return normalizedName;
                         }
                     }
-                }, error -> { /* Silently ignore */ });
-        } catch (Exception e) {
-            // Ignore
-        }
+                    return cachedName != null ? cachedName : "";
+                })
+                .onErrorReturnItem(cachedName != null ? cachedName : "");
     }
 
-    private HomeContent buildHomeContent(HomeDataResponse data, String type,
-                                          List<com.example.comicversev1.data.model.ComicDTO> personalizedRecs) {
-        String name = prefs.getString(Constants.KEY_DISPLAY_NAME, "");
-        String greeting = name.isEmpty() ? "Hi, Khách!" : "Hi, " + name + "!";
+    private HomeContent buildHomeContent(HomeDataResponse data,
+                                         String type,
+                                         List<com.example.comicversev1.data.model.ComicDTO> personalizedRecs,
+                                         String displayName) {
+        String name = displayName != null && !displayName.trim().isEmpty()
+                ? displayName.trim()
+                : prefs.getString(Constants.KEY_DISPLAY_NAME, "");
+        String greeting = name == null || name.trim().isEmpty() ? "Hi, Khách!" : "Hi, " + name.trim() + "!";
 
-        // Nếu có kết quả đề xuất cá nhân hóa → dùng, nếu không → fallback sang recommended từ home API
         List<HomeContent.ComicCard> recommendedCards;
         if (personalizedRecs != null && !personalizedRecs.isEmpty()) {
             recommendedCards = mapToCards(personalizedRecs);
@@ -133,15 +132,14 @@ public class HomeRepositoryImpl implements HomeRepository {
 
         return new HomeContent(
                 greeting,
-                "Chào mừng trở lại ✨",
+                "Chào mừng trở lại",
                 Collections.emptyList(),
                 "COMIC".equals(type) ? Arrays.asList(
-                    new HomeContent.QuickAction("vip", "Mua gói VIP", "Ưu đãi hội viên", R.drawable.ic_vip),
-                    new HomeContent.QuickAction("remove_ads", "Xoá QC", "Tăng tốc đọc", R.drawable.ic_remove_ads),
-                    new HomeContent.QuickAction("history", "Lịch sử", "Tiếp tục đọc", R.drawable.ic_history)
+                        new HomeContent.QuickAction("vip", "Mua gói VIP", "Ưu đãi hội viên", R.drawable.ic_vip),
+                        new HomeContent.QuickAction("history", "Lịch sử", "Tiếp tục đọc", R.drawable.ic_history)
                 ) : Collections.emptyList(),
                 null,
-                mapToCards(data.recentlyUpdated),
+                Collections.emptyList(),
                 recommendedCards,
                 mapToCards(data.recentlyUpdated),
                 mapToCards(data.topTrending),
@@ -150,4 +148,3 @@ public class HomeRepositoryImpl implements HomeRepository {
         );
     }
 }
-

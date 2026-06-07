@@ -1,10 +1,14 @@
 spring:
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:../.env[.properties]
   application:
     name: comic-novel-platform
   datasource:
-    url: ${DB_URL:jdbc:mysql://172.31.46.47:3306/comicverse?serverTimezone=Asia/Ho_Chi_Minh}
-    username: admin
-    password: ${DB_PASSWORD:Duchoang003}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: update
@@ -19,16 +23,39 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
 
 aws:
   s3:
-    region: ${AWS_REGION:ap-southeast-1}
-    bucket-name: ${AWS_S3_BUCKET:comicverse-storage}
+    region: ${AWS_REGION}
+    bucket-name: ${AWS_S3_BUCKET}
     credentials:
-      access-key: ${AWS_ACCESS_KEY_ID:AKIA6F6ONXPVDOTS275Z}
-      secret-key: ${AWS_SECRET_ACCESS_KEY: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}
+      access-key: ${AWS_ACCESS_KEY_ID}
+      secret-key: ${AWS_SECRET_ACCESS_KEY}
 
 payos:
-  client-id: ${PAYOS_CLIENT_ID:6848b4bc-a1f6-4859-92b9-9a48f702f3fd}
-  api-key: ${PAYOS_API_KEY:4d266542-4884-4d98-9a07-2840081785f6}
-  checksum-key: ${PAYOS_CHECKSUM_KEY:efce9c60dfa83c89c6380d35e05bd358cfdd54a4cc16d22ef070197e0298067e}
+  client-id: ${PAYOS_CLIENT_ID}
+  api-key: ${PAYOS_API_KEY}
+  checksum-key: ${PAYOS_CHECKSUM_KEY}
+
+app:
+  jwtSecret: ${APP_JWT_SECRET}
+  jwtExpirationMs: ${APP_JWT_EXPIRATION_MS}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+  password-reset:
+    otp-expiration-minutes: ${PASSWORD_RESET_OTP_EXPIRATION_MINUTES:15}
+    max-attempts: ${PASSWORD_RESET_MAX_ATTEMPTS:5}
+    sender-name: ${PASSWORD_RESET_SENDER_NAME:ComicVerse}
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost:8081}
