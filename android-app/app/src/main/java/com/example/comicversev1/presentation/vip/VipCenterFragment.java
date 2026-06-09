@@ -86,6 +86,9 @@ public class VipCenterFragment extends Fragment {
                         if (response.isSuccess() && response.getCheckoutUrl() != null) {
                             Intent intent = new Intent(requireContext(), CheckoutActivity.class);
                             intent.putExtra(CheckoutActivity.EXTRA_CHECKOUT_URL, response.getCheckoutUrl());
+                            if (response.getOrderCode() != null) {
+                                intent.putExtra(CheckoutActivity.EXTRA_ORDER_CODE, response.getOrderCode());
+                            }
                             startActivity(intent);
                         } else {
                             Toast.makeText(requireContext(), "Lỗi khi tạo đơn hàng (Cần đăng nhập từ Khác)", Toast.LENGTH_SHORT).show();

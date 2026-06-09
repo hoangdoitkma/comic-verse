@@ -11,4 +11,6 @@ public interface VipRepository {
     Single<List<VipPackageDTO>> getVipPackages();
 
     Single<PaymentResponse> createVipOrder(int packageId);
+
+    Single<PaymentResponse> confirmVipOrder(long orderCode);
 }

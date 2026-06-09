@@ -1,6 +1,7 @@
 package com.example.comicversev1.data.repository;
 
 import com.example.comicversev1.data.api.ApiService;
+import com.example.comicversev1.data.model.PaymentConfirmRequest;
 import com.example.comicversev1.data.model.PaymentRequest;
 import com.example.comicversev1.data.model.PaymentResponse;
 import com.example.comicversev1.data.model.VipPackageDTO;
@@ -37,5 +38,10 @@ public class VipRepositoryImpl implements VipRepository {
     @Override
     public Single<PaymentResponse> createVipOrder(int packageId) {
         return apiService.createVipOrder(new PaymentRequest(packageId, 0));
+    }
+
+    @Override
+    public Single<PaymentResponse> confirmVipOrder(long orderCode) {
+        return apiService.confirmVipOrder(new PaymentConfirmRequest(orderCode));
     }
 }

@@ -194,7 +194,12 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        ChapterImageItem item = items.get(position);
+        int adapterPosition = holder.getBindingAdapterPosition();
+        if (adapterPosition == RecyclerView.NO_POSITION || adapterPosition >= items.size()) {
+            return;
+        }
+
+        ChapterImageItem item = items.get(adapterPosition);
         if (holder instanceof PageViewHolder) {
             PageViewHolder pageHolder = (PageViewHolder) holder;
 
@@ -241,7 +246,7 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             // Tải trước (Preload) 2 trang tiếp theo để lướt mượt không chờ mạng
             for (int i = 1; i <= 2; i++) {
-                int nextPos = position + i;
+                int nextPos = adapterPosition + i;
                 if (nextPos < items.size() && items.get(nextPos).type == TYPE_PAGE) {
                     Glide.with(pageHolder.itemView.getContext())
                          .load(items.get(nextPos).imageUrl)

@@ -186,6 +186,11 @@ public interface ApiService {
             @Body com.example.comicversev1.data.model.PaymentRequest request
     );
 
+    @POST("payment/confirm-vip-order")
+    Single<com.example.comicversev1.data.model.PaymentResponse> confirmVipOrder(
+            @Body com.example.comicversev1.data.model.PaymentConfirmRequest request
+    );
+
     // Profile
     @GET("user/profile")
     Single<BaseResponse<com.example.comicversev1.data.model.UserProfileDTO>> getUserProfile();

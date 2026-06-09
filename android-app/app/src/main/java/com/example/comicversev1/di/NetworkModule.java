@@ -1,9 +1,6 @@
 package com.example.comicversev1.di;
 
 import android.content.SharedPreferences;
-import android.util.Log;
-
-import androidx.annotation.NonNull;
 
 import com.example.comicversev1.BuildConfig;
 import com.example.comicversev1.data.api.ApiService;
@@ -36,7 +33,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 @InstallIn(SingletonComponent.class)
 public class NetworkModule {
 
-    private static final boolean IS_DEBUG = true; // TODO: wire to BuildConfig if needed
+    private static final boolean ENABLE_HTTP_LOGS = BuildConfig.DEBUG;
 
     @Provides
     @Singleton
@@ -50,7 +47,7 @@ public class NetworkModule {
     @Singleton
     HttpLoggingInterceptor provideLoggingInterceptor() {
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
-        interceptor.setLevel(IS_DEBUG ? HttpLoggingInterceptor.Level.BODY : HttpLoggingInterceptor.Level.NONE);
+        interceptor.setLevel(ENABLE_HTTP_LOGS ? HttpLoggingInterceptor.Level.BASIC : HttpLoggingInterceptor.Level.NONE);
         return interceptor;
     }
 
@@ -165,7 +162,7 @@ public class NetworkModule {
     @Singleton
     @Named("baseUrl")
     String provideBaseUrl() {
-        return Constants.BASE_URL;
+        return BuildConfig.BASE_URL;
     }
 
     @Provides

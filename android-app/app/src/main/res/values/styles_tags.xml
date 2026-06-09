@@ -4,8 +4,10 @@
     <style name="TagChip">
         <item name="android:background">#1A1D24</item>
         <item name="android:textColor">#A0A0A0</item>
-        <item name="android:paddingHorizontal">12dp</item>
-        <item name="android:paddingVertical">6dp</item>
+        <item name="android:paddingLeft">12dp</item>
+        <item name="android:paddingRight">12dp</item>
+        <item name="android:paddingTop">6dp</item>
+        <item name="android:paddingBottom">6dp</item>
         <item name="android:layout_marginEnd">8dp</item>
         <item name="android:textSize">13sp</item>
     </style>

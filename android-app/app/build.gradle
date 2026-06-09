@@ -6,6 +6,12 @@ plugins {
 }
 
 def googleWebClientId = project.findProperty("GOOGLE_WEB_CLIENT_ID") ?: System.getenv("GOOGLE_WEB_CLIENT_ID") ?: ""
+def debugApiBaseUrl = project.findProperty("DEBUG_API_BASE_URL") ?: System.getenv("DEBUG_API_BASE_URL") ?: "http://10.0.2.2:8080/api/"
+def releaseApiBaseUrl = project.findProperty("RELEASE_API_BASE_URL") ?: System.getenv("RELEASE_API_BASE_URL") ?: "https://api.comicverse.example/api/"
+def normalizeApiBaseUrl = { value ->
+    def normalized = value.toString().trim()
+    return normalized.endsWith("/") ? normalized : normalized + "/"
+}
 
 android {
     namespace 'com.example.comicversev1'
@@ -15,20 +21,27 @@ android {
         applicationId "com.example.comicversev1"
         minSdk 24
         targetSdk 35
-        versionCode 22
-        versionName "1.1.22"
+        versionCode 23
+        versionName "1.1.23"
 
-        buildConfigField "String", "BASE_URL", '"http://3.1.207.156/api/"'
         buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", "\"${googleWebClientId}\""
     }
 
     buildTypes {
+        debug {
+            buildConfigField "String", "BASE_URL", "\"${normalizeApiBaseUrl(debugApiBaseUrl)}\""
+            manifestPlaceholders = [usesCleartextTraffic: "true"]
+        }
+
         release {
+            buildConfigField "String", "BASE_URL", "\"${normalizeApiBaseUrl(releaseApiBaseUrl)}\""
+            manifestPlaceholders = [usesCleartextTraffic: "false"]
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
@@ -70,6 +83,7 @@ dependencies {
     implementation libs.credentials
     implementation libs.credentials.play.services.auth
     implementation libs.googleid
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 
     // SwipeRefreshLayout for pull-to-refresh
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'

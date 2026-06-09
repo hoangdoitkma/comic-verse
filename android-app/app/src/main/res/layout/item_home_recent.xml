@@ -41,7 +41,7 @@
             android:layout_margin="12dp"
             android:padding="8dp"
             android:src="@android:drawable/ic_menu_edit"
-            android:tint="#AAAAAA"
+            app:tint="#AAAAAA"
             android:background="@drawable/bg_icon_circle" />
 
         <!-- Content area (right of cover) -->
@@ -145,7 +145,7 @@
                 android:layout_width="14dp"
                 android:layout_height="14dp"
                 android:src="@drawable/ic_writer"
-                android:tint="#FF6B6B" />
+                app:tint="#FF6B6B" />
 
             <TextView
                 android:id="@+id/textAuthor"
@@ -164,7 +164,7 @@
                 android:layout_height="18dp"
                 android:layout_marginStart="16dp"
                 android:src="@android:drawable/ic_menu_view"
-                android:tint="#FFA64D" />
+                app:tint="#FFA64D" />
 
             <TextView
                 android:id="@+id/textViews"
