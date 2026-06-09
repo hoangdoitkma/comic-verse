@@ -6,8 +6,8 @@ plugins {
 }
 
 def googleWebClientId = project.findProperty("GOOGLE_WEB_CLIENT_ID") ?: System.getenv("GOOGLE_WEB_CLIENT_ID") ?: ""
-def debugApiBaseUrl = project.findProperty("DEBUG_API_BASE_URL") ?: System.getenv("DEBUG_API_BASE_URL") ?: "http://10.0.2.2:8080/api/"
-def releaseApiBaseUrl = project.findProperty("RELEASE_API_BASE_URL") ?: System.getenv("RELEASE_API_BASE_URL") ?: "https://api.comicverse.example/api/"
+def debugApiBaseUrl = project.findProperty("DEBUG_API_BASE_URL") ?: System.getenv("DEBUG_API_BASE_URL") ?: "http://3.1.207.156/api/"
+def releaseApiBaseUrl = project.findProperty("RELEASE_API_BASE_URL") ?: System.getenv("RELEASE_API_BASE_URL") ?: "http://3.1.207.156/api/"
 def normalizeApiBaseUrl = { value ->
     def normalized = value.toString().trim()
     return normalized.endsWith("/") ? normalized : normalized + "/"
@@ -21,8 +21,8 @@ android {
         applicationId "com.example.comicversev1"
         minSdk 24
         targetSdk 35
-        versionCode 23
-        versionName "1.1.23"
+        versionCode 24
+        versionName "1.1.24"
 
         buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", "\"${googleWebClientId}\""
     }
@@ -35,7 +35,7 @@ android {
 
         release {
             buildConfigField "String", "BASE_URL", "\"${normalizeApiBaseUrl(releaseApiBaseUrl)}\""
-            manifestPlaceholders = [usesCleartextTraffic: "false"]
+            manifestPlaceholders = [usesCleartextTraffic: "true"]
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
