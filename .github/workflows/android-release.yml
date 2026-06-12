@@ -3,13 +3,33 @@ name: Android Release to S3
 on:
   push:
     tags:
-      - 'v*' # Sẽ chạy tự động nếu tag có dạng v1.0.0
-  workflow_dispatch: # Cho phép bấm nút "Run workflow" bằng tay trên Github
+      - 'android-v*'
+      - 'android/*'
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Android versionName, for example 1.1.25. Leave empty to read app/build.gradle.'
+        required: false
+        type: string
+      version_code:
+        description: 'Android versionCode. Leave empty to read app/build.gradle.'
+        required: false
+        type: string
+      release_notes:
+        description: 'Release notes shown in version.json.'
+        required: false
+        type: string
+      force_update:
+        description: 'Set isForceUpdate=true in version.json.'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-    
+
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -30,6 +50,66 @@ jobs:
 
       - name: Grant execution permission for gradlew
         run: chmod +x gradlew
+
+      - name: Resolve Android release metadata
+        shell: bash
+        env:
+          INPUT_VERSION_NAME: ${{ github.event.inputs.version_name || '' }}
+          INPUT_VERSION_CODE: ${{ github.event.inputs.version_code || '' }}
+          INPUT_RELEASE_NOTES: ${{ github.event.inputs.release_notes || '' }}
+          INPUT_FORCE_UPDATE: ${{ github.event.inputs.force_update || 'false' }}
+        run: |
+          set -euo pipefail
+
+          GRADLE_VERSION_NAME=$(sed -n "s/.*appVersionName.*\"\\([^\"]*\\)\".*/\\1/p" app/build.gradle | tail -n 1)
+          GRADLE_VERSION_CODE=$(sed -n "s/.*appVersionCode.*\"\\([0-9][0-9]*\\)\".*/\\1/p" app/build.gradle | tail -n 1)
+
+          VERSION_NAME="${INPUT_VERSION_NAME:-}"
+          if [ -z "$VERSION_NAME" ] && [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
+            TAG_NAME="${GITHUB_REF_NAME}"
+            case "$TAG_NAME" in
+              android-v*) VERSION_NAME="${TAG_NAME#android-v}" ;;
+              android/*) VERSION_NAME="${TAG_NAME#android/}" ;;
+              v*) VERSION_NAME="${TAG_NAME#v}" ;;
+              *) VERSION_NAME="$TAG_NAME" ;;
+            esac
+            VERSION_NAME="${VERSION_NAME#v}"
+          fi
+          VERSION_NAME="${VERSION_NAME:-$GRADLE_VERSION_NAME}"
+
+          VERSION_CODE="${INPUT_VERSION_CODE:-$GRADLE_VERSION_CODE}"
+
+          if ! [[ "$VERSION_NAME" =~ ^[0-9]+(\.[0-9]+){1,3}([._-][0-9A-Za-z]+)?$ ]]; then
+            echo "Invalid VERSION_NAME: $VERSION_NAME"
+            echo "Use a tag like android-v1.1.25, android/1.1.25, or v1.1.25."
+            exit 1
+          fi
+
+          if ! [[ "$VERSION_CODE" =~ ^[0-9]+$ ]]; then
+            echo "Invalid VERSION_CODE: $VERSION_CODE"
+            exit 1
+          fi
+
+          SAFE_VERSION_NAME=$(printf '%s' "$VERSION_NAME" | tr -cd 'A-Za-z0-9._-')
+          APK_NAME="comicverse-android-v${SAFE_VERSION_NAME}.apk"
+          RELEASE_NOTES="${INPUT_RELEASE_NOTES:-Cap nhat ComicVerse Android len phien ban $VERSION_NAME}"
+          IS_FORCE_UPDATE="${INPUT_FORCE_UPDATE:-false}"
+
+          {
+            echo "VERSION_NAME=$VERSION_NAME"
+            echo "VERSION_CODE=$VERSION_CODE"
+            echo "APK_NAME=$APK_NAME"
+            echo "IS_FORCE_UPDATE=$IS_FORCE_UPDATE"
+            echo "RELEASE_NOTES<<EOF"
+            printf '%s\n' "$RELEASE_NOTES"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
+
+          echo "Android release metadata:"
+          echo "  versionName=$VERSION_NAME"
+          echo "  versionCode=$VERSION_CODE"
+          echo "  apkName=$APK_NAME"
+          echo "  forceUpdate=$IS_FORCE_UPDATE"
 
       - name: Print release signing certificate SHA-1
         shell: bash
@@ -69,41 +149,48 @@ jobs:
         uses: r0adkll/sign-android-release@v1
         with:
           releaseDirectory: android-app/app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
+          signingKeyBase64: ${{ secrets.SIGNING_KEY || secrets.ANDROID_RELEASE_KEYSTORE_BASE64 || secrets.ANDROID_KEYSTORE_BASE64 }}
+          alias: ${{ secrets.KEY_ALIAS || secrets.ANDROID_RELEASE_KEY_ALIAS || secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD || secrets.ANDROID_RELEASE_KEYSTORE_PASSWORD || secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD || secrets.ANDROID_RELEASE_KEY_PASSWORD || secrets.ANDROID_KEY_PASSWORD || secrets.KEY_STORE_PASSWORD || secrets.ANDROID_RELEASE_KEYSTORE_PASSWORD || secrets.ANDROID_KEYSTORE_PASSWORD }}
         env:
           BUILD_TOOLS_VERSION: "34.0.0"
 
+      - name: Prepare signed APK artifact
+        shell: bash
+        run: |
+          SIGNED_APK_PATH="../${{ steps.sign_app.outputs.signedReleaseFile }}"
+          if [ ! -f "$SIGNED_APK_PATH" ]; then
+            echo "Signed APK not found: $SIGNED_APK_PATH"
+            exit 1
+          fi
+
+          cp "$SIGNED_APK_PATH" "$APK_NAME"
+          echo "APK_SIZE=$(stat -c%s "$APK_NAME")" >> "$GITHUB_ENV"
+
       - name: Generate version.json
         id: gen_version
+        shell: bash
         run: |
-          # Bắt Tag name (v1.2.3 -> 1.2.3)
-          VERSION_NAME=${GITHUB_REF#refs/tags/v}
-          
-          # Lấy versionCode từ build.gradle
-          VERSION_CODE=$(grep -oP 'versionCode\s+\K\d+' app/build.gradle)
-          
-          # Lấy thông tin app (Do action trả về đường dẫn root, ta thêm ../ để lùi ra do đang đứng ở android-app)
-          APK_PATH="../${{steps.sign_app.outputs.signedReleaseFile}}"
-          APK_NAME=$(basename "$APK_PATH")
-          APK_SIZE=$(stat -c%s "$APK_PATH")
-          RELEASE_NOTES="Cập nhật hệ thống lên phiên bản $VERSION_NAME"
+          python3 - <<'PY'
+          import json
+          import os
 
-          echo "Đang tạo version.json..."
-          cat <<EOF > version.json
-          {
-            "versionCode": $VERSION_CODE,
-            "versionName": "$VERSION_NAME",
-            "apkName": "$APK_NAME",
-            "downloadUrl": "https://comicverse-storage.s3.ap-southeast-1.amazonaws.com/android-updates/$APK_NAME",
-            "releaseNotes": "$RELEASE_NOTES",
-            "isForceUpdate": false,
-            "apkSize": $APK_SIZE
+          version = {
+              "versionCode": int(os.environ["VERSION_CODE"]),
+              "versionName": os.environ["VERSION_NAME"],
+              "apkName": os.environ["APK_NAME"],
+              "downloadUrl": f"https://comicverse-storage.s3.ap-southeast-1.amazonaws.com/android-updates/{os.environ['APK_NAME']}",
+              "releaseNotes": os.environ["RELEASE_NOTES"],
+              "isForceUpdate": os.environ.get("IS_FORCE_UPDATE", "false").lower() == "true",
+              "apkSize": int(os.environ["APK_SIZE"]),
           }
-          EOF
-          
+
+          with open("version.json", "w", encoding="utf-8") as f:
+              json.dump(version, f, ensure_ascii=False, indent=2)
+              f.write("\n")
+          PY
+
           cat version.json
 
       - name: Configure AWS Credentials
@@ -115,15 +202,12 @@ jobs:
 
       - name: Deploy to AWS S3
         run: |
-          APK_PATH="../${{steps.sign_app.outputs.signedReleaseFile}}"
-          APK_NAME=$(basename "$APK_PATH")
-          
-          echo "Đẩy file APK lên S3..."
-          aws s3 cp "$APK_PATH" s3://comicverse-storage/android-updates/ \
+          echo "Uploading APK to S3..."
+          aws s3 cp "$APK_NAME" "s3://comicverse-storage/android-updates/$APK_NAME" \
             --content-type "application/vnd.android.package-archive"
-            
-          echo "Đẩy file version.json lên S3..."
-          aws s3 cp version.json s3://comicverse-storage/android-updates/ \
+
+          echo "Uploading version.json to S3..."
+          aws s3 cp version.json s3://comicverse-storage/android-updates/version.json \
             --content-type "application/json"
-            
-          echo "✨ Upload thành công!"
+
+          echo "Android release upload completed."
