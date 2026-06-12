@@ -14,4 +14,9 @@ public class ChapterReportRequest {
     private ChapterReportType type;
     
     private String reason;
+    private String readerMode;
+    private Integer pageIndex;
+    private Integer paragraphIndex;
+    private String contentSnapshot;
+    private String pageImageUrl;
 }

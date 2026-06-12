@@ -8,16 +8,23 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.datn.backend.dto.request.BulkChapterUploadRequest;
+import com.datn.backend.dto.request.ChapterAccessTypeUpdateRequest;
 import com.datn.backend.dto.request.ChapterRequest;
 import com.datn.backend.dto.response.ApiResponse;
 import com.datn.backend.dto.response.BulkInitResponse;
+import com.datn.backend.dto.response.ChapterAccessTypeUpdateResponse;
 import com.datn.backend.repository.UploadLogRepository;
+import com.datn.backend.security.services.UserDetailsImpl;
 import com.datn.backend.service.ChapterService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/uploader/chapters")
@@ -70,6 +77,7 @@ public class ChapterController {
             map.put("title", ch.getTitle());
             map.put("accessType", ch.getAccessType());
             map.put("viewCount", ch.getViewCount());
+            map.put("createdAt", ch.getCreatedAt());
             map.put("status", statusMap.getOrDefault(ch.getId(), "APPROVED")); // Default if no log
             map.put("rejectReason", reasonMap.get(ch.getId()));
             result.add(map);
@@ -79,6 +87,8 @@ public class ChapterController {
 
     @GetMapping("/view/{chapterId}/pages")
     public ApiResponse<List<Map<String, Object>>> getChapterPages(@PathVariable Integer chapterId) {
+        com.datn.backend.entity.Chapter chapter = chapterService.getChapterById(chapterId);
+        assertCanViewChapter(chapter);
         List<com.datn.backend.entity.ChapterPage> pages = chapterService.getChapterPages(chapterId);
         List<Map<String, Object>> result = pages.stream().map(p -> {
             Map<String, Object> map = new LinkedHashMap<>();
@@ -92,6 +102,7 @@ public class ChapterController {
     @GetMapping("/view/{chapterId}/detail")
     public ApiResponse<Map<String, Object>> getChapterDetail(@PathVariable Integer chapterId) {
         com.datn.backend.entity.Chapter ch = chapterService.getChapterById(chapterId);
+        assertCanViewChapter(ch);
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", ch.getId());
         map.put("title", ch.getTitle());
@@ -110,10 +121,38 @@ public class ChapterController {
         return ApiResponse.success(map);
     }
 
+    private void assertCanViewChapter(com.datn.backend.entity.Chapter chapter) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+        if (isAdmin) {
+            return;
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof UserDetailsImpl userDetails)) {
+            throw new AccessDeniedException("You do not have permission to view this chapter.");
+        }
+
+        Integer ownerId = chapter.getComic() != null && chapter.getComic().getCreatedBy() != null
+                ? chapter.getComic().getCreatedBy().getId()
+                : null;
+        if (ownerId == null || !ownerId.equals(userDetails.getId())) {
+            throw new AccessDeniedException("You do not have permission to view this chapter.");
+        }
+    }
+
     @GetMapping("/{comicId}/max-chapter-number")
     public ApiResponse<BigDecimal> getMaxChapterNumber(@PathVariable Integer comicId) {
         BigDecimal maxNumber = chapterService.getMaxChapterNumber(comicId);
         return ApiResponse.success(maxNumber);
+    }
+
+    @PatchMapping("/access-type")
+    public ApiResponse<ChapterAccessTypeUpdateResponse> updateChapterAccessType(
+            @Valid @RequestBody ChapterAccessTypeUpdateRequest request) {
+        ChapterAccessTypeUpdateResponse result = chapterService.updateChapterAccessTypes(request.getChapterIds(), request.getAccessType());
+        return ApiResponse.success(result, "Chapter access type updated successfully");
     }
 
     /**

@@ -12,4 +12,6 @@ import lombok.NoArgsConstructor;
 public class HandleChapterReportRequest {
     @NotNull(message = "Action is required")
     private ReportStatus action;
+
+    private String adminNotes;
 }

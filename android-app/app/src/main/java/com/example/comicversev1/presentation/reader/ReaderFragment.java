@@ -70,9 +70,12 @@ public class ReaderFragment extends Fragment {
         binding.recyclerView.setAdapter(adapter);
         applyReaderSettings();
 
-        adapter.setOnPageLongClickListener(chapterId -> {
+        adapter.setOnPageLongClickListener((chapterId, pageIndex, imageUrl) -> {
             com.example.comicversev1.presentation.shared.ReportChapterBottomSheet sheet = new com.example.comicversev1.presentation.shared.ReportChapterBottomSheet();
             sheet.setOnReportSubmitListener(request -> {
+                request.setReaderMode("COMIC");
+                request.setPageIndex(pageIndex);
+                request.setPageImageUrl(imageUrl);
                 viewModel.reportChapter(chapterId, request);
             });
             sheet.show(getChildFragmentManager(), "ReportChapterBottomSheet");

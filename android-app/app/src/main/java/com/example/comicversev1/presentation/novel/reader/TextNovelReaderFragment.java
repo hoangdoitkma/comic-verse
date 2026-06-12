@@ -154,9 +154,12 @@ public class TextNovelReaderFragment extends Fragment {
             Toast.makeText(requireContext(), "Cần tích hợp IAP hoặc coin để mở khóa!", Toast.LENGTH_SHORT).show();
         });
 
-        adapter.setOnParagraphLongClickListener(chapterId -> {
+        adapter.setOnParagraphLongClickListener((chapterId, paragraphIndex, content) -> {
             com.example.comicversev1.presentation.shared.ReportChapterBottomSheet sheet = new com.example.comicversev1.presentation.shared.ReportChapterBottomSheet();
             sheet.setOnReportSubmitListener(request -> {
+                request.setReaderMode("NOVEL");
+                request.setParagraphIndex(paragraphIndex);
+                request.setContentSnapshot(trimReportSnapshot(content));
                 viewModel.reportChapter(chapterId, request);
             });
             sheet.show(getChildFragmentManager(), "ReportChapterBottomSheet");
@@ -493,6 +496,14 @@ public class TextNovelReaderFragment extends Fragment {
         }
 
         chapterListSheet.show();
+    }
+
+    private String trimReportSnapshot(String content) {
+        if (content == null) {
+            return null;
+        }
+        String trimmed = content.trim();
+        return trimmed.length() > 1000 ? trimmed.substring(0, 1000) : trimmed;
     }
 
     private void showSettingsBottomSheet() {

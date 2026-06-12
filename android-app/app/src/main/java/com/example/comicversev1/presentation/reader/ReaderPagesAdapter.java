@@ -35,7 +35,7 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public interface 
     OnPageLongClickListener {
-        void onLongClick(int chapterId);
+        void onLongClick(int chapterId, int pageIndex, String imageUrl);
     }
 
     private OnImageLoadStateListener imageLoadStateListener;
@@ -266,7 +266,7 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             // Long click to report
             pageHolder.imageView.setOnLongClickListener(v -> {
                 if (onPageLongClickListener != null) {
-                    onPageLongClickListener.onLongClick(item.chapterId);
+                    onPageLongClickListener.onLongClick(item.chapterId, item.imageIndexInChapter, item.imageUrl);
                     return true;
                 }
                 return false;
