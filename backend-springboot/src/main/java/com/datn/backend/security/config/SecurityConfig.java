@@ -2,6 +2,7 @@ package com.datn.backend.security.config;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -33,6 +34,9 @@ public class SecurityConfig {
     private final UserDetailsServiceImpl userDetailsService;
     private final AuthEntryPointJwt unauthorizedHandler;
 
+    @Value("#{'${app.cors.allowed-origins}'.split(',')}")
+    private List<String> allowedOrigins;
+
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
         return new AuthTokenFilter();
@@ -61,7 +65,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+        configuration.setAllowedOrigins(allowedOrigins.stream()
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
@@ -82,9 +89,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/comics/**", "/api/chapters/**", "/api/comments/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/comics/reading-history-info").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/search-history/hot").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/search-history").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/payment/webhook").permitAll()
                         .requestMatchers("/api/reading-history/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/data/**").authenticated()
+                        .requestMatchers("/api/search-history", "/api/search-history/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/data/**").permitAll()
                         .requestMatchers("/api/uploader/**").hasAnyRole("UPLOADER", "ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated());

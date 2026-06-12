@@ -1,0 +1,84 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: comic-verse-mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: local-root-password
+      MYSQL_DATABASE: comicverse
+      MYSQL_USER: comicverse
+      MYSQL_PASSWORD: comicverse-password
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: comic-verse-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend-springboot
+    image: comic-verse-backend:local
+    container_name: comic-verse-backend
+    environment:
+      DB_URL: "jdbc:mysql://mysql:3306/comicverse?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=utf8"
+      DB_USERNAME: comicverse
+      DB_PASSWORD: comicverse-password
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_JPA_SHOW_SQL: "false"
+      AWS_REGION: ap-southeast-1
+      AWS_S3_BUCKET: comicverse-local
+      AWS_ACCESS_KEY_ID: local-access-key
+      AWS_SECRET_ACCESS_KEY: local-secret-key
+      PAYOS_CLIENT_ID: local-payos-client
+      PAYOS_API_KEY: local-payos-api-key
+      PAYOS_CHECKSUM_KEY: local-payos-checksum-key
+      APP_JWT_SECRET: "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
+      APP_JWT_EXPIRATION_MS: 86400000
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web-admin:
+    build:
+      context: ./web-admin
+      args:
+        VITE_API_BASE_URL: /api
+    image: comic-verse-web-admin:local
+    container_name: comic-verse-web-admin
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  redis_data:

@@ -5,6 +5,16 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+def googleWebClientId = project.findProperty("GOOGLE_WEB_CLIENT_ID") ?: System.getenv("GOOGLE_WEB_CLIENT_ID") ?: ""
+def debugApiBaseUrl = project.findProperty("DEBUG_API_BASE_URL") ?: System.getenv("DEBUG_API_BASE_URL") ?: "http://3.1.207.156/api/"
+def releaseApiBaseUrl = project.findProperty("RELEASE_API_BASE_URL") ?: System.getenv("RELEASE_API_BASE_URL") ?: "http://3.1.207.156/api/"
+def appVersionCode = (project.findProperty("VERSION_CODE") ?: System.getenv("VERSION_CODE") ?: "27").toString().toInteger()
+def appVersionName = (project.findProperty("VERSION_NAME") ?: System.getenv("VERSION_NAME") ?: "1.1.27").toString()
+def normalizeApiBaseUrl = { value ->
+    def normalized = value.toString().trim()
+    return normalized.endsWith("/") ? normalized : normalized + "/"
+}
+
 android {
     namespace 'com.example.comicversev1'
     compileSdk 35
@@ -13,19 +23,27 @@ android {
         applicationId "com.example.comicversev1"
         minSdk 24
         targetSdk 35
-        versionCode 1
-        versionName "1.0"
+        versionCode appVersionCode
+        versionName appVersionName
 
-        buildConfigField "String", "BASE_URL", '"http://192.168.100.247:8080/api/"'
+        buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", "\"${googleWebClientId}\""
     }
 
     buildTypes {
+        debug {
+            buildConfigField "String", "BASE_URL", "\"${normalizeApiBaseUrl(debugApiBaseUrl)}\""
+            manifestPlaceholders = [usesCleartextTraffic: "true"]
+        }
+
         release {
+            buildConfigField "String", "BASE_URL", "\"${normalizeApiBaseUrl(releaseApiBaseUrl)}\""
+            manifestPlaceholders = [usesCleartextTraffic: "true"]
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
@@ -64,6 +82,10 @@ dependencies {
     implementation libs.paging.rxjava3
     implementation libs.glide
     annotationProcessor libs.glide.compiler
+    implementation libs.credentials
+    implementation libs.credentials.play.services.auth
+    implementation libs.googleid
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 
     // SwipeRefreshLayout for pull-to-refresh
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
@@ -78,4 +100,7 @@ dependencies {
     // Kotlin Coroutines for Timer
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+
+    // Lottie for animations
+    implementation 'com.airbnb.android:lottie:6.4.0'
 }

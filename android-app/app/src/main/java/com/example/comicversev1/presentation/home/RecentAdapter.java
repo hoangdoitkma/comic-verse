@@ -49,8 +49,8 @@ public class RecentAdapter extends RecyclerView.Adapter<RecentAdapter.RecentView
         holder.binding.progressCircle.setProgress(item.getProgress());
         holder.binding.textProgress.setText(item.getProgress() + "%");
 
-        // Format likes/views
-        holder.binding.textLikes.setText(formatCompact(item.getLikes()));
+        // Format author/views
+        holder.binding.textAuthor.setText(item.getAuthorName());
         holder.binding.textViews.setText(formatCompact(item.getViews()));
 
         // Load cover
@@ -58,6 +58,12 @@ public class RecentAdapter extends RecyclerView.Adapter<RecentAdapter.RecentView
                 .load(item.getCoverUrl())
                 .centerCrop()
                 .into(holder.binding.imageCover);
+
+        if ("VIP".equals(item.getAccessType())) {
+            holder.binding.ivVipIcon.setVisibility(android.view.View.VISIBLE);
+        } else {
+            holder.binding.ivVipIcon.setVisibility(android.view.View.GONE);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onComicClick(item);

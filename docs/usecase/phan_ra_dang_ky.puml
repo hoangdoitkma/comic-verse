@@ -1,0 +1,16 @@
+@startuml
+left to right direction
+
+actor "Khách\n(Guest)" as Guest
+
+usecase "Đăng ký tài khoản" as MainUC
+
+usecase "Nhập thông tin (Email, Mật khẩu)" as UC_Input
+usecase "Xác nhận gửi Form" as UC_Submit
+
+Guest --> MainUC
+
+MainUC ..> UC_Input : <<include>>
+MainUC ..> UC_Submit : <<include>>
+
+@enduml

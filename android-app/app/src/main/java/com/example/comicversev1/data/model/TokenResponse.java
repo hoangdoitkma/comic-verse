@@ -3,9 +3,9 @@ package com.example.comicversev1.data.model;
 import com.google.gson.annotations.SerializedName;
 
 public class TokenResponse {
-    @SerializedName("access_token")
+    @SerializedName(value = "token", alternate = {"access_token", "accessToken"})
     private String accessToken;
-    @SerializedName("refresh_token")
+    @SerializedName(value = "refreshToken", alternate = {"refresh_token"})
     private String refreshToken;
 
     public String getAccessToken() { return accessToken; }

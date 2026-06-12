@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+
+actor "Độc giả\n(Guest/User)" as User
+
+usecase "Tìm kiếm và Lọc truyện" as MainUC
+
+usecase "Nhập từ khóa tìm kiếm" as UC_Keyword
+usecase "Lọc theo thể loại/tác giả" as UC_Filter
+usecase "Sắp xếp (Mới nhất, Hot nhất)" as UC_Sort
+
+User --> MainUC
+
+MainUC ..> UC_Keyword : <<include>>
+MainUC ..> UC_Filter : <<include>>
+MainUC ..> UC_Sort : <<include>>
+
+@enduml

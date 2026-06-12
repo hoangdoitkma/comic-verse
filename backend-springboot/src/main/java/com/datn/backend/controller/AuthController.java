@@ -1,7 +1,10 @@
 package com.datn.backend.controller;
 
 import com.datn.backend.dto.request.LoginRequest;
+import com.datn.backend.dto.request.ForgotPasswordRequest;
+import com.datn.backend.dto.request.GoogleLoginRequest;
 import com.datn.backend.dto.request.RegisterRequest;
+import com.datn.backend.dto.request.ResetPasswordRequest;
 import com.datn.backend.dto.response.ApiResponse;
 import com.datn.backend.dto.response.JwtResponse;
 import com.datn.backend.entity.User;
@@ -10,6 +13,7 @@ import com.datn.backend.entity.enums.UserStatus;
 import com.datn.backend.repository.UserRepository;
 import com.datn.backend.security.jwt.JwtUtils;
 import com.datn.backend.security.services.UserDetailsImpl;
+import com.datn.backend.service.AuthAccountService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +38,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder encoder;
     private final JwtUtils jwtUtils;
+    private final AuthAccountService authAccountService;
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<JwtResponse>> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -54,6 +59,7 @@ public class AuthController {
                 .id(userDetails.getId())
                 .email(userDetails.getEmail())
                 .roles(roles)
+                .displayName(userDetails.getDisplayName())
                 .build();
 
         return ResponseEntity.ok(ApiResponse.success(jwtResponse, "Login successfully"));
@@ -71,6 +77,7 @@ public class AuthController {
                 .email(signUpRequest.getEmail())
                 .password(encoder.encode(signUpRequest.getPassword()))
                 .displayName(signUpRequest.getDisplayName())
+                .authProvider("LOCAL")
                 .role(Role.USER)
                 .status(UserStatus.ACTIVE)
                 .build();
@@ -78,5 +85,23 @@ public class AuthController {
         userRepository.save(user);
 
         return ResponseEntity.ok(ApiResponse.success(null, "User registered successfully!"));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<ApiResponse<JwtResponse>> authenticateGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        JwtResponse response = authAccountService.loginWithGoogle(request.getIdToken());
+        return ResponseEntity.ok(ApiResponse.success(response, "Login with Google successfully"));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Object>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authAccountService.requestPasswordReset(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success(null, "If the email exists, a reset code has been sent."));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Object>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authAccountService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Password reset successfully"));
     }
 }

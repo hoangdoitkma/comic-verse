@@ -16,12 +16,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.comicversev1.databinding.FragmentVipCenterBinding;
 
 import java.util.ArrayList;
-import java.util.List;
-
 import dagger.hilt.android.AndroidEntryPoint;
 
-import com.example.comicversev1.data.api.ApiService;
-import com.example.comicversev1.data.model.PaymentRequest;
+import com.example.comicversev1.data.repository.VipRepository;
 import android.content.Intent;
 import android.util.Log;
 import javax.inject.Inject;
@@ -33,7 +30,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 public class VipCenterFragment extends Fragment {
 
     @Inject
-    ApiService apiService;
+    VipRepository vipRepository;
 
     private CompositeDisposable disposable = new CompositeDisposable();
 
@@ -65,16 +62,33 @@ public class VipCenterFragment extends Fragment {
 
     private void setupRecyclerView() {
         adapter = new VipPackageAdapter(new ArrayList<>(), vipPackage -> {
+            
+            // Client-side login check
+            android.content.SharedPreferences prefs = requireActivity().getSharedPreferences(
+                com.example.comicversev1.utils.Constants.PREF_AUTH, android.content.Context.MODE_PRIVATE);
+            String token = prefs.getString(com.example.comicversev1.utils.Constants.KEY_ACCESS_TOKEN, "");
+            
+            if (token.isEmpty()) {
+                Toast.makeText(requireContext(), "Yêu cầu đăng nhập trước khi thanh toán", Toast.LENGTH_SHORT).show();
+                try {
+                    NavHostFragment.findNavController(this).navigate(com.example.comicversev1.R.id.loginFragment);
+                } catch (Exception e) {}
+                return;
+            }
+
             Toast.makeText(requireContext(), "Đang tạo đơn hàng...", Toast.LENGTH_SHORT).show();
             // Call API: now user ID is captured by backend from Auth Header, send 0 or 1
             disposable.add(
-                apiService.createVipOrder(new PaymentRequest(vipPackage.id, 0)) 
+                vipRepository.createVipOrder(vipPackage.id)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(response -> {
                         if (response.isSuccess() && response.getCheckoutUrl() != null) {
                             Intent intent = new Intent(requireContext(), CheckoutActivity.class);
                             intent.putExtra(CheckoutActivity.EXTRA_CHECKOUT_URL, response.getCheckoutUrl());
+                            if (response.getOrderCode() != null) {
+                                intent.putExtra(CheckoutActivity.EXTRA_ORDER_CODE, response.getOrderCode());
+                            }
                             startActivity(intent);
                         } else {
                             Toast.makeText(requireContext(), "Lỗi khi tạo đơn hàng (Cần đăng nhập từ Khác)", Toast.LENGTH_SHORT).show();
@@ -93,12 +107,12 @@ public class VipCenterFragment extends Fragment {
 
     private void loadVipPackages() {
         disposable.add(
-            apiService.getVipPackages()
+            vipRepository.getVipPackages()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(response -> {
-                    if (response.isSuccess() && response.getData() != null) {
-                        adapter.setItems(response.getData());
+                .subscribe(packages -> {
+                    if (!packages.isEmpty()) {
+                        adapter.setItems(packages);
                     } else {
                         Toast.makeText(requireContext(), "Lỗi tải thông tin gói VIP", Toast.LENGTH_SHORT).show();
                     }

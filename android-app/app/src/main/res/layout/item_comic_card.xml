@@ -1,23 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="12dp">
+    android:paddingHorizontal="@dimen/margin_medium"
+    android:paddingVertical="@dimen/margin_small"
+    android:background="?attr/selectableItemBackground">
 
-    <ImageView
-        android:id="@+id/imgComicCover"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardCover"
         android:layout_width="80dp"
         android:layout_height="120dp"
-        android:scaleType="centerCrop" />
+        app:cardCornerRadius="@dimen/radius_medium"
+        app:cardElevation="@dimen/card_elevation"
+        app:cardBackgroundColor="@color/bg_dark_surface"
+        app:strokeWidth="1dp"
+        app:strokeColor="@color/stroke_divider"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-    <TextView
-        android:id="@+id/txtComicTitle"
-        android:layout_width="wrap_content"
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            
+            <ImageView
+                android:id="@+id/imgComicCover"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                tools:src="@tools:sample/backgrounds/scenic" />
+
+            <!-- Gradient overlay for better text/badge visibility -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_gradient_overlay"
+                android:visibility="gone"/>
+
+            <ImageView
+                android:id="@+id/ivVipIcon"
+                android:layout_width="@dimen/icon_size_medium"
+                android:layout_height="@dimen/icon_size_medium"
+                android:layout_gravity="top|start"
+                android:layout_margin="@dimen/margin_tiny"
+                android:src="@drawable/ic_vip"
+                android:visibility="gone" />
+        </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:paddingStart="12dp"
-        android:textSize="16sp"
-        android:textStyle="bold" />
+        android:orientation="vertical"
+        android:layout_marginStart="@dimen/margin_medium"
+        app:layout_constraintStart_toEndOf="@id/cardCover"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/cardCover"
+        app:layout_constraintBottom_toBottomOf="@id/cardCover"
+        app:layout_constraintVertical_bias="0.5">
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/txtComicTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/text_size_medium"
+            android:textStyle="bold"
+            android:maxLines="2"
+            android:ellipsize="end"
+            tools:text="Tên truyện rất dài dòng test thử xem hiển thị ra sao" />
+            
+        <TextView
+            android:id="@+id/txtComicAuthor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_tiny"
+            android:textColor="@color/text_secondary"
+            android:textSize="@dimen/text_size_small"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="Tác giả: Nhĩ Căn"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
 

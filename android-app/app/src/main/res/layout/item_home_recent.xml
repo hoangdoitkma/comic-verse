@@ -22,6 +22,16 @@
             android:layout_height="150dp"
             android:scaleType="centerCrop" />
 
+        <ImageView
+            android:id="@+id/ivVipIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignStart="@id/imageCover"
+            android:layout_alignTop="@id/imageCover"
+            android:layout_margin="8dp"
+            android:src="@drawable/ic_vip"
+            android:visibility="gone" />
+
         <!-- Edit / Open Icon (top-right) -->
         <ImageView
             android:id="@+id/imageEdit"
@@ -31,7 +41,7 @@
             android:layout_margin="12dp"
             android:padding="8dp"
             android:src="@android:drawable/ic_menu_edit"
-            android:tint="#AAAAAA"
+            app:tint="#AAAAAA"
             android:background="@drawable/bg_icon_circle" />
 
         <!-- Content area (right of cover) -->
@@ -89,6 +99,7 @@
 
         <!-- Circular Progress with percentage text (bottom-right) -->
         <FrameLayout
+            android:id="@+id/frameProgress"
             android:layout_width="52dp"
             android:layout_height="52dp"
             android:layout_alignParentEnd="true"
@@ -98,7 +109,7 @@
 
             <ProgressBar
                 android:id="@+id/progressCircle"
-                style="@android:style/Widget.ProgressBar.Small"
+                style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="52dp"
                 android:layout_height="52dp"
                 android:layout_gravity="center"
@@ -120,26 +131,30 @@
 
         <!-- Likes and Views row (bottom) -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_toEndOf="@id/imageCover"
+            android:layout_toStartOf="@id/frameProgress"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="14dp"
             android:paddingBottom="14dp">
 
             <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:src="@android:drawable/btn_star_big_on"
-                android:tint="#FF6B6B" />
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_writer"
+                app:tint="#FF6B6B" />
 
             <TextView
-                android:id="@+id/textLikes"
-                android:layout_width="wrap_content"
+                android:id="@+id/textAuthor"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:layout_marginStart="4dp"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="N/A"
                 android:textColor="#9EA5B1"
                 android:textSize="13sp" />
@@ -149,13 +164,15 @@
                 android:layout_height="18dp"
                 android:layout_marginStart="16dp"
                 android:src="@android:drawable/ic_menu_view"
-                android:tint="#FFA64D" />
+                app:tint="#FFA64D" />
 
             <TextView
                 android:id="@+id/textViews"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="N/A"
                 android:textColor="#9EA5B1"
                 android:textSize="13sp" />

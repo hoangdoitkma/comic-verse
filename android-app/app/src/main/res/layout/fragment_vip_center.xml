@@ -20,9 +20,9 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:titleTextColor="@color/white"
+            app:navigationIcon="?attr/homeAsUpIndicator"
             app:title="Trung tâm VIP"
-            app:navigationIcon="?attr/homeAsUpIndicator" />
+            app:titleTextColor="@color/white" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView

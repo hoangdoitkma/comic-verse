@@ -45,7 +45,11 @@ public class AdminChapterReportController {
     public ApiResponse<Void> handleReport(
             @PathVariable Integer id,
             @Valid @RequestBody HandleChapterReportRequest request) {
-        adminChapterReportService.handleReport(id, request);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Integer actorId = ((UserDetailsImpl) authentication.getPrincipal()).getId();
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+        adminChapterReportService.handleReport(id, request, actorId, isAdmin);
         return ApiResponse.success(null, "Cập nhật trạng thái thành công");
     }
 }

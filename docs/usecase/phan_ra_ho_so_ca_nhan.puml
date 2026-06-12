@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+
+actor "Thành viên\n(User)" as User
+
+usecase "Cập nhật hồ sơ" as MainUC
+
+usecase "Đổi tên hiển thị" as UC_Name
+usecase "Đổi ảnh đại diện (Avatar)" as UC_Avatar
+usecase "Đổi mật khẩu" as UC_Password
+
+User --> MainUC
+
+MainUC ..> UC_Name : <<include>>
+MainUC ..> UC_Avatar : <<include>>
+MainUC ..> UC_Password : <<include>>
+
+@enduml

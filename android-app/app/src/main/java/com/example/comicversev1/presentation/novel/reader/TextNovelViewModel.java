@@ -6,13 +6,13 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
-import com.example.comicversev1.data.api.ApiService;
 import com.example.comicversev1.data.local.dao.ReadingHistoryDao;
 import com.example.comicversev1.data.local.entity.ReadingHistoryEntity;
-import com.example.comicversev1.data.model.ViewTrackingRequest;
+import com.example.comicversev1.data.repository.ReaderActionRepository;
 import com.example.comicversev1.domain.entity.ChapterEntity;
 import com.example.comicversev1.domain.usecase.GetChapterDetailUseCase;
 import com.example.comicversev1.domain.entity.ChapterItem;
+import com.example.comicversev1.data.local.dao.ComicCacheDao;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
@@ -40,7 +40,8 @@ public class TextNovelViewModel extends ViewModel {
 
     private final GetChapterDetailUseCase getChapterDetailUseCase;
     private final ReadingHistoryDao readingHistoryDao;
-    private final ApiService apiService;
+    private final ComicCacheDao comicCacheDao;
+    private final ReaderActionRepository readerActionRepository;
     private final CompositeDisposable disposables = new CompositeDisposable();
     
     // Manual singleton client to avoid Hilt injection issues if not provided in Module
@@ -49,6 +50,13 @@ public class TextNovelViewModel extends ViewModel {
 
     private final int comicId;
     private final int initialChapterId;
+    
+    // Cached variables config UI for history
+    private String cachedComicTitle = "Truyện Chữ";
+    private String cachedCoverUrl = "";
+    private String cachedSlug = "";
+    private String cachedAuthorName = "Unknown";
+    private long cachedViewCount = 0;
 
     // Trạng thái load cho UI
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
@@ -89,15 +97,31 @@ public class TextNovelViewModel extends ViewModel {
     @Inject
     public TextNovelViewModel(GetChapterDetailUseCase getChapterDetailUseCase,
                               ReadingHistoryDao readingHistoryDao,
+                              ComicCacheDao comicCacheDao,
                               SavedStateHandle handle,
-                              ApiService apiService) {
+                              ReaderActionRepository readerActionRepository) {
         this.getChapterDetailUseCase = getChapterDetailUseCase;
         this.readingHistoryDao = readingHistoryDao;
-        this.apiService = apiService;
+        this.comicCacheDao = comicCacheDao;
+        this.readerActionRepository = readerActionRepository;
         
         // Nhận param truyền từ màn chi tiết
         this.initialChapterId = handle.get("chapterId");
         this.comicId = handle.get("comicId");
+
+        // Load cached properties for historic saves
+        disposables.add(comicCacheDao.getComicById(this.comicId)
+                .subscribeOn(Schedulers.io())
+                .subscribe(cached -> {
+                    this.cachedComicTitle = cached.title != null ? cached.title : "Truyện Chữ";
+                    this.cachedCoverUrl = cached.coverImage != null ? cached.coverImage : "";
+                    this.cachedSlug = cached.slug != null ? cached.slug : "";
+                    this.cachedAuthorName = cached.author != null ? cached.author : "Unknown";
+                    this.cachedViewCount = cached.viewCount;
+                }, throwable -> {
+                    Log.e(TAG, "Not found in comicCache: " + throwable.getMessage());
+                })
+        );
 
         setupSaveDebouncer();
         loadSavedProgressAndStart();
@@ -108,7 +132,8 @@ public class TextNovelViewModel extends ViewModel {
                 saveProgressSubject
                         .throttleLatest(1000, TimeUnit.MILLISECONDS)
                         .observeOn(Schedulers.io())
-                        .flatMapCompletable(entity -> readingHistoryDao.insertOrUpdate(entity))
+                        .flatMapCompletable(entity -> readingHistoryDao.insertOrUpdate(entity)
+                                .andThen(syncHistoryToServer(entity)))
                         .subscribe(
                                 () -> Log.d(TAG, ">>> Lịch sử Novel lưu OK"),
                                 throwable -> Log.e(TAG, ">>> Lỗi lưu Novel history: " + throwable.getMessage())
@@ -184,12 +209,31 @@ public class TextNovelViewModel extends ViewModel {
                             _appendItemsEvent.setValue(items);
                         }, throwable -> {
                             isLoadingMore = false;
+                            boolean isVip = false;
+                            if (throwable.getMessage() != null && throwable.getMessage().contains("VIP_REQUIRED")) {
+                                isVip = true;
+                            }
                             if (isInitial) {
                                 _isLoading.setValue(false);
-                                _errorEvent.setValue("Lỗi tải S3 JSON hoặc API: " + throwable.getMessage());
+                                if (isVip) {
+                                    if (throwable.getMessage() != null && throwable.getMessage().contains("VIP_REQUIRED_ANONYMOUS")) {
+                                        _errorEvent.setValue("VIP_REQUIRED_ANONYMOUS");
+                                    } else {
+                                        _errorEvent.setValue("VIP_REQUIRED");
+                                    }
+                                } else {
+                                    _errorEvent.setValue("Lỗi tải API: " + throwable.getMessage());
+                                }
                             } else {
-                                // Nên remove cái Spinner ở đây nếu là Load More (Fragment/Adapter tự lo bằng method removeLoadingItem)
-                                _errorEvent.setValue("Chưa tải được chương tiếp theo!");
+                                if (isVip) {
+                                    if (throwable.getMessage() != null && throwable.getMessage().contains("VIP_REQUIRED_ANONYMOUS")) {
+                                        _errorEvent.setValue("VIP_REQUIRED_ANONYMOUS");
+                                    } else {
+                                        _errorEvent.setValue("VIP_REQUIRED");
+                                    }
+                                } else {
+                                    _errorEvent.setValue("Chưa tải được chương tiếp theo!");
+                                }
                             }
                         })
         );
@@ -291,10 +335,25 @@ public class TextNovelViewModel extends ViewModel {
         entity.chapterId = chapterId;
         entity.pageIndex = paragraphIndex;
         entity.readAt = System.currentTimeMillis();
+        
+        entity.comicTitle = this.cachedComicTitle;
+        entity.coverUrl = this.cachedCoverUrl;
+        entity.slug = this.cachedSlug;
+        entity.comicType = "NOVEL";
+        entity.authorName = this.cachedAuthorName;
+        entity.viewCount = this.cachedViewCount;
+        
+        String chTitle = chapterTitleCache.get(chapterId);
+        entity.chapterTitle = chTitle != null ? chTitle : "Chương " + chapterId;
+
         // Percent tính phức tạp hơn với List flat, ta set tạm 0 hoặc số trang ước lượng
         entity.percent = 0; 
         
         saveProgressSubject.onNext(entity);
+    }
+
+    private io.reactivex.rxjava3.core.Completable syncHistoryToServer(ReadingHistoryEntity entity) {
+        return readerActionRepository.syncReadingHistory(entity);
     }
 
     public void loadNextChapterIfNeeded() {
@@ -316,18 +375,12 @@ public class TextNovelViewModel extends ViewModel {
         if (isChapterListLoaded) return;
         
         disposables.add(
-            apiService.getChaptersById(comicId)
+            readerActionRepository.getChaptersByComicId(comicId)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(response -> {
-                    if (response != null && response.getData() != null) {
-                        List<ChapterItem> list = new ArrayList<>();
-                        for (com.example.comicversev1.data.model.ChapterItemDTO dto : response.getData()) {
-                            list.add(new ChapterItem(dto.getId(), dto.getTitle(), dto.getAccessType()));
-                        }
-                        _chapterListEvent.setValue(list);
-                        isChapterListLoaded = true;
-                    }
+                .subscribe(list -> {
+                    _chapterListEvent.setValue(list);
+                    isChapterListLoaded = true;
                 }, throwable -> {
                     _errorEvent.setValue("Lỗi tải danh sách chương: " + throwable.getMessage());
                 })
@@ -353,7 +406,7 @@ public class TextNovelViewModel extends ViewModel {
     public void trackChapterView(int chapterId) {
         if (comicId <= 0 || chapterId <= 0) return;
         disposables.add(
-                apiService.trackView(new ViewTrackingRequest(comicId, chapterId))
+                readerActionRepository.trackView(comicId, chapterId)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
@@ -371,7 +424,7 @@ public class TextNovelViewModel extends ViewModel {
 
     public void reportChapter(int chapterId, com.example.comicversev1.data.model.ChapterReportRequest request) {
         disposables.add(
-                apiService.reportChapter(chapterId, request)
+                readerActionRepository.reportChapter(chapterId, request)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(

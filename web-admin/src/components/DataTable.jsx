@@ -25,7 +25,7 @@ export default function DataTable({
   errorMessage = 'Đã xảy ra lỗi khi tải dữ liệu.',
   emptyMessage = 'Không có dữ liệu để hiển thị.',
   pagination,
-  skeletonRows = 5,
+  skeletonRows = 6,
 }) {
   const alignClass = (align) => {
     if (align === 'center') return 'text-center';
@@ -77,8 +77,8 @@ export default function DataTable({
   );
 
   // ======= Data Rows =======
-  const renderRows = () =>
-    data.map((row, rowIdx) => (
+  const renderRows = () => {
+    const rows = data.map((row, rowIdx) => (
       <tr
         key={row.id || rowIdx}
         className="border-b border-dark-700/30 hover:bg-dark-800/50 transition-colors duration-150"
@@ -94,6 +94,29 @@ export default function DataTable({
         ))}
       </tr>
     ));
+
+    // Thêm hàng trống để giữ chiều cao bảng cố định
+    const emptyRowsCount = skeletonRows - data.length;
+    if (pagination && emptyRowsCount > 0) {
+      for (let i = 0; i < emptyRowsCount; i++) {
+        rows.push(
+          <tr key={`empty-${i}`} className="border-b border-dark-700/30">
+            {columns.map((col) => (
+              <td
+                key={`empty-${i}-${col.key}`}
+                className="px-4 py-3.5"
+                style={col.minWidth ? { minWidth: col.minWidth } : undefined}
+              >
+                &nbsp;
+              </td>
+            ))}
+          </tr>
+        );
+      }
+    }
+
+    return rows;
+  };
 
   return (
     <div className="bg-dark-900 border border-dark-700/50 rounded-xl overflow-hidden">

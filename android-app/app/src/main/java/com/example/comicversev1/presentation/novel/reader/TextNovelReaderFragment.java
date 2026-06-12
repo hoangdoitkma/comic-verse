@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.comicversev1.R;
+import com.example.comicversev1.utils.ReaderSettings;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import android.text.Editable;
@@ -72,9 +73,9 @@ public class TextNovelReaderFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        prefs = requireActivity().getSharedPreferences("NovelReaderPrefs", Context.MODE_PRIVATE);
-        currentTextSize = prefs.getFloat("text_size", 18f);
-        currentTheme = prefs.getInt("theme", 0);
+        prefs = requireActivity().getSharedPreferences(ReaderSettings.PREF_NOVEL, Context.MODE_PRIVATE);
+        currentTextSize = prefs.getFloat(ReaderSettings.KEY_NOVEL_TEXT_SIZE, ReaderSettings.DEFAULT_NOVEL_TEXT_SIZE);
+        currentTheme = prefs.getInt(ReaderSettings.KEY_NOVEL_THEME, ReaderSettings.DEFAULT_NOVEL_THEME);
 
         viewModel = new ViewModelProvider(this).get(TextNovelViewModel.class);
 
@@ -117,23 +118,6 @@ public class TextNovelReaderFragment extends Fragment {
             viewModel.fetchChapterList();
         });
         
-        ImageButton btnComments = view.findViewById(R.id.btn_comments);
-        if (btnComments != null) {
-            btnComments.setOnClickListener(v -> {
-                int chapterId = currentlyTrackedChapterId;
-                if (chapterId <= 0) {
-                    com.example.comicversev1.domain.entity.ChapterEntity current = viewModel.currentChapterEvent().getValue();
-                    if (current != null) chapterId = current.getId();
-                }
-                if (chapterId > 0) {
-                    com.example.comicversev1.presentation.comments.CommentsBottomSheetDialogFragment.newInstance(chapterId)
-                            .show(getChildFragmentManager(), "CommentsBottomSheet");
-                } else {
-                    Toast.makeText(requireContext(), "Đang tải chương...", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-
         
         btnNext.setOnClickListener(v -> {
             Integer nextId = viewModel.getPendingNextChapterId();
@@ -153,7 +137,15 @@ public class TextNovelReaderFragment extends Fragment {
         autoScrollManager = new AutoScrollManager(requireContext(), recyclerView);
         autoScrollManager.setListener(isScrolling -> {
             // Callback when auto-scroll state changes (e.g. paused by touch in Mode A)
+            prefs.edit().putBoolean(ReaderSettings.KEY_NOVEL_AUTO_SCROLL_ENABLED, isScrolling).apply();
         });
+        autoScrollManager.applySettings(
+                prefs.getInt(ReaderSettings.KEY_NOVEL_SCROLL_SPEED, ReaderSettings.DEFAULT_NOVEL_SCROLL_SPEED),
+                prefs.getInt(ReaderSettings.KEY_NOVEL_SCROLL_CONFLICT_MODE, ReaderSettings.DEFAULT_NOVEL_SCROLL_CONFLICT_MODE)
+        );
+        if (prefs.getBoolean(ReaderSettings.KEY_NOVEL_AUTO_SCROLL_ENABLED, ReaderSettings.DEFAULT_NOVEL_AUTO_SCROLL_ENABLED)) {
+            autoScrollManager.toggle(true);
+        }
 
         applyTheme(); // Áp dụng theme ban đầu (Background của FrameLayout)
 
@@ -162,9 +154,12 @@ public class TextNovelReaderFragment extends Fragment {
             Toast.makeText(requireContext(), "Cần tích hợp IAP hoặc coin để mở khóa!", Toast.LENGTH_SHORT).show();
         });
 
-        adapter.setOnParagraphLongClickListener(chapterId -> {
+        adapter.setOnParagraphLongClickListener((chapterId, paragraphIndex, content) -> {
             com.example.comicversev1.presentation.shared.ReportChapterBottomSheet sheet = new com.example.comicversev1.presentation.shared.ReportChapterBottomSheet();
             sheet.setOnReportSubmitListener(request -> {
+                request.setReaderMode("NOVEL");
+                request.setParagraphIndex(paragraphIndex);
+                request.setContentSnapshot(trimReportSnapshot(content));
                 viewModel.reportChapter(chapterId, request);
             });
             sheet.show(getChildFragmentManager(), "ReportChapterBottomSheet");
@@ -205,15 +200,43 @@ public class TextNovelReaderFragment extends Fragment {
         // Toggle UI Hide/Show bằng GestureDetector
         android.view.GestureDetector gestureDetector = new android.view.GestureDetector(requireContext(), new android.view.GestureDetector.SimpleOnGestureListener() {
             @Override
-            public boolean onSingleTapConfirmed(android.view.MotionEvent e) {
-                toggleSystemUI();
+            public boolean onSingleTapUp(android.view.MotionEvent e) {
+                int screenHeight = recyclerView.getHeight();
+                int screenWidth = recyclerView.getWidth();
+                float x = e.getX();
+                float y = e.getY();
+                
+                if (y < screenHeight / 3.0f) {
+                    // Top zone: scroll up 1 page
+                    recyclerView.post(() -> recyclerView.smoothScrollBy(0, -(int)(screenHeight * 0.9)));
+                } else if (y > screenHeight * 2.0f / 3.0f) {
+                    // Bottom zone: scroll down 1 page
+                    recyclerView.post(() -> recyclerView.smoothScrollBy(0, (int)(screenHeight * 0.9)));
+                } else {
+                    // Middle zone row
+                    if (x < screenWidth / 3.0f) {
+                        // Left zone: Previous Chapter
+                        View btnPrev = getView() != null ? getView().findViewById(R.id.btn_previous_chapter) : null;
+                        if (btnPrev != null) btnPrev.performClick();
+                    } else if (x > screenWidth * 2.0f / 3.0f) {
+                        // Right zone: Next Chapter
+                        View btnNext = getView() != null ? getView().findViewById(R.id.btn_next_chapter) : null;
+                        if (btnNext != null) btnNext.performClick();
+                    } else {
+                        // Center zone: toggle system UI
+                        toggleSystemUI();
+                    }
+                }
                 return true;
             }
         });
 
-        recyclerView.setOnTouchListener((v, event) -> {
-            gestureDetector.onTouchEvent(event);
-            return false;
+        recyclerView.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull android.view.MotionEvent event) {
+                gestureDetector.onTouchEvent(event);
+                return false;
+            }
         });
 
         observeViewModel();
@@ -264,7 +287,39 @@ public class TextNovelReaderFragment extends Fragment {
 
         viewModel.errorEvent().observe(getViewLifecycleOwner(), msg -> {
             if (msg != null && !msg.isEmpty()) {
-                Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+                if (msg.contains("VIP_REQUIRED")) {
+                    boolean isAnonymous = msg.contains("VIP_REQUIRED_ANONYMOUS");
+                    com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet = new com.google.android.material.bottomsheet.BottomSheetDialog(requireContext());
+                    View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_vip_required, null);
+                    bottomSheet.setContentView(sheetView);
+                    
+                    android.widget.TextView tvVipMessage = sheetView.findViewById(R.id.tvVipMessage);
+                    android.widget.TextView tvPrimaryAction = sheetView.findViewById(R.id.tvPrimaryAction);
+                    View btnPrimaryAction = sheetView.findViewById(R.id.btnPrimaryAction);
+                    View btnCancel = sheetView.findViewById(R.id.btnCancel);
+
+                    tvVipMessage.setText(isAnonymous ? "Chương này dành riêng cho tài khoản VIP. Bạn cần đăng nhập để tiếp tục." : "Chương này yêu cầu tài khoản VIP. Bạn có muốn nâng cấp tài khoản VIP ngay bây giờ không?");
+                    tvPrimaryAction.setText(isAnonymous ? "Đăng nhập" : "Nâng cấp ngay");
+                    
+                    btnPrimaryAction.setOnClickListener(v -> {
+                        bottomSheet.dismiss();
+                        if (isAnonymous) {
+                            androidx.navigation.fragment.NavHostFragment.findNavController(this).navigate(R.id.loginFragment);
+                        } else {
+                            androidx.navigation.fragment.NavHostFragment.findNavController(this).navigate(R.id.action_global_vipCenter);
+                        }
+                    });
+                    
+                    btnCancel.setOnClickListener(v -> {
+                        bottomSheet.dismiss();
+                        androidx.navigation.fragment.NavHostFragment.findNavController(this).navigateUp();
+                    });
+
+                    bottomSheet.setCancelable(false);
+                    bottomSheet.show();
+                } else {
+                    Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -323,9 +378,35 @@ public class TextNovelReaderFragment extends Fragment {
                     chapterListSheet.dismiss();
                     viewModel.loadSpecificChapter(chapterId); // Load the chosen chapter
                 });
+                
+                int currentId = currentlyTrackedChapterId;
+                if (currentId <= 0 && viewModel.currentChapterEvent().getValue() != null) {
+                    currentId = viewModel.currentChapterEvent().getValue().getId();
+                }
+                chapterListAdapter.setCurrentChapterId(currentId);
+                
                 RecyclerView rv = chapterListSheet.findViewById(R.id.rv_chapter_list);
                 if (rv != null) {
                     rv.setAdapter(chapterListAdapter);
+                    
+                    int currentIndex = -1;
+                    for (int i = 0; i < chapters.size(); i++) {
+                        if (chapters.get(i).getId() == currentId) {
+                            currentIndex = i;
+                            break;
+                        }
+                    }
+                    if (currentIndex != -1) {
+                        final int finalIndex = currentIndex;
+                        rv.post(() -> {
+                            RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
+                            if (layoutManager instanceof LinearLayoutManager) {
+                                ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(finalIndex, rv.getHeight() / 3);
+                            } else {
+                                rv.scrollToPosition(finalIndex);
+                            }
+                        });
+                    }
                 }
             }
         });
@@ -382,7 +463,47 @@ public class TextNovelReaderFragment extends Fragment {
                 });
             }
         }
+
+        if (chapterListAdapter != null) {
+            int currentId = currentlyTrackedChapterId;
+            if (currentId <= 0 && viewModel.currentChapterEvent().getValue() != null) {
+                currentId = viewModel.currentChapterEvent().getValue().getId();
+            }
+            if (currentId > 0) {
+                chapterListAdapter.setCurrentChapterId(currentId);
+                RecyclerView rv = chapterListSheet.findViewById(R.id.rv_chapter_list);
+                if (rv != null && chapterListAdapter.getChapters() != null) {
+                    int currentIndex = -1;
+                    for (int i = 0; i < chapterListAdapter.getChapters().size(); i++) {
+                        if (chapterListAdapter.getChapters().get(i).getId() == currentId) {
+                            currentIndex = i;
+                            break;
+                        }
+                    }
+                    if (currentIndex != -1) {
+                        final int finalIndex = currentIndex;
+                        rv.post(() -> {
+                            RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
+                            if (layoutManager instanceof LinearLayoutManager) {
+                                ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(finalIndex, rv.getHeight() / 3);
+                            } else {
+                                rv.scrollToPosition(finalIndex);
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
         chapterListSheet.show();
+    }
+
+    private String trimReportSnapshot(String content) {
+        if (content == null) {
+            return null;
+        }
+        String trimmed = content.trim();
+        return trimmed.length() > 1000 ? trimmed.substring(0, 1000) : trimmed;
     }
 
     private void showSettingsBottomSheet() {
@@ -430,11 +551,11 @@ public class TextNovelReaderFragment extends Fragment {
             switchAutoScroll.setChecked(autoScrollManager.isAutoScrolling());
             layoutAutoScrollSettings.setVisibility(switchAutoScroll.isChecked() ? View.VISIBLE : View.GONE);
             
-            int currentSpeed = prefs.getInt("scroll_speed", 2);
+            int currentSpeed = prefs.getInt(ReaderSettings.KEY_NOVEL_SCROLL_SPEED, ReaderSettings.DEFAULT_NOVEL_SCROLL_SPEED);
             seekBarSpeed.setProgress(currentSpeed);
             tvScrollSpeedLbl.setText("Tốc độ cuộn: " + currentSpeed);
 
-            int conflictMode = prefs.getInt("scroll_conflict_mode", 1);
+            int conflictMode = prefs.getInt(ReaderSettings.KEY_NOVEL_SCROLL_CONFLICT_MODE, ReaderSettings.DEFAULT_NOVEL_SCROLL_CONFLICT_MODE);
             if (conflictMode == 0) {
                 rgConflictMode.check(R.id.rbStop);
                 if (tvAutoScrollHint != null) tvAutoScrollHint.setText("Lưu ý: Bất kỳ thao tác chạm nào trên trang đọc cũng sẽ tắt hẳn chức năng tự động cuộn.");
@@ -445,6 +566,7 @@ public class TextNovelReaderFragment extends Fragment {
 
             switchAutoScroll.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 layoutAutoScrollSettings.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+                prefs.edit().putBoolean(ReaderSettings.KEY_NOVEL_AUTO_SCROLL_ENABLED, isChecked).apply();
                 autoScrollManager.toggle(isChecked);
                 // Ẩn thanh công cụ và Settings Dialog để đọc luôn với Auto-scroll
                 if (isChecked && isUiVisible) {
@@ -458,7 +580,7 @@ public class TextNovelReaderFragment extends Fragment {
                 public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
                     int speed = Math.max(1, progress); // Tốc độ tối thiểu là 1
                     tvScrollSpeedLbl.setText("Tốc độ cuộn: " + speed);
-                    autoScrollManager.applySettings(speed, prefs.getInt("scroll_conflict_mode", 1));
+                    autoScrollManager.applySettings(speed, prefs.getInt(ReaderSettings.KEY_NOVEL_SCROLL_CONFLICT_MODE, ReaderSettings.DEFAULT_NOVEL_SCROLL_CONFLICT_MODE));
                 }
                 @Override
                 public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
@@ -468,7 +590,7 @@ public class TextNovelReaderFragment extends Fragment {
 
             rgConflictMode.setOnCheckedChangeListener((group, checkedId) -> {
                 int mode = checkedId == R.id.rbStop ? 0 : 1;
-                autoScrollManager.applySettings(prefs.getInt("scroll_speed", 2), mode);
+                autoScrollManager.applySettings(prefs.getInt(ReaderSettings.KEY_NOVEL_SCROLL_SPEED, ReaderSettings.DEFAULT_NOVEL_SCROLL_SPEED), mode);
                 if (tvAutoScrollHint != null) {
                     if (mode == 0) {
                         tvAutoScrollHint.setText("Lưu ý: Bất kỳ thao tác chạm nào trên trang đọc cũng sẽ tắt hẳn chức năng tự động cuộn.");
@@ -484,8 +606,8 @@ public class TextNovelReaderFragment extends Fragment {
 
     private void saveSettings() {
         prefs.edit()
-            .putFloat("text_size", currentTextSize)
-            .putInt("theme", currentTheme)
+            .putFloat(ReaderSettings.KEY_NOVEL_TEXT_SIZE, currentTextSize)
+            .putInt(ReaderSettings.KEY_NOVEL_THEME, currentTheme)
             .apply();
         applyTheme();
     }

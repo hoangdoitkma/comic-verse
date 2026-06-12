@@ -81,6 +81,23 @@ public class HomeUiState {
         return new HomeUiState(false, "", "", Collections.emptyList(), Collections.emptyList(), "", 0, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), message);
     }
 
+    public HomeUiState withError(String message) {
+        return new HomeUiState(false,
+                greetingTitle,
+                greetingSubtitle,
+                heroes,
+                quickActions,
+                continueSubtitle,
+                continueProgress,
+                recentlyRead,
+                recommendations,
+                newUpdates,
+                hotComics,
+                completed,
+                newComics,
+                message);
+    }
+
     public boolean isLoading() {
         return isLoading;
     }

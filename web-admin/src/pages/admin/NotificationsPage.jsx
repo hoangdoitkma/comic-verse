@@ -1,14 +1,78 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Send, Clock } from 'lucide-react';
 import DataTable from '../../components/DataTable';
 import notificationService from '../../services/notificationService';
+
+const COLUMNS = [
+  {
+    key: 'id',
+    label: 'ID',
+    minWidth: '60px',
+    render: (val) => <span className="text-dark-500 tabular-nums">#{val}</span>,
+  },
+  {
+    key: 'title',
+    label: 'Tiêu đề',
+    minWidth: '200px',
+    render: (val, row) => (
+      <div>
+        <p className="font-medium text-white">{val}</p>
+        <p className="text-xs text-dark-400 line-clamp-1 mt-0.5">{row.message}</p>
+      </div>
+    ),
+  },
+  {
+    key: 'type',
+    label: 'Loại',
+    minWidth: '120px',
+    render: (val) => {
+      const colors = {
+        SYSTEM: 'bg-emerald-500/15 text-emerald-400',
+        PROMOTION: 'bg-purple-500/15 text-purple-400',
+        UPDATE: 'bg-blue-500/15 text-blue-400',
+      };
+      const defaultColor = 'bg-primary-500/15 text-primary-400';
+      return (
+        <span className={`px-2 py-1 rounded text-xs font-medium ${colors[val] || defaultColor}`}>
+          {val}
+        </span>
+      );
+    },
+  },
+  {
+    key: 'targetUserName',
+    label: 'Người nhận',
+    minWidth: '140px',
+    render: (val) => (
+      <span className={val === 'Broadcast' ? 'text-primary-400 font-medium' : 'text-dark-200'}>
+        {val || 'Broadcast'}
+      </span>
+    ),
+  },
+  {
+    key: 'createdAt',
+    label: 'Thời gian gửi',
+    minWidth: '160px',
+    render: (val) => <span className="text-sm text-dark-300">{new Date(val).toLocaleString()}</span>,
+  },
+];
 
 export default function NotificationsPage() {
   const { addToast } = useOutletContext();
   const [history, setHistory] = useState([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 0,
+    totalPages: 1,
+    totalElements: 0,
+    size: 6
+  });
+  const [filters, setFilters] = useState({
+    type: '',
+    isBroadcast: ''
+  });
 
   const [formData, setFormData] = useState({
     title: '',
@@ -18,11 +82,25 @@ export default function NotificationsPage() {
     targetUserId: '',
   });
 
-  const fetchHistory = async () => {
+  const fetchHistory = async (page = 0) => {
     setIsLoadingHistory(true);
     try {
-      const res = await notificationService.getNotificationHistory();
-      setHistory(Array.isArray(res.data) ? res.data : []);
+      const params = {
+        page: page,
+        size: pagination.size,
+      };
+      if (filters.type) params.type = filters.type;
+      if (filters.isBroadcast !== '') params.isBroadcast = filters.isBroadcast;
+
+      const res = await notificationService.getNotificationHistory(params);
+      const pageData = res.data;
+      setHistory(pageData.content || []);
+      setPagination(prev => ({
+        ...prev,
+        page: pageData.number || 0,
+        totalPages: pageData.totalPages || 1,
+        totalElements: pageData.totalElements || 0
+      }));
     } catch (err) {
       addToast('Lỗi khi tải lịch sử thông báo', 'error');
     } finally {
@@ -31,8 +109,8 @@ export default function NotificationsPage() {
   };
 
   useEffect(() => {
-    fetchHistory();
-  }, []);
+    fetchHistory(0);
+  }, [filters]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,7 +142,7 @@ export default function NotificationsPage() {
         isBroadcast: true,
         targetUserId: '',
       });
-      fetchHistory();
+      fetchHistory(0);
     } catch (err) {
       addToast(err.response?.data?.message || 'Có lỗi xảy ra khi gửi thông báo', 'error');
     } finally {
@@ -72,59 +150,20 @@ export default function NotificationsPage() {
     }
   };
 
-  const columns = [
-    {
-      key: 'id',
-      label: 'ID',
-      minWidth: '60px',
-      render: (val) => <span className="text-dark-500 tabular-nums">#{val}</span>,
-    },
-    {
-      key: 'title',
-      label: 'Tiêu đề',
-      minWidth: '200px',
-      render: (val, row) => (
-        <div>
-          <p className="font-medium text-white">{val}</p>
-          <p className="text-xs text-dark-400 line-clamp-1 mt-0.5">{row.message}</p>
-        </div>
-      ),
-    },
-    {
-      key: 'type',
-      label: 'Loại',
-      minWidth: '120px',
-      render: (val) => {
-        const colors = {
-          SYSTEM: 'bg-emerald-500/15 text-emerald-400',
-          PROMOTION: 'bg-purple-500/15 text-purple-400',
-          UPDATE: 'bg-blue-500/15 text-blue-400',
-        };
-        const defaultColor = 'bg-primary-500/15 text-primary-400';
-        return (
-          <span className={`px-2 py-1 rounded text-xs font-medium ${colors[val] || defaultColor}`}>
-            {val}
-          </span>
-        );
-      },
-    },
-    {
-      key: 'targetUserName',
-      label: 'Người nhận',
-      minWidth: '140px',
-      render: (val) => (
-        <span className={val === 'Broadcast' ? 'text-primary-400 font-medium' : 'text-dark-200'}>
-          {val || 'Broadcast'}
-        </span>
-      ),
-    },
-    {
-      key: 'createdAt',
-      label: 'Thời gian gửi',
-      minWidth: '160px',
-      render: (val) => <span className="text-sm text-dark-300">{new Date(val).toLocaleString()}</span>,
-    },
-  ];
+  const memoizedTable = useMemo(() => (
+    <DataTable
+      columns={COLUMNS}
+      data={history}
+      isLoading={isLoadingHistory}
+      emptyMessage="Chưa có thông báo nào được gửi."
+      pagination={{
+        page: pagination.page,
+        totalPages: pagination.totalPages,
+        totalElements: pagination.totalElements,
+        onPageChange: (newPage) => fetchHistory(newPage)
+      }}
+    />
+  ), [history, isLoadingHistory, pagination]);
 
   return (
     <div className="space-y-6">
@@ -242,16 +281,36 @@ export default function NotificationsPage() {
 
         {/* History Table */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center gap-2">
-            <Clock size={18} className="text-dark-400" />
-            <h2 className="text-base font-semibold text-white">Lịch sử đã gửi</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Clock size={18} className="text-dark-400" />
+              <h2 className="text-base font-semibold text-white">Lịch sử đã gửi</h2>
+            </div>
+            
+            {/* Table Filters */}
+            <div className="flex items-center gap-3">
+              <select
+                value={filters.type}
+                onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                className="px-3 py-2 bg-dark-800 border border-dark-700/50 rounded-lg text-sm text-dark-200 outline-none"
+              >
+                <option value="">Tất cả loại</option>
+                <option value="SYSTEM">Hệ thống</option>
+                <option value="PROMOTION">Khuyến mãi</option>
+                <option value="UPDATE">Cập nhật</option>
+              </select>
+              <select
+                value={filters.isBroadcast}
+                onChange={(e) => setFilters({ ...filters, isBroadcast: e.target.value })}
+                className="px-3 py-2 bg-dark-800 border border-dark-700/50 rounded-lg text-sm text-dark-200 outline-none"
+              >
+                <option value="">Mọi đối tượng</option>
+                <option value="true">Gửi tất cả (Broadcast)</option>
+                <option value="false">Cá nhân</option>
+              </select>
+            </div>
           </div>
-          <DataTable
-            columns={columns}
-            data={history}
-            isLoading={isLoadingHistory}
-            emptyMessage="Chưa có thông báo nào được gửi."
-          />
+          {memoizedTable}
         </div>
       </div>
     </div>

@@ -1,29 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp">
+    android:layout_marginHorizontal="@dimen/margin_small"
+    android:layout_marginVertical="4dp"
+    app:cardCornerRadius="@dimen/radius_medium"
+    app:cardElevation="@dimen/card_elevation"
+    app:cardBackgroundColor="@color/bg_dark_surface"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/stroke_divider">
 
-    <ImageView
-        android:id="@+id/imageCover"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:adjustViewBounds="true"
-        android:scaleType="centerCrop"
-        android:background="@drawable/bg_card_rounded" />
+        android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/textRank"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="8dp"
-        android:paddingHorizontal="10dp"
-        android:paddingVertical="4dp"
-        android:background="#CC000000"
-        android:text="1"
-        android:textColor="@android:color/white"
-        android:textSize="22sp"
-        android:textStyle="bold" />
-</FrameLayout>
+        <ImageView
+            android:id="@+id/imageCover"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:adjustViewBounds="true"
+            android:scaleType="centerCrop"
+            tools:src="@tools:sample/backgrounds/scenic" />
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:background="@drawable/bg_gradient_overlay" />
+
+        <TextView
+            android:id="@+id/textRank"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="@dimen/margin_small"
+            android:background="@drawable/bg_rank_badge"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
+            android:text="1"
+            android:textColor="@color/text_primary"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+    </FrameLayout>
+</com.google.android.material.card.MaterialCardView>

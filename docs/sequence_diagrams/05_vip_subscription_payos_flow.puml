@@ -1,0 +1,54 @@
+@startuml
+autonumber
+skinparam sequenceMessageAlign center
+
+actor "User" as User
+participant "Android App" as App
+participant "PaymentController" as Backend
+participant "payOS API" as PayOS
+database "MySQL DB" as DB
+
+User -> App: Chọn gói VIP & Nhấn "Thanh toán"
+activate App
+
+App -> Backend: POST /api/payment/create-order\n(packageId)
+activate Backend
+
+Backend -> DB: Lấy thông tin gói VIP (Giá tiền)
+activate DB
+DB --> Backend: Package Details
+deactivate DB
+
+Backend -> Backend: Tạo mã đơn hàng (orderCode)
+Backend -> PayOS: POST /v2/payment-requests (Create Payment Link)
+activate PayOS
+PayOS --> Backend: Trả về checkoutUrl & QRCode
+deactivate PayOS
+
+Backend -> DB: Lưu trạng thái đơn hàng (PENDING) vào bảng transactions
+activate DB
+DB --> Backend: success
+deactivate DB
+
+Backend --> App: 200 OK (checkoutUrl)
+deactivate Backend
+
+App -> User: Mở WebView/Browser chuyển tới cổng payOS
+User -> PayOS: Quét mã VietQR trên ứng dụng ngân hàng
+
+PayOS -> PayOS: Ngân hàng xử lý giao dịch thành công
+PayOS -> Backend: POST /api/payment/webhook (Async Webhook)
+activate Backend
+Backend -> Backend: Xác thực chữ ký Webhook (Signature)
+Backend -> DB: Cập nhật transactions = SUCCESS
+Backend -> DB: Cập nhật users (role=VIP), thêm vào bảng subscriptions
+Backend --> PayOS: 200 OK (Confirm Webhook)
+deactivate Backend
+
+User -> App: Đóng màn hình thanh toán, quay lại App
+App -> Backend: GET /api/users/me (Làm mới thông tin)
+Backend --> App: Trả về thông tin User (Role: VIP)
+App --> User: Hiển thị "Nâng cấp VIP thành công"
+deactivate App
+
+@enduml

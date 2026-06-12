@@ -130,7 +130,7 @@ public class AdminDataServiceImpl implements AdminDataService {
         if (!authorRepository.existsById(id)) {
             throw new ResourceNotFoundException("Author not found with id: " + id);
         }
-        if (comicRepository.existsByAuthorId(id)) {
+        if (comicRepository.existsByAuthorIdAndIsDeletedFalse(id)) {
             throw new ResourceInUseException("Cannot delete author because they are associated with one or more comics");
         }
         authorRepository.deleteById(id);

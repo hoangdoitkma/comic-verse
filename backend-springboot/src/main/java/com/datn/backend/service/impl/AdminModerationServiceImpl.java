@@ -55,14 +55,16 @@ public class AdminModerationServiceImpl implements AdminModerationService {
 
         UploadLog savedLog = uploadLogRepository.save(log);
 
-        String title = "Kết quả duyệt chương";
+        String chapterTitle = log.getChapter() != null ? log.getChapter().getTitle() : "không xác định";
+        String comicTitle = log.getComic() != null ? log.getComic().getTitle() : "không xác định";
+
         String message = newStatus == UploadStatus.APPROVED 
-                ? "Chương " + log.getChapter().getTitle() + " của truyện " + log.getComic().getTitle() + " đã được phê duyệt và hiển thị." 
-                : "Chương " + log.getChapter().getTitle() + " bị từ chối.";
+                ? String.format(com.datn.backend.constant.NotificationConstants.MSG_CHAPTER_APPROVED, chapterTitle, comicTitle) 
+                : String.format(com.datn.backend.constant.NotificationConstants.MSG_CHAPTER_REJECTED, chapterTitle, comicTitle);
         
         if (newStatus == UploadStatus.REJECTED) {
             if (request.getReason() != null && !request.getReason().trim().isEmpty()) {
-                message += " Lý do: " + request.getReason();
+                message += String.format(com.datn.backend.constant.NotificationConstants.MSG_REJECT_REASON_SUFFIX, request.getReason());
                 log.setRejectReason(request.getReason());
             }
 
@@ -99,7 +101,7 @@ public class AdminModerationServiceImpl implements AdminModerationService {
 
         com.datn.backend.entity.enums.NotificationType type = com.datn.backend.entity.enums.NotificationType.SYSTEM;
 
-        notificationService.sendSystemNotification(log.getUploader(), title, message, type, "/uploader/comics");
+        notificationService.sendSystemNotification(log.getUploader(), com.datn.backend.constant.NotificationConstants.TITLE_MODERATION_RESULT, message, type, "/uploader/comics");
 
         return mapToResponse(savedLog);
     }

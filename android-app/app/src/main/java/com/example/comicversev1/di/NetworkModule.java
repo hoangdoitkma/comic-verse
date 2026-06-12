@@ -1,9 +1,6 @@
 package com.example.comicversev1.di;
 
 import android.content.SharedPreferences;
-import android.util.Log;
-
-import androidx.annotation.NonNull;
 
 import com.example.comicversev1.BuildConfig;
 import com.example.comicversev1.data.api.ApiService;
@@ -36,7 +33,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 @InstallIn(SingletonComponent.class)
 public class NetworkModule {
 
-    private static final boolean IS_DEBUG = true; // TODO: wire to BuildConfig if needed
+    private static final boolean ENABLE_HTTP_LOGS = BuildConfig.DEBUG;
 
     @Provides
     @Singleton
@@ -50,7 +47,7 @@ public class NetworkModule {
     @Singleton
     HttpLoggingInterceptor provideLoggingInterceptor() {
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
-        interceptor.setLevel(IS_DEBUG ? HttpLoggingInterceptor.Level.BODY : HttpLoggingInterceptor.Level.NONE);
+        interceptor.setLevel(ENABLE_HTTP_LOGS ? HttpLoggingInterceptor.Level.BASIC : HttpLoggingInterceptor.Level.NONE);
         return interceptor;
     }
 
@@ -76,6 +73,9 @@ public class NetworkModule {
     @Singleton
     Authenticator provideAuthenticator(SharedPreferences prefs, Provider<ApiService> apiServiceProvider) {
         return (route, response) -> {
+            String path = response.request().url().encodedPath();
+            if (isAuthEndpoint(path)) return null;
+
             String refresh = prefs.getString(Constants.KEY_REFRESH_TOKEN, "");
             if (refresh.isEmpty()) return null;
             try {
@@ -84,6 +84,12 @@ public class NetworkModule {
                 if (refreshResp.isSuccessful() && refreshResp.body() != null && refreshResp.body().getData() != null) {
                     String newAccess = refreshResp.body().getData().getAccessToken();
                     String newRefresh = refreshResp.body().getData().getRefreshToken();
+                    if (newAccess == null || newAccess.isEmpty()) {
+                        return null;
+                    }
+                    if (newRefresh == null || newRefresh.isEmpty()) {
+                        newRefresh = newAccess;
+                    }
                     prefs.edit()
                             .putString(Constants.KEY_ACCESS_TOKEN, newAccess)
                             .putString(Constants.KEY_REFRESH_TOKEN, newRefresh)
@@ -94,6 +100,10 @@ public class NetworkModule {
                 }
             } catch (Exception ignored) {
             }
+            prefs.edit()
+                    .remove(Constants.KEY_ACCESS_TOKEN)
+                    .remove(Constants.KEY_REFRESH_TOKEN)
+                    .apply();
             return null;
         };
     }
@@ -105,12 +115,24 @@ public class NetworkModule {
         return chain -> {
             okhttp3.Response response = chain.proceed(chain.request());
             if (response.code() == 401) {
+                String path = response.request().url().encodedPath();
+                if (isLoginEndpoint(path)) {
+                    throw new com.example.comicversev1.data.model.NetworkException(401, "Thông tin đăng nhập không chính xác.");
+                }
                 throw new com.example.comicversev1.data.model.NetworkException(401, "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
             } else if (response.code() >= 500) {
                 throw new com.example.comicversev1.data.model.NetworkException(response.code(), "Lỗi máy chủ (" + response.code() + ").");
             }
             return response;
         };
+    }
+
+    private static boolean isAuthEndpoint(String path) {
+        return path != null && path.contains("/auth/");
+    }
+
+    private static boolean isLoginEndpoint(String path) {
+        return path != null && (path.endsWith("/auth/login") || path.endsWith("/auth/google"));
     }
 
     @Provides
@@ -140,7 +162,7 @@ public class NetworkModule {
     @Singleton
     @Named("baseUrl")
     String provideBaseUrl() {
-        return Constants.BASE_URL;
+        return BuildConfig.BASE_URL;
     }
 
     @Provides

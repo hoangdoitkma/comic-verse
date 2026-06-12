@@ -2,19 +2,19 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/menu_home"
-        android:icon="@android:drawable/ic_menu_view"
+        android:icon="@drawable/ic_menu_comic"
         android:title="Truyện Tranh" />
     <item
         android:id="@+id/menu_novel"
-        android:icon="@android:drawable/ic_menu_edit"
+        android:icon="@drawable/ic_menu_novel"
         android:title="Truyện Chữ" />
     <item
         android:id="@+id/menu_favorite"
-        android:icon="@android:drawable/ic_menu_agenda"
+        android:icon="@drawable/ic_menu_like"
         android:title="Yêu Thích" />
     <item
         android:id="@+id/menu_more"
-        android:icon="@android:drawable/ic_menu_more"
+        android:icon="@drawable/ic_menu_settings"
         android:title="Khác" />
 </menu>
 

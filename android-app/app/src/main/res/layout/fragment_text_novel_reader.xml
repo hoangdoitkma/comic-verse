@@ -5,7 +5,7 @@
     android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212">
+    android:background="@color/bg_dark_primary">
 
     <!-- Content List -->
     <androidx.recyclerview.widget.RecyclerView
@@ -13,8 +13,8 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipToPadding="false"
-        android:paddingTop="20dp"
-        android:paddingBottom="80dp"
+        android:paddingTop="?attr/actionBarSize"
+        android:paddingBottom="@dimen/bottom_bar_height"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -25,7 +25,7 @@
         android:id="@+id/appBarLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="#E6121212"
+        android:background="#D91A1D24"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -42,22 +42,23 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingEnd="16dp">
+                android:paddingEnd="@dimen/margin_medium">
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:gravity="center_vertical">
+                    android:gravity="center_vertical"
+                    android:paddingStart="@dimen/margin_medium">
                     
                     <TextView
                         android:id="@+id/tv_novel_title"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         tools:text="Tên Truyện Dài"
-                        android:textColor="#FFFFFF"
-                        android:textSize="20sp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="@dimen/text_size_large"
                         android:textStyle="bold"
                         android:maxLines="1"
                         android:ellipsize="end" />
@@ -67,20 +68,12 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         tools:text="Chương 1: Khởi đầu"
-                        android:textColor="#B3B3B3"
-                        android:textSize="16sp"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_size_small"
                         android:maxLines="1"
                         android:ellipsize="end" />
                 </LinearLayout>
 
-                <ImageButton
-                    android:id="@+id/btn_comments"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_comment"
-                    android:contentDescription="Bình luận"
-                    app:tint="#E0E0E0" />
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
@@ -89,8 +82,8 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/bottomBar"
         android:layout_width="0dp"
-        android:layout_height="64dp"
-        android:background="#E6121212"
+        android:layout_height="@dimen/bottom_bar_height"
+        android:background="#D91A1D24"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -114,7 +107,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/baseline_arrow_back_ios_24"
                 android:contentDescription="Chương trước"
-                app:tint="#E0E0E0" />
+                app:tint="@color/text_primary" />
 
             <ImageButton
                 android:id="@+id/btn_chapter_list"
@@ -124,7 +117,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/baseline_menu_24"
                 android:contentDescription="Mục lục"
-                app:tint="#E0E0E0" />
+                app:tint="@color/text_primary" />
 
             <ImageButton
                 android:id="@+id/btn_next_chapter"
@@ -134,7 +127,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/baseline_arrow_forward_ios_24"
                 android:contentDescription="Chương tiếp"
-                app:tint="#E0E0E0" />
+                app:tint="@color/text_primary" />
         </LinearLayout>
         
         <LinearLayout
@@ -144,25 +137,25 @@
             android:orientation="vertical"
             android:gravity="center"
             android:background="?attr/selectableItemBackground"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
+            android:paddingStart="@dimen/margin_medium"
+            android:paddingEnd="@dimen/margin_medium"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
             
             <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="@dimen/icon_size_medium"
+                android:layout_height="@dimen/icon_size_medium"
                 android:src="@drawable/baseline_settings_24"
                 android:contentDescription="Settings"
-                app:tint="#E0E0E0" />
+                app:tint="@color/text_primary" />
                 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Cài đặt"
-                android:textColor="#E0E0E0"
-                android:textSize="12sp"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_size_small"
                 android:layout_marginTop="4dp" />
         </LinearLayout>
         
@@ -172,7 +165,7 @@
         android:id="@+id/loadingOverlay"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#80121212"
+        android:background="@color/bg_dark_glass"
         android:visibility="gone"
         tools:visibility="gone"
         app:layout_constraintTop_toTopOf="parent"

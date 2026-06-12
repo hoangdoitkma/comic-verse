@@ -20,12 +20,34 @@ const comicService = {
   },
 
   /**
+   * Lấy danh sách thể loại
+   * GET /api/data/genres
+   */
+  getGenres: async () => {
+    const response = await axiosClient.get('/data/genres');
+    return response.data;
+  },
+
+  /**
    * Tạo truyện mới (multipart/form-data)
    * POST /api/uploader/comics
    * @param {FormData} formData - Bao gồm: title, synopsis, authorId, ageRatingId, contentType, comicFormat, thumbnail (File)
    */
   createComic: async (formData) => {
     const response = await axiosClient.post('/uploader/comics', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Cập nhật truyện (multipart/form-data)
+   * PUT /api/uploader/comics/{comicId}
+   */
+  updateComic: async (comicId, formData) => {
+    const response = await axiosClient.put(`/uploader/comics/${comicId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -119,6 +141,15 @@ const comicService = {
    */
   getChapterPages: async (chapterId) => {
     const response = await axiosClient.get(`/uploader/chapters/view/${chapterId}/pages`);
+    return response.data;
+  },
+
+  /**
+   * Lấy chi tiết nội dung chương (bao gồm content text và pages)
+   * GET /api/uploader/chapters/view/{chapterId}/detail
+   */
+  getChapterDetail: async (chapterId) => {
+    const response = await axiosClient.get(`/uploader/chapters/view/${chapterId}/detail`);
     return response.data;
   },
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout 
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -11,485 +11,730 @@
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:elevation="0dp"
-        android:background="@color/bg_dark_primary">
+        android:background="#F20F1115"
+        app:elevation="0dp">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbarDetail"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:navigationIcon="@android:drawable/ic_menu_revert"
-            app:navigationIconTint="@android:color/white">
+            android:paddingEnd="@dimen/margin_medium"
+            app:contentInsetStartWithNavigation="0dp"
+            app:navigationIcon="@drawable/baseline_arrow_back_24"
+            app:navigationIconTint="@color/text_primary">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSubscribe"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:layout_marginEnd="@dimen/margin_medium"
-                app:cornerRadius="@dimen/margin_small"
-                app:strokeColor="@android:color/white"
-                android:text="@string/action_subscribe"
-                android:textColor="@android:color/white" />
+                android:layout_gravity="end|center_vertical"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/btnReport"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_detail_icon_button"
+                    android:contentDescription="@string/action_report"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_report"
+                    app:tint="@color/btn_report_text" />
+            </LinearLayout>
         </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/scrollViewMain"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshDetail"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        android:clipToPadding="false"
-        android:paddingBottom="@dimen/scroll_padding_bottom">
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/scrollViewMain"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="@dimen/margin_large"
-            android:paddingTop="@dimen/margin_large">
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="124dp">
 
-            <!-- Cover Image -->
-            <ImageView
-                android:id="@+id/imgCover"
-                android:layout_width="@dimen/cover_width"
-                android:layout_height="@dimen/cover_height"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="@dimen/margin_xxlarge">
+
+            <FrameLayout
+                android:id="@+id/layoutHero"
+                android:layout_width="0dp"
+                android:layout_height="314dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:background="@drawable/bg_icon_rounded"
-                android:clipToOutline="true"
-                android:scaleType="centerCrop"
-                tools:src="@tools:sample/backgrounds/scenic" />
+                app:layout_constraintTop_toTopOf="parent">
 
-            <!-- Title -->
-            <TextView
-                android:id="@+id/txtTitle"
+                <ImageView
+                    android:id="@+id/imgBackdrop"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:alpha="0.36"
+                    android:scaleType="centerCrop"
+                    tools:src="@tools:sample/backgrounds/scenic" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_detail_hero_scrim" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingHorizontal="@dimen/margin_large"
+                    android:paddingTop="@dimen/margin_large"
+                    android:paddingBottom="@dimen/margin_xlarge">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardCover"
+                        android:layout_width="148dp"
+                        android:layout_height="218dp"
+                        app:cardBackgroundColor="@color/bg_dark_surface"
+                        app:cardCornerRadius="@dimen/radius_large"
+                        app:cardElevation="10dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:strokeColor="#33FFFFFF"
+                        app:strokeWidth="1dp">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
+
+                            <ImageView
+                                android:id="@+id/imgCover"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="centerCrop"
+                                tools:src="@tools:sample/backgrounds/scenic" />
+
+                            <ImageButton
+                                android:id="@+id/btnSubscribe"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:layout_gravity="bottom|end"
+                                android:layout_margin="8dp"
+                                android:background="@drawable/bg_detail_icon_button"
+                                android:contentDescription="@string/action_subscribe"
+                                android:elevation="8dp"
+                                android:padding="10dp"
+                                android:src="@drawable/ic_menu_like"
+                                app:tint="@color/text_primary" />
+                        </FrameLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <LinearLayout
+                        android:id="@+id/layoutHeroInfo"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/margin_medium"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/cardCover"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <TextView
+                            android:id="@+id/txtSource"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_detail_type_chip"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="5dp"
+                            android:textColor="@color/brand_primary"
+                            android:textSize="@dimen/text_size_tiny"
+                            android:textStyle="bold"
+                            android:visibility="gone"
+                            tools:text="TRUYỆN TRANH" />
+
+                        <TextView
+                            android:id="@+id/txtTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/margin_small"
+                            android:ellipsize="end"
+                            android:lineSpacingExtra="2dp"
+                            android:maxLines="3"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_size_title"
+                            android:textStyle="bold"
+                            tools:text="Tiên Nghịch" />
+
+                        <LinearLayout
+                            android:id="@+id/layoutMetaInfo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/margin_medium"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:src="@drawable/ic_writer"
+                                    app:tint="@color/icon_yellow" />
+
+                                <TextView
+                                    android:id="@+id/txtAuthor"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="@dimen/margin_small"
+                                    android:layout_weight="1"
+                                    android:ellipsize="end"
+                                    android:maxLines="1"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="@dimen/text_size_small"
+                                    tools:text="Nhĩ Căn" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/margin_small"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:src="@drawable/ic_calendar"
+                                    app:tint="@color/icon_cyan" />
+
+                                <TextView
+                                    android:id="@+id/txtUpdateDate"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="@dimen/margin_small"
+                                    android:layout_weight="1"
+                                    android:ellipsize="end"
+                                    android:maxLines="1"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="@dimen/text_size_small"
+                                    tools:text="22/10/2025" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/margin_small"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:src="@drawable/ic_status"
+                                    app:tint="@color/status_completed" />
+
+                                <TextView
+                                    android:id="@+id/txtStatus"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="@dimen/margin_small"
+                                    android:background="@drawable/bg_detail_status_chip"
+                                    android:paddingHorizontal="10dp"
+                                    android:paddingVertical="5dp"
+                                    android:textColor="@color/status_completed"
+                                    android:textSize="@dimen/text_size_small"
+                                    android:textStyle="bold"
+                                    tools:text="Đã hoàn thành" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:id="@+id/layoutAccessType"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/margin_small"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:id="@+id/icAccessType"
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:src="@drawable/ic_book"
+                                    app:tint="@color/icon_green" />
+
+                                <TextView
+                                    android:id="@+id/txtAccessType"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="@dimen/margin_small"
+                                    android:background="@drawable/bg_detail_access_free"
+                                    android:paddingHorizontal="10dp"
+                                    android:paddingVertical="5dp"
+                                    android:textColor="@color/icon_green"
+                                    android:textSize="@dimen/text_size_small"
+                                    android:textStyle="bold"
+                                    tools:text="FREE" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </FrameLayout>
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/layoutTags"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_xlarge"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/imgCover"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/text_size_title"
-                android:textStyle="bold"
-                tools:text="Tiên Nghịch" />
-
-            <!-- Metadata Info Rows -->
-            <TextView
-                android:id="@+id/txtAuthor"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/margin_large"
                 android:layout_marginTop="@dimen/margin_medium"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/txtTitle"
-                android:drawablePadding="@dimen/margin_medium_small"
-                app:drawableStartCompat="@android:drawable/ic_menu_edit"
-                app:drawableTint="@color/icon_yellow"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/text_size_normal"
-                tools:text="Nhĩ Căn" />
-
-            <TextView
-                android:id="@+id/txtUpdateDate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_medium_small"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/txtAuthor"
-                android:drawablePadding="@dimen/margin_medium_small"
-                app:drawableStartCompat="@android:drawable/ic_menu_today"
-                app:drawableTint="@color/icon_cyan"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/text_size_normal"
-                tools:text="22/10/2025 03:47" />
-
-            <TextView
-                android:id="@+id/txtSource"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_medium_small"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/txtUpdateDate"
-                android:drawablePadding="@dimen/margin_medium_small"
-                app:drawableStartCompat="@android:drawable/ic_menu_info_details"
-                app:drawableTint="@color/icon_light_blue"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/text_size_normal"
-                tools:text="NovelVN" />
-
-            <TextView
-                android:id="@+id/txtStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_medium_small"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/txtSource"
-                android:drawablePadding="@dimen/margin_medium_small"
-                app:drawableStartCompat="@android:drawable/ic_media_play"
-                app:drawableTint="@color/status_completed"
-                android:textColor="@color/status_completed"
-                android:textSize="@dimen/text_size_normal"
-                tools:text="Đã hoàn thành" />
-
-            <TextView
-                android:id="@+id/btnReport"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_medium_small"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/txtStatus"
-                android:drawablePadding="@dimen/margin_medium_small"
-                android:background="?attr/selectableItemBackground"
-                app:drawableStartCompat="@android:drawable/ic_dialog_alert"
-                app:drawableTint="@color/btn_report_text"
-                android:textColor="@color/btn_report_text"
-                android:textSize="@dimen/text_size_normal"
-                android:text="@string/action_report"
-                android:clickable="true"
-                android:focusable="true" />
-
-            <!-- Tags (Genres) -->
-            <HorizontalScrollView
-                android:id="@+id/scrollTags"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_xlarge"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/btnReport"
-                android:scrollbars="none">
-                
-                <LinearLayout
-                    android:id="@+id/layoutTags"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal" />
-            </HorizontalScrollView>
+                app:layout_constraintTop_toBottomOf="@id/layoutHero" />
 
-            <!-- Synopsis Section -->
-            <ImageView
-                android:id="@+id/icSynopsisStar"
-                android:layout_width="@dimen/margin_xlarge"
-                android:layout_height="@dimen/margin_xlarge"
-                android:layout_marginTop="@dimen/margin_xxlarge"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/scrollTags"
-                android:src="@android:drawable/star_on"
-                app:tint="@color/icon_yellow" />
-
-            <TextView
-                android:id="@+id/txtSynopsisTitle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/margin_small"
-                app:layout_constraintBottom_toBottomOf="@id/icSynopsisStar"
-                app:layout_constraintEnd_toStartOf="@id/icSynopsisExpand"
-                app:layout_constraintStart_toEndOf="@id/icSynopsisStar"
-                app:layout_constraintTop_toTopOf="@id/icSynopsisStar"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/text_size_large"
-                android:text="@string/title_synopsis"
-                android:textStyle="bold" />
-
-            <ImageView
-                android:id="@+id/icSynopsisExpand"
-                android:layout_width="@dimen/margin_xlarge"
-                android:layout_height="@dimen/margin_xlarge"
-                app:layout_constraintBottom_toBottomOf="@id/icSynopsisStar"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@id/icSynopsisStar"
-                android:src="@android:drawable/arrow_down_float"
-                app:tint="@android:color/white" />
-
-            <!-- Invisible View to handle clicks for Synopsis Expand cleanly without wrapping LinearLayout -->
-            <View
-                android:id="@+id/btnExpandSynopsis"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                app:layout_constraintBottom_toBottomOf="@id/icSynopsisStar"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@id/icSynopsisStar"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"/>
-
-            <TextView
-                android:id="@+id/txtSynopsis"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_small"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/icSynopsisStar"
-                android:textColor="@color/text_synopsis"
-                android:textSize="@dimen/text_size_normal"
-                android:ellipsize="end"
-                android:lineSpacingExtra="6dp"
-                android:maxLines="3"
-                tools:text="Bạn đang đọc truyện Tiên Nghịch full (đã hoàn thành) của tác giả Nhĩ Căn. Vương Lâm, một thiếu niên..." />
-
-            <!-- Latest Chapters -->
-            <ImageView
-                android:id="@+id/icChaptersLatest"
-                android:layout_width="@dimen/margin_xlarge"
-                android:layout_height="@dimen/margin_xlarge"
-                android:layout_marginTop="@dimen/margin_xxlarge"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/txtSynopsis"
-                android:src="@android:drawable/ic_menu_agenda"
-                app:tint="@color/icon_red" />
-
-            <TextView
-                android:id="@+id/txtChaptersTitle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/margin_small"
-                app:layout_constraintBottom_toBottomOf="@id/icChaptersLatest"
-                app:layout_constraintEnd_toStartOf="@id/icChaptersNext"
-                app:layout_constraintStart_toEndOf="@id/icChaptersLatest"
-                app:layout_constraintTop_toTopOf="@id/icChaptersLatest"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/text_size_large"
-                android:text="@string/title_latest_chapters"
-                android:textStyle="bold" />
-
-            <ImageView
-                android:id="@+id/icChaptersNext"
-                android:layout_width="@dimen/margin_xlarge"
-                android:layout_height="@dimen/margin_xlarge"
-                app:layout_constraintBottom_toBottomOf="@id/icChaptersLatest"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@id/icChaptersLatest"
-                android:src="@android:drawable/ic_media_next"
-                app:tint="@android:color/white" />
-
-            <!-- Invisible View to handle clicks for Chapters Expand -->
-            <View
-                android:id="@+id/btnViewAllChapters"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                app:layout_constraintBottom_toBottomOf="@id/icChaptersLatest"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@id/icChaptersLatest"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true" />
-
-            <!-- The list of chapters, must remain a Vertical View as it gets dynamically inflated -->
             <LinearLayout
-                android:id="@+id/layoutChapters"
+                android:id="@+id/sectionSynopsis"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_medium_small"
+                android:layout_marginHorizontal="@dimen/margin_large"
+                android:layout_marginTop="@dimen/margin_large"
+                android:background="@drawable/bg_detail_section_surface"
+                android:orientation="vertical"
+                android:padding="@dimen/margin_medium"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/icChaptersLatest"
-                android:orientation="vertical" />
+                app:layout_constraintTop_toBottomOf="@id/layoutTags">
 
-            <!-- Comments -->
-            <ImageView
-                android:id="@+id/icComments"
-                android:layout_width="@dimen/margin_xlarge"
-                android:layout_height="@dimen/margin_xlarge"
-                android:layout_marginTop="@dimen/margin_xxlarge"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/layoutChapters"
-                android:src="@android:drawable/stat_notify_chat"
-                app:tint="@color/icon_cyan" />
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp">
 
-            <TextView
-                android:id="@+id/txtCommentsTitle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/margin_small"
-                app:layout_constraintBottom_toBottomOf="@id/icComments"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/icComments"
-                app:layout_constraintTop_toTopOf="@id/icComments"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/text_size_large"
-                android:text="@string/title_comments"
-                android:textStyle="bold" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-            <!-- Actual Comments List -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvComicComments"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_medium"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/icComments"
-                android:nestedScrollingEnabled="false"
-                android:clipToPadding="false"
-                tools:itemCount="3"
-                tools:listitem="@layout/item_comment" />
+                        <ImageView
+                            android:id="@+id/icSynopsisStar"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="@drawable/bg_detail_section_icon"
+                            android:padding="7dp"
+                            android:src="@android:drawable/star_on"
+                            app:tint="@color/icon_yellow" />
 
-            <!-- Empty State for Comments List -->
-            <TextView
-                android:id="@+id/tvEmptyComicComments"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_medium"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/rvComicComments"
-                android:gravity="center"
-                android:visibility="gone"
-                android:textColor="@color/text_hint_gray"
-                android:textSize="@dimen/text_size_normal"
-                android:text="Chưa có bình luận nào. Hãy là người đầu tiên!" />
+                        <TextView
+                            android:id="@+id/txtSynopsisTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/margin_small"
+                            android:layout_weight="1"
+                            android:text="@string/title_synopsis"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_size_large"
+                            android:textStyle="bold" />
 
-            <!-- Comment Pagination Control -->
-            <LinearLayout
-                android:id="@+id/layoutCommentPagination"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_medium"
-                android:orientation="horizontal"
-                android:gravity="center"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvEmptyComicComments">
+                        <ImageView
+                            android:id="@+id/icSynopsisExpand"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/bg_detail_icon_button"
+                            android:padding="9dp"
+                            android:src="@android:drawable/arrow_down_float"
+                            app:tint="@color/text_secondary" />
+                    </LinearLayout>
 
-                <ImageButton
-                    android:id="@+id/btnPrevPage"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_media_previous"
-                    app:tint="@android:color/white"
-                    android:contentDescription="Previous Page" />
+                    <View
+                        android:id="@+id/btnExpandSynopsis"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true" />
+                </FrameLayout>
 
                 <TextView
-                    android:id="@+id/tvCurrentPage"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/txtSynopsis"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="16dp"
-                    android:textColor="@android:color/white"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    tools:text="Trang 1 / 1" />
-
-                <ImageButton
-                    android:id="@+id/btnNextPage"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_media_next"
-                    app:tint="@android:color/white"
-                    android:contentDescription="Next Page" />
+                    android:layout_marginTop="@dimen/margin_small"
+                    android:ellipsize="end"
+                    android:lineSpacingExtra="6dp"
+                    android:maxLines="3"
+                    android:textColor="@color/text_synopsis"
+                    android:textSize="@dimen/text_size_normal"
+                    tools:text="Bạn đang đọc truyện Tiên Nghịch full của tác giả Nhĩ Căn. Vương Lâm, một thiếu niên bình thường, bước vào con đường tu tiên..." />
             </LinearLayout>
 
-            <!-- Comment Input Section -->
+            <View
+                android:id="@+id/dividerSynopsis"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintEnd_toEndOf="@id/sectionSynopsis"
+                app:layout_constraintStart_toStartOf="@id/sectionSynopsis"
+                app:layout_constraintTop_toTopOf="@id/sectionSynopsis" />
+
             <LinearLayout
-                android:id="@+id/layoutCommentInput"
+                android:id="@+id/sectionChapters"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/margin_large"
                 android:layout_marginTop="@dimen/margin_medium"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
+                android:background="@drawable/bg_detail_section_surface"
+                android:orientation="vertical"
+                android:padding="@dimen/margin_medium"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/layoutCommentPagination">
+                app:layout_constraintTop_toBottomOf="@id/sectionSynopsis">
 
-                <EditText
-                    android:id="@+id/etComicComment"
-                    android:layout_width="0dp"
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/icChaptersLatest"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/bg_detail_section_icon"
+                        android:padding="7dp"
+                        android:src="@drawable/ic_book"
+                        app:tint="@color/icon_red" />
+
+                    <TextView
+                        android:id="@+id/txtChaptersTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/margin_small"
+                        android:layout_weight="1"
+                        android:text="@string/title_latest_chapters"
+                        android:textColor="@color/text_primary"
+                        android:textSize="@dimen/text_size_large"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/btnViewAllChapters"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_detail_text_button"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:paddingHorizontal="12dp"
+                        android:text="@string/action_view_all"
+                        android:textColor="@color/brand_primary"
+                        android:textSize="@dimen/text_size_small"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/icChaptersNext"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:visibility="gone"
+                        android:src="@drawable/baseline_arrow_forward_ios_24" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layoutChapters"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="Viết bình luận..."
-                    android:background="@drawable/bg_search_box"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="12dp"
-                    android:textColorHint="@color/text_hint_gray"
-                    android:textColor="@color/black"
-                    android:textSize="14sp"
-                    android:maxLines="4"
-                    android:inputType="textMultiLine" />
-
-                <ImageButton
-                    android:id="@+id/btnSendComicComment"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginStart="8dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_send"
-                    app:tint="@color/icon_light_blue"
-                    android:contentDescription="Send comment" />
+                    android:layout_marginTop="@dimen/margin_small"
+                    android:orientation="vertical" />
             </LinearLayout>
 
-            <!-- Similar Novels -->
-            <ImageView
-                android:id="@+id/icSimilar"
-                android:layout_width="@dimen/margin_xlarge"
-                android:layout_height="@dimen/margin_xlarge"
-                android:layout_marginTop="@dimen/margin_xxlarge"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/layoutCommentInput"
-                android:src="@android:drawable/ic_menu_sort_by_size"
-                app:tint="@color/icon_orange" />
+            <View
+                android:id="@+id/dividerChapters"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintEnd_toEndOf="@id/sectionChapters"
+                app:layout_constraintStart_toStartOf="@id/sectionChapters"
+                app:layout_constraintTop_toTopOf="@id/sectionChapters" />
 
-            <TextView
-                android:id="@+id/txtSimilarTitle"
+            <LinearLayout
+                android:id="@+id/sectionComments"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/margin_small"
-                app:layout_constraintBottom_toBottomOf="@id/icSimilar"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/icSimilar"
-                app:layout_constraintTop_toTopOf="@id/icSimilar"
-                android:textColor="@android:color/white"
-                android:textSize="@dimen/text_size_large"
-                android:text="@string/title_similar_novels"
-                android:textStyle="bold" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerSimilar"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/margin_large"
                 android:layout_marginTop="@dimen/margin_medium"
+                android:background="@drawable/bg_detail_section_surface"
+                android:orientation="vertical"
+                android:padding="@dimen/margin_medium"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/icSimilar"
-                android:clipToPadding="false" />
+                app:layout_constraintTop_toBottomOf="@id/sectionChapters">
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.core.widget.NestedScrollView>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-    <!-- Bottom Read Action -->
-    <LinearLayout
-        android:id="@+id/btnStartReading"
+                    <ImageView
+                        android:id="@+id/icComments"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/bg_detail_section_icon"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="7dp"
+                        android:src="@drawable/ic_comment"
+                        app:tint="@color/icon_cyan" />
+
+                    <TextView
+                        android:id="@+id/txtCommentsTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/margin_small"
+                        android:layout_weight="1"
+                        android:text="@string/title_comments"
+                        android:textColor="@color/text_primary"
+                        android:textSize="@dimen/text_size_large"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvComicComments"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/margin_small"
+                    android:clipToPadding="false"
+                    android:nestedScrollingEnabled="false"
+                    tools:itemCount="3"
+                    tools:listitem="@layout/item_comment" />
+
+                <TextView
+                    android:id="@+id/tvEmptyComicComments"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/margin_medium"
+                    android:drawableTop="@drawable/ic_comment"
+                    android:drawablePadding="@dimen/margin_small"
+                    android:gravity="center"
+                    android:paddingVertical="@dimen/margin_large"
+                    android:text="@string/empty_comments_detail"
+                    android:textColor="@color/text_hint_gray"
+                    android:textSize="@dimen/text_size_normal"
+                    android:visibility="gone"
+                    app:drawableTint="#4DFFFFFF" />
+
+                <LinearLayout
+                    android:id="@+id/layoutCommentPagination"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/margin_small"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <ImageButton
+                        android:id="@+id/btnPrevPage"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_detail_icon_button"
+                        android:contentDescription="Trang trước"
+                        android:padding="9dp"
+                        android:src="@android:drawable/ic_media_previous"
+                        app:tint="@color/text_secondary" />
+
+                    <TextView
+                        android:id="@+id/tvCurrentPage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="38dp"
+                        android:layout_marginHorizontal="@dimen/margin_medium"
+                        android:background="@drawable/bg_detail_text_button"
+                        android:gravity="center"
+                        android:minWidth="96dp"
+                        android:paddingHorizontal="14dp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="@dimen/text_size_small"
+                        android:textStyle="bold"
+                        tools:text="Trang 1 / 4" />
+
+                    <ImageButton
+                        android:id="@+id/btnNextPage"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_detail_icon_button"
+                        android:contentDescription="Trang sau"
+                        android:padding="9dp"
+                        android:src="@android:drawable/ic_media_next"
+                        app:tint="@color/text_secondary" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layoutCommentInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/margin_medium"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/etComicComment"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_detail_comment_input"
+                        android:hint="@string/hint_write_comment"
+                        android:inputType="textMultiLine"
+                        android:maxLines="4"
+                        android:minHeight="48dp"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="12dp"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint_gray"
+                        android:textSize="14sp" />
+
+                    <ImageButton
+                        android:id="@+id/btnSendComicComment"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="@dimen/margin_small"
+                        android:background="@drawable/bg_detail_send_button"
+                        android:contentDescription="@string/action_send_comment"
+                        android:padding="13dp"
+                        android:src="@drawable/ic_send"
+                        app:tint="@color/text_primary" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View
+                android:id="@+id/dividerComments"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintEnd_toEndOf="@id/sectionComments"
+                app:layout_constraintStart_toStartOf="@id/sectionComments"
+                app:layout_constraintTop_toTopOf="@id/sectionComments" />
+
+            <LinearLayout
+                android:id="@+id/sectionSimilar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/margin_large"
+                android:layout_marginTop="@dimen/margin_medium"
+                android:background="@drawable/bg_detail_section_surface"
+                android:orientation="vertical"
+                android:padding="@dimen/margin_medium"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/sectionComments">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/icSimilar"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/bg_detail_section_icon"
+                        android:padding="7dp"
+                        android:src="@android:drawable/ic_menu_sort_by_size"
+                        app:tint="@color/icon_orange" />
+
+                    <TextView
+                        android:id="@+id/txtSimilarTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/margin_small"
+                        android:layout_weight="1"
+                        android:text="@string/title_similar_novels"
+                        android:textColor="@color/text_primary"
+                        android:textSize="@dimen/text_size_large"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerSimilar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/margin_small"
+                    android:clipToPadding="false" />
+            </LinearLayout>
+
+            <View
+                android:id="@+id/dividerSimilar"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintEnd_toEndOf="@id/sectionSimilar"
+                app:layout_constraintStart_toStartOf="@id/sectionSimilar"
+                app:layout_constraintTop_toTopOf="@id/sectionSimilar" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.core.widget.NestedScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <FrameLayout
+        android:id="@+id/bottomReadBar"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/bottom_bar_height"
+        android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:background="@color/bg_start_reading"
-        android:clickable="true"
-        android:focusable="true">
+        android:background="@drawable/bg_detail_bottom_bar"
+        android:paddingHorizontal="@dimen/margin_large"
+        android:paddingTop="@dimen/margin_medium"
+        android:paddingBottom="@dimen/margin_large">
 
-        <TextView
-            android:id="@+id/txtStartReadingTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:textSize="@dimen/text_size_xlarge"
-            android:text="@string/action_start_reading"
-            android:textStyle="bold" />
+        <LinearLayout
+            android:id="@+id/btnStartReading"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:background="@drawable/bg_detail_read_button"
+            android:clickable="true"
+            android:elevation="8dp"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/margin_medium">
 
-        <TextView
-            android:id="@+id/txtStartReadingSubtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textColor="@color/text_subtitle_light"
-            android:textSize="@dimen/text_size_small"
-            tools:text="Chương 1" />
-    </LinearLayout>
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_book"
+                app:tint="@color/text_primary" />
 
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/margin_medium_small"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/txtStartReadingTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="@string/action_start_reading"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_size_medium"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/txtStartReadingSubtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="@dimen/text_size_small"
+                    tools:text="Chương 1" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/baseline_arrow_forward_ios_24"
+                app:tint="@color/text_primary" />
+        </LinearLayout>
+    </FrameLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

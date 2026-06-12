@@ -67,9 +67,9 @@ public class ChapterServiceImpl implements ChapterService {
 
     private void notifyAdmins(Comic comic, Chapter chapter, com.datn.backend.entity.User uploader) {
         List<com.datn.backend.entity.User> admins = userRepository.findByRole(com.datn.backend.entity.enums.Role.ADMIN);
-        String message = "Uploader " + uploader.getDisplayName() + " vừa tải lên chương " + chapter.getTitle() + " cho truyện " + comic.getTitle() + ". Vui lòng kiểm duyệt.";
+        String message = String.format(com.datn.backend.constant.NotificationConstants.MSG_NEW_CHAPTER, uploader.getDisplayName(), chapter.getTitle(), comic.getTitle());
         for (com.datn.backend.entity.User admin : admins) {
-            notificationService.sendSystemNotification(admin, "Có chương mới chờ duyệt", message, com.datn.backend.entity.enums.NotificationType.NEW_CHAPTER, "/admin/approval-queue");
+            notificationService.sendSystemNotification(admin, com.datn.backend.constant.NotificationConstants.TITLE_NEW_CHAPTER, message, com.datn.backend.entity.enums.NotificationType.NEW_CHAPTER, "/admin/approval-queue");
         }
     }
 
@@ -475,9 +475,15 @@ public class ChapterServiceImpl implements ChapterService {
         return chapterRepository.findByComicIdOrderBySortOrderAsc(comicId);
     }
 
-    @Override
     @Transactional(readOnly = true)
     public List<ChapterPage> getChapterPages(Integer chapterId) {
         return chapterPageRepository.findByChapterIdOrderByPageNumberAsc(chapterId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Chapter getChapterById(Integer chapterId) {
+        return chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new ResourceNotFoundException("Chapter", "id", chapterId));
     }
 }

@@ -1,0 +1,40 @@
+@startuml
+autonumber
+skinparam sequenceMessageAlign center
+
+actor "Người đăng truyện\n(Uploader)" as Uploader
+participant "Web Admin\n(ReactJS)" as Web
+participant "ComicAdminController" as Controller
+participant "AWS S3" as S3
+database "MySQL DB" as DB
+
+Uploader -> Web: Nhập thông tin truyện (Tên, Thể loại...)\n& Chọn file Ảnh bìa
+activate Web
+Uploader -> Web: Nhấn "Lưu truyện"
+
+Web -> Controller: POST /api/admin/comics\n(FormData: ComicInfo, ThumbnailFile)
+activate Controller
+
+Controller -> S3: Upload file Ảnh bìa lên Bucket
+activate S3
+S3 --> Controller: URL Ảnh bìa công khai
+deactivate S3
+
+Controller -> DB: INSERT INTO comics\n(title, thumbnail_url, status='DRAFT', uploader_id)
+activate DB
+DB --> Controller: success (comic_id)
+deactivate DB
+
+Controller -> DB: INSERT INTO comic_genres, comic_tags
+activate DB
+DB --> Controller: success
+deactivate DB
+
+Controller -> DB: INSERT INTO upload_logs (Ghi log)
+
+Controller --> Web: 200 OK (Message: Tạo thành công)
+deactivate Controller
+
+Web --> Uploader: Thông báo thành công và\nchuyển về danh sách truyện
+deactivate Web
+@enduml

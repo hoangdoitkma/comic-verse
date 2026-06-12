@@ -35,6 +35,8 @@ public interface ChapterService {
     // Retrieve chapter entities (with IDs)  
     List<com.datn.backend.entity.Chapter> getChapterEntitiesByComic(Integer comicId);
 
-    // Get chapter pages (images) sorted by page number
     List<com.datn.backend.entity.ChapterPage> getChapterPages(Integer chapterId);
+
+    // Get single chapter entity by ID
+    com.datn.backend.entity.Chapter getChapterById(Integer chapterId);
 }

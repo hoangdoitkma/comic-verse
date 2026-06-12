@@ -13,11 +13,16 @@ import {
   Unlock,
   Upload,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Tag,
+  Globe,
+  Clock,
+  Edit3
 } from 'lucide-react';
 import React from 'react';
 import comicService from '../../services/comicService';
 import CreateChapterModal from './CreateChapterModal';
+import EditComicModal from './EditComicModal';
 import ChapterViewer from './ChapterViewer';
 import { ToastContainer, useToast } from '../../components/Toast';
 import Pagination from '../../components/Pagination';
@@ -54,6 +59,32 @@ function AccessBadge({ type }) {
   );
 }
 
+function PublishBadge({ status }) {
+  const label = status === 'ONGOING' ? 'Đang ra' :
+                status === 'COMPLETED' ? 'Hoàn thành' :
+                status === 'HIATUS' ? 'Tạm ngưng' :
+                status === 'DROPPED' ? 'Hủy bỏ' : status;
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">
+      <Clock size={12} />
+      {label}
+    </span>
+  );
+}
+
+function OriginBadge({ origin }) {
+  const label = origin === 'KOREA' ? 'Manhwa' :
+                origin === 'JAPAN' ? 'Manga' :
+                origin === 'CHINA' ? 'Manhua' :
+                origin === 'VIETNAM' ? 'Việt Nam' :
+                origin === 'GLOBAL' ? 'Global' : origin;
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-fuchsia-500/15 text-fuchsia-400 border border-fuchsia-500/20">
+      <Globe size={12} />{label}
+    </span>
+  );
+}
+
 // Skeleton for chapter table row
 function ChapterSkeletonRow() {
   return (
@@ -77,6 +108,7 @@ export default function ComicDetailPage() {
   const [loadingComic, setLoadingComic] = useState(true);
   const [loadingChapters, setLoadingChapters] = useState(true);
   const [showChapterModal, setShowChapterModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [deletingChapter, setDeletingChapter] = useState(null);
   const { toasts, addToast, dismissToast } = useToast();
@@ -98,6 +130,17 @@ export default function ComicDetailPage() {
     };
     fetchComic();
   }, [comicId]);
+
+  const handleEditSuccess = async () => {
+    addToast('Cập nhật truyện thành công!', 'success');
+    try {
+      const comics = await comicService.getMyComics();
+      const found = (comics || []).find((c) => String(c.id) === String(comicId));
+      setComic(found || null);
+    } catch (err) {
+      console.error('Lỗi khi tải thông tin truyện:', err);
+    }
+  };
 
   // Fetch chapters
   useEffect(() => {
@@ -170,24 +213,45 @@ export default function ComicDetailPage() {
         contentType={comic?.contentType}
       />
 
+      {/* Edit Comic Modal */}
+      <EditComicModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSuccess={handleEditSuccess}
+        initialData={comic}
+      />
+
       {/* Back button + Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate('/uploader/comics')}
-          className="p-2 rounded-lg hover:bg-dark-800 text-dark-400 hover:text-white transition-all cursor-pointer"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold text-white">
-            {loadingComic ? (
-              <div className="h-7 w-48 rounded bg-dark-700 animate-pulse" />
-            ) : (
-              comic?.title || 'Không tìm thấy truyện'
-            )}
-          </h1>
-          <p className="text-sm text-dark-400 mt-0.5">Chi tiết & Quản lý chương</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/uploader/comics')}
+            className="p-2 rounded-lg hover:bg-dark-800 text-dark-400 hover:text-white transition-all cursor-pointer"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-white">
+              {loadingComic ? (
+                <div className="h-7 w-48 rounded bg-dark-700 animate-pulse" />
+              ) : (
+                comic?.title || 'Không tìm thấy truyện'
+              )}
+            </h1>
+            <p className="text-sm text-dark-400 mt-0.5">Chi tiết & Quản lý chương</p>
+          </div>
         </div>
+
+        {/* Edit Button */}
+        {!loadingComic && comic && (
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 border border-dark-700/50 text-white text-sm font-semibold transition-all duration-200 cursor-pointer"
+          >
+            <Edit3 size={16} />
+            <span className="hidden sm:inline">Chỉnh sửa</span>
+          </button>
+        )}
       </div>
 
       {/* Comic Info Card */}
@@ -213,15 +277,30 @@ export default function ComicDetailPage() {
             <div className="flex-1 space-y-4">
               <div className="flex items-center gap-3 flex-wrap">
                 <StatusBadge status={comic.status} />
+                <AccessBadge type={comic.accessType} />
+                {comic.publishStatus && <PublishBadge status={comic.publishStatus} />}
+                {comic.originCountry && <OriginBadge origin={comic.originCountry} />}
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/15 text-blue-400">
                   <FileText size={12} />
                   {comic.contentType || '—'}
                 </span>
+                {comic.contentType !== 'NOVEL' && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-violet-500/15 text-violet-400">
                   <Palette size={12} />
                   {comic.comicFormat || '—'}
                 </span>
+                )}
               </div>
+
+              {comic.genres && comic.genres.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-1 -ml-1">
+                  {comic.genres.map(g => (
+                    <span key={g.id} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-dark-800 text-dark-300 border border-dark-700">
+                      <Tag size={10} className="text-primary-500" /> {g.name}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {comic.synopsis && (
                 <p className="text-sm text-dark-400 leading-relaxed line-clamp-3">

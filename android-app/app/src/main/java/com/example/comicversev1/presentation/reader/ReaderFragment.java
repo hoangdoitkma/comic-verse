@@ -1,10 +1,13 @@
 package com.example.comicversev1.presentation.reader;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,6 +21,7 @@ import com.example.comicversev1.databinding.FragmentReaderBinding;
 import com.example.comicversev1.domain.entity.ChapterEntity;
 import com.example.comicversev1.domain.entity.ChapterItem;
 import com.example.comicversev1.presentation.novel.reader.BottomSheetChapterAdapter;
+import com.example.comicversev1.utils.ReaderSettings;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -45,6 +49,7 @@ public class ReaderFragment extends Fragment {
 
     private BottomSheetDialog chapterListSheet;
     private BottomSheetChapterAdapter chapterListAdapter;
+    private boolean autoLoadNextChapter = ReaderSettings.DEFAULT_COMIC_AUTO_LOAD_NEXT;
 
     @Nullable
     @Override
@@ -63,10 +68,14 @@ public class ReaderFragment extends Fragment {
 
         binding.recyclerView.setLayoutManager(layoutManager);
         binding.recyclerView.setAdapter(adapter);
+        applyReaderSettings();
 
-        adapter.setOnPageLongClickListener(chapterId -> {
+        adapter.setOnPageLongClickListener((chapterId, pageIndex, imageUrl) -> {
             com.example.comicversev1.presentation.shared.ReportChapterBottomSheet sheet = new com.example.comicversev1.presentation.shared.ReportChapterBottomSheet();
             sheet.setOnReportSubmitListener(request -> {
+                request.setReaderMode("COMIC");
+                request.setPageIndex(pageIndex);
+                request.setPageImageUrl(imageUrl);
                 viewModel.reportChapter(chapterId, request);
             });
             sheet.show(getChildFragmentManager(), "ReportChapterBottomSheet");
@@ -74,7 +83,6 @@ public class ReaderFragment extends Fragment {
 
         setupToolbar();
         setupBackButton();
-        setupCommentsButton();
         setupNavigationButtons();
         setupScrollListener();
         setupTouchZones();
@@ -153,37 +161,64 @@ public class ReaderFragment extends Fragment {
                 });
             }
         }
-        chapterListSheet.show();
-    }
 
-    private void setupCommentsButton() {
-        binding.btnComments.setOnClickListener(v -> {
-            if (currentVisibleChapterId > 0) {
-                com.example.comicversev1.presentation.comments.CommentsBottomSheetDialogFragment.newInstance(currentVisibleChapterId)
-                        .show(getChildFragmentManager(), "CommentsBottomSheet");
-            } else {
-                android.widget.Toast.makeText(requireContext(), "Đang tải chương...", android.widget.Toast.LENGTH_SHORT).show();
+        if (chapterListAdapter != null && currentVisibleChapterId != -1) {
+            chapterListAdapter.setCurrentChapterId(currentVisibleChapterId);
+            RecyclerView rv = chapterListSheet.findViewById(R.id.rv_chapter_list);
+            if (rv != null && chapterListAdapter.getChapters() != null) {
+                int currentIndex = -1;
+                for (int i = 0; i < chapterListAdapter.getChapters().size(); i++) {
+                    if (chapterListAdapter.getChapters().get(i).getId() == currentVisibleChapterId) {
+                        currentIndex = i;
+                        break;
+                    }
+                }
+                if (currentIndex != -1) {
+                    final int finalIndex = currentIndex;
+                    rv.post(() -> {
+                        RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
+                        if (layoutManager instanceof LinearLayoutManager) {
+                            ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(finalIndex, rv.getHeight() / 3);
+                        } else {
+                            rv.scrollToPosition(finalIndex);
+                        }
+                    });
+                }
             }
-        });
+        }
+
+        chapterListSheet.show();
     }
 
     private void setupTouchZones() {
         android.view.GestureDetector gestureDetector = new android.view.GestureDetector(requireContext(), new android.view.GestureDetector.SimpleOnGestureListener() {
             @Override
-            public boolean onSingleTapConfirmed(android.view.MotionEvent e) {
+            public boolean onSingleTapUp(android.view.MotionEvent e) {
                 int screenHeight = binding.recyclerView.getHeight();
+                int screenWidth = binding.recyclerView.getWidth();
+                float x = e.getX();
                 float y = e.getY();
+                
                 if (y < screenHeight / 3.0f) {
                     // Top zone: scroll up 1 page
-                    binding.recyclerView.smoothScrollBy(0, -screenHeight);
+                    binding.recyclerView.post(() -> binding.recyclerView.smoothScrollBy(0, -(int)(screenHeight * 0.9)));
                 } else if (y > screenHeight * 2.0f / 3.0f) {
                     // Bottom zone: scroll down 1 page
-                    binding.recyclerView.smoothScrollBy(0, screenHeight);
+                    binding.recyclerView.post(() -> binding.recyclerView.smoothScrollBy(0, (int)(screenHeight * 0.9)));
                 } else {
-                    // Middle zone: toggle topBar and bottomBar visibility
-                    boolean isVisible = binding.appBarLayout.getVisibility() == View.VISIBLE;
-                    binding.appBarLayout.setVisibility(isVisible ? View.GONE : View.VISIBLE);
-                    binding.bottomBar.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+                    // Middle zone row
+                    if (x < screenWidth / 3.0f) {
+                        // Left zone: Previous Chapter
+                        binding.btnPreviousChapter.performClick();
+                    } else if (x > screenWidth * 2.0f / 3.0f) {
+                        // Right zone: Next Chapter
+                        binding.btnNextChapter.performClick();
+                    } else {
+                        // Center zone: toggle topBar and bottomBar visibility
+                        boolean isVisible = binding.appBarLayout.getVisibility() == View.VISIBLE;
+                        binding.appBarLayout.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+                        binding.bottomBar.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+                    }
                 }
                 return true;
             }
@@ -269,11 +304,38 @@ public class ReaderFragment extends Fragment {
                 }
 
                 // Trigger load next chapter when near the end (5 items from bottom)
-                if (lastVisiblePosition >= totalItemCount - 5 && totalItemCount > 0) {
+                if (autoLoadNextChapter && lastVisiblePosition >= totalItemCount - 5 && totalItemCount > 0) {
                     viewModel.loadNextChapterIfNeeded();
                 }
             }
         });
+    }
+
+    private void applyReaderSettings() {
+        SharedPreferences prefs = requireActivity().getSharedPreferences(ReaderSettings.PREF_COMIC, Context.MODE_PRIVATE);
+        int imageSpacingDp = prefs.getInt(
+                ReaderSettings.KEY_COMIC_IMAGE_SPACING_DP,
+                ReaderSettings.DEFAULT_COMIC_IMAGE_SPACING_DP
+        );
+        boolean fitWidth = prefs.getBoolean(
+                ReaderSettings.KEY_COMIC_FIT_WIDTH,
+                ReaderSettings.DEFAULT_COMIC_FIT_WIDTH
+        );
+        boolean keepScreenOn = prefs.getBoolean(
+                ReaderSettings.KEY_COMIC_KEEP_SCREEN_ON,
+                ReaderSettings.DEFAULT_COMIC_KEEP_SCREEN_ON
+        );
+        autoLoadNextChapter = prefs.getBoolean(
+                ReaderSettings.KEY_COMIC_AUTO_LOAD_NEXT,
+                ReaderSettings.DEFAULT_COMIC_AUTO_LOAD_NEXT
+        );
+
+        adapter.applyReaderSettings(imageSpacingDp, fitWidth);
+        if (keepScreenOn) {
+            requireActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        } else {
+            requireActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
     }
 
     /**
@@ -322,7 +384,61 @@ public class ReaderFragment extends Fragment {
             }
 
             if (state.getError() != null && adapter.getItemCount() == 0) {
-                binding.txtChapterTitle.setText("Lỗi: " + state.getError());
+                if ("CHAPTER_DELETED".equals(state.getError())) {
+                    android.widget.Toast.makeText(requireContext(), "Truyện hoặc chương này đã bị gỡ!", android.widget.Toast.LENGTH_LONG).show();
+                    NavHostFragment.findNavController(this).navigateUp();
+                } else if ("VIP_REQUIRED".equals(state.getError()) || "VIP_REQUIRED_ANONYMOUS".equals(state.getError())) {
+                    boolean isAnonymous = "VIP_REQUIRED_ANONYMOUS".equals(state.getError());
+                    
+                    // Show a fake blurry/locked page background
+                    View vipLayout = binding.getRoot().findViewById(R.id.layoutVipBlocked);
+                    if (vipLayout != null) {
+                        vipLayout.setVisibility(View.VISIBLE);
+                        android.widget.ImageView imgBg = vipLayout.findViewById(R.id.imgVipBlockedBg);
+                        if (imgBg != null && viewModel.getCachedCoverUrl() != null && !viewModel.getCachedCoverUrl().isEmpty()) {
+                            com.bumptech.glide.Glide.with(requireContext())
+                                .load(viewModel.getCachedCoverUrl())
+                                .into(imgBg);
+                        }
+                    }
+                    
+                    com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet = new com.google.android.material.bottomsheet.BottomSheetDialog(requireContext());
+                    View sheetView = getLayoutInflater().inflate(R.layout.bottom_sheet_vip_required, null);
+                    bottomSheet.setContentView(sheetView);
+                    
+                    android.widget.TextView tvVipMessage = sheetView.findViewById(R.id.tvVipMessage);
+                    android.widget.TextView tvPrimaryAction = sheetView.findViewById(R.id.tvPrimaryAction);
+                    View btnPrimaryAction = sheetView.findViewById(R.id.btnPrimaryAction);
+                    View btnCancel = sheetView.findViewById(R.id.btnCancel);
+
+                    tvVipMessage.setText(isAnonymous ? "Chương này dành riêng cho tài khoản VIP. Bạn cần đăng nhập để tiếp tục." : "Chương này yêu cầu tài khoản VIP. Bạn có muốn nâng cấp tài khoản VIP ngay bây giờ không?");
+                    tvPrimaryAction.setText(isAnonymous ? "Đăng nhập" : "Nâng cấp ngay");
+                    
+                    btnPrimaryAction.setOnClickListener(v -> {
+                        bottomSheet.dismiss();
+                        if (isAnonymous) {
+                            NavHostFragment.findNavController(this).navigate(R.id.loginFragment);
+                        } else {
+                            NavHostFragment.findNavController(this).navigate(R.id.action_global_vipCenter);
+                        }
+                    });
+                    
+                    btnCancel.setOnClickListener(v -> {
+                        bottomSheet.dismiss();
+                        NavHostFragment.findNavController(this).navigateUp();
+                    });
+
+                    bottomSheet.setOnDismissListener(dialog -> {
+                        if (vipLayout != null) {
+                            vipLayout.setVisibility(View.GONE);
+                        }
+                    });
+
+                    bottomSheet.setCancelable(false);
+                    bottomSheet.show();
+                } else {
+                    binding.txtChapterTitle.setText("Lỗi: " + state.getError());
+                }
             }
         });
 
@@ -345,9 +461,29 @@ public class ReaderFragment extends Fragment {
                     chapterListSheet.dismiss();
                     viewModel.loadSpecificChapter(chapterId);
                 });
+                chapterListAdapter.setCurrentChapterId(currentVisibleChapterId);
                 RecyclerView rv = chapterListSheet.findViewById(R.id.rv_chapter_list);
                 if (rv != null) {
                     rv.setAdapter(chapterListAdapter);
+                    
+                    int currentIndex = -1;
+                    for (int i = 0; i < chapters.size(); i++) {
+                        if (chapters.get(i).getId() == currentVisibleChapterId) {
+                            currentIndex = i;
+                            break;
+                        }
+                    }
+                    if (currentIndex != -1) {
+                        final int finalIndex = currentIndex;
+                        rv.post(() -> {
+                            RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
+                            if (layoutManager instanceof LinearLayoutManager) {
+                                ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(finalIndex, rv.getHeight() / 3);
+                            } else {
+                                rv.scrollToPosition(finalIndex);
+                            }
+                        });
+                    }
                 }
             }
         });
@@ -443,6 +579,7 @@ public class ReaderFragment extends Fragment {
         if (viewTrackingTimer != null) {
             viewTrackingTimer.cancelTimer();
         }
+        requireActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.onDestroyView();
         binding = null;
     }

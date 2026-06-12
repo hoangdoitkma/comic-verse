@@ -13,11 +13,8 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.comicversev1.R;
-import com.example.comicversev1.data.api.ApiService;
-import com.example.comicversev1.data.model.NotificationDTO;
+import com.example.comicversev1.data.repository.NotificationRepository;
 import com.example.comicversev1.databinding.FragmentNotificationBinding;
-
-import java.util.List;
 
 import javax.inject.Inject;
 
@@ -30,7 +27,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 public class NotificationFragment extends Fragment {
 
     @Inject
-    ApiService apiService;
+    NotificationRepository notificationRepository;
 
     private FragmentNotificationBinding binding;
     private NotificationAdapter adapter;
@@ -84,18 +81,13 @@ public class NotificationFragment extends Fragment {
     private void loadNotifications() {
         binding.swipeRefresh.setRefreshing(true);
         disposables.add(
-                apiService.getNotifications()
+                notificationRepository.getNotifications()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(response -> {
+                        .subscribe(notifications -> {
                             binding.swipeRefresh.setRefreshing(false);
-                            if (response.isSuccess() && response.getData() != null) {
-                                List<NotificationDTO> notifications = response.getData();
-                                adapter.submitList(notifications);
-                                updateEmptyState(notifications.isEmpty());
-                            } else {
-                                updateEmptyState(true);
-                            }
+                            adapter.submitList(notifications);
+                            updateEmptyState(notifications.isEmpty());
                         }, error -> {
                             binding.swipeRefresh.setRefreshing(false);
                             updateEmptyState(true);
@@ -108,7 +100,7 @@ public class NotificationFragment extends Fragment {
 
     private void markAsRead(int notificationId, int position) {
         disposables.add(
-                apiService.markNotificationAsRead(notificationId)
+                notificationRepository.markAsRead(notificationId)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(() -> {
@@ -121,7 +113,7 @@ public class NotificationFragment extends Fragment {
 
     private void markAllAsRead() {
         disposables.add(
-                apiService.markAllNotificationsAsRead()
+                notificationRepository.markAllAsRead()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(() -> {

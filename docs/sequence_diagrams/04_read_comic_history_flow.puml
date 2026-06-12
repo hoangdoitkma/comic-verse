@@ -1,0 +1,54 @@
+@startuml
+autonumber
+skinparam sequenceMessageAlign center
+
+actor "Người dùng" as User
+participant "Android App" as App
+participant "ChapterController" as Controller
+participant "HistoryService" as HistoryService
+participant "AWS S3" as S3
+database "MySQL DB" as DB
+
+User -> App: Chọn đọc 1 chương truyện
+activate App
+
+App -> Controller: GET /api/chapters/{id}/content\n(Header: Bearer Token)
+activate Controller
+
+Controller -> DB: Kiểm tra thuộc tính chương (FREE/VIP)
+activate DB
+DB --> Controller: Chapter details (access_type)
+deactivate DB
+
+alt Chương VIP và User không có quyền VIP
+    Controller --> App: 403 Forbidden (Yêu cầu nâng cấp VIP)
+    App --> User: Hiển thị hộp thoại "Yêu cầu tài khoản VIP"
+else Chương FREE hoặc User là VIP
+    Controller -> DB: Lấy danh sách ảnh (chapter_pages)
+    activate DB
+    DB --> Controller: Danh sách URL ảnh S3
+    deactivate DB
+    
+    Controller --> App: 200 OK (Danh sách URLs)
+    
+    par Tải ảnh & Lưu lịch sử đồng thời
+        App -> S3: Yêu cầu tải hình ảnh từ URL
+        activate S3
+        S3 --> App: Trả về luồng ảnh
+        deactivate S3
+        App --> User: Render ảnh lên giao diện đọc
+        
+        App -> Controller: POST /api/history/update (Async)
+        Controller -> HistoryService: updateReadingHistory(userId, comicId, chapterId)
+        activate HistoryService
+        HistoryService -> DB: UPSERT bảng reading_history
+        activate DB
+        DB --> HistoryService: success
+        deactivate DB
+        HistoryService --> Controller: success
+        deactivate HistoryService
+    end
+end
+deactivate Controller
+deactivate App
+@enduml

@@ -43,6 +43,11 @@ const menuItems = [
     icon: Users,
   },
   {
+    label: 'Quản lý Truyện',
+    path: '/admin/comics',
+    icon: BookOpen,
+  },
+  {
     label: 'Quản lý Thể loại',
     path: '/admin/genres',
     icon: Layers,

@@ -35,11 +35,13 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public interface 
     OnPageLongClickListener {
-        void onLongClick(int chapterId);
+        void onLongClick(int chapterId, int pageIndex, String imageUrl);
     }
 
     private OnImageLoadStateListener imageLoadStateListener;
     private OnPageLongClickListener onPageLongClickListener;
+    private int imageSpacingPx = 0;
+    private boolean fitWidth = true;
 
     public void setOnImageLoadStateListener(OnImageLoadStateListener listener) {
         this.imageLoadStateListener = listener;
@@ -47,6 +49,12 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     public void setOnPageLongClickListener(OnPageLongClickListener listener) {
         this.onPageLongClickListener = listener;
+    }
+
+    public void applyReaderSettings(int imageSpacingDp, boolean fitWidth) {
+        this.imageSpacingPx = (int) (imageSpacingDp * Resources.getSystem().getDisplayMetrics().density);
+        this.fitWidth = fitWidth;
+        notifyDataSetChanged();
     }
 
     private static final int TYPE_PAGE = 0;
@@ -186,7 +194,12 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        ChapterImageItem item = items.get(position);
+        int adapterPosition = holder.getBindingAdapterPosition();
+        if (adapterPosition == RecyclerView.NO_POSITION || adapterPosition >= items.size()) {
+            return;
+        }
+
+        ChapterImageItem item = items.get(adapterPosition);
         if (holder instanceof PageViewHolder) {
             PageViewHolder pageHolder = (PageViewHolder) holder;
 
@@ -194,6 +207,8 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             // Ngăn chặn việc RecyclerView tưởng tất cả các trang đều vừa màn hình và ghim anchor về Item 0!
             int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
             pageHolder.imageView.setMinimumHeight(screenHeight / 2);
+            pageHolder.itemView.setPadding(0, 0, 0, imageSpacingPx);
+            pageHolder.imageView.setScaleType(fitWidth ? ImageView.ScaleType.FIT_CENTER : ImageView.ScaleType.CENTER_INSIDE);
 
             // Tối ưu Glide: 
             // 1. override SIZE_ORIGINAL chặn resize bậy bạ
@@ -231,7 +246,7 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             // Tải trước (Preload) 2 trang tiếp theo để lướt mượt không chờ mạng
             for (int i = 1; i <= 2; i++) {
-                int nextPos = position + i;
+                int nextPos = adapterPosition + i;
                 if (nextPos < items.size() && items.get(nextPos).type == TYPE_PAGE) {
                     Glide.with(pageHolder.itemView.getContext())
                          .load(items.get(nextPos).imageUrl)
@@ -251,7 +266,7 @@ public class ReaderPagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             // Long click to report
             pageHolder.imageView.setOnLongClickListener(v -> {
                 if (onPageLongClickListener != null) {
-                    onPageLongClickListener.onLongClick(item.chapterId);
+                    onPageLongClickListener.onLongClick(item.chapterId, item.imageIndexInChapter, item.imageUrl);
                     return true;
                 }
                 return false;

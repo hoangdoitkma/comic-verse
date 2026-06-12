@@ -9,10 +9,12 @@ import com.datn.backend.entity.ReadingHistory;
 import com.datn.backend.repository.ComicRepository;
 import com.datn.backend.repository.ReadingHistoryRepository;
 import com.datn.backend.service.public_api.PublicComicService;
+import com.datn.backend.service.public_api.RecommendationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,17 +26,31 @@ public class PublicComicServiceImpl implements PublicComicService {
 
     private final ComicRepository comicRepository;
     private final ReadingHistoryRepository readingHistoryRepository;
+    private final com.datn.backend.repository.ChapterRepository chapterRepository;
+    private final RecommendationService recommendationService;
 
     @Override
     public Page<ComicDTO> getComics(int page, int limit) {
-        Pageable pageable = PageRequest.of(page, limit);
-        return comicRepository.findAll(pageable).map(this::mapToDTO);
+        return searchComics(page, limit, null, null, null, null, null);
     }
 
     @Override
+    public Page<ComicDTO> searchComics(int page, int limit,
+                                       String keyword,
+                                       com.datn.backend.entity.enums.ContentType type,
+                                       com.datn.backend.entity.enums.OriginCountry country,
+                                       Integer genreId,
+                                       com.datn.backend.entity.enums.ComicStatus status) {
+        String normalizedKeyword = keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null;
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "updatedAt"));
+        return comicRepository.searchPublicComics(normalizedKeyword, type, country, genreId, status, pageable).map(this::mapToDTO);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ComicDetailDTO getComicDetail(String slug) {
-        Comic comic = comicRepository.findBySlug(slug)
-                .orElseThrow(() -> new RuntimeException("Comic not found"));
+        Comic comic = comicRepository.findBySlugAndIsDeletedFalse(slug)
+                .orElseThrow(() -> new com.datn.backend.exception.ResourceNotFoundException("Comic", "slug", slug));
 
         ComicDetailDTO dto = new ComicDetailDTO();
         // Mapping basic fields
@@ -48,6 +64,7 @@ public class PublicComicServiceImpl implements PublicComicService {
         dto.setStatus(comic.getStatus() != null ? comic.getStatus().name() : null);
         dto.setContentType(comic.getContentType() != null ? comic.getContentType().name() : null);
         dto.setComicFormat(comic.getComicFormat() != null ? comic.getComicFormat().name() : null);
+        dto.setAccessType(comic.getAccessType() != null ? comic.getAccessType().name() : "FREE");
         dto.setCreatedAt(comic.getCreatedAt());
         dto.setUpdatedAt(comic.getUpdatedAt());
 
@@ -59,39 +76,50 @@ public class PublicComicServiceImpl implements PublicComicService {
         if (comic.getAgeRating() != null) {
             dto.setAgeRating(comic.getAgeRating().getLabel());
         }
-        // Assuming genres mapping is complex or missing, we skip it for now or set empty
-        dto.setGenres(List.of());
+        
+        // Fetch actual genres from DB
+        if (comic.getComicGenres() != null) {
+            List<String> genres = comic.getComicGenres().stream()
+                    .map(cg -> cg.getGenre().getName())
+                    .collect(Collectors.toList());
+            dto.setGenres(genres);
+        } else {
+            dto.setGenres(List.of());
+        }
 
         return dto;
     }
 
     @Override
-    public HomeDataResponse getHomeContent(com.datn.backend.entity.enums.ContentType type) {
+    public HomeDataResponse getHomeContent(com.datn.backend.entity.enums.ContentType type, Integer userId) {
         List<ComicDTO> topTrending;
         List<ComicDTO> recentlyUpdated;
         List<ComicDTO> newComics;
         
         if (type == null) {
-            topTrending = comicRepository.findTop5ByOrderByViewCountDesc()
+            topTrending = comicRepository.findTop5ByIsDeletedFalseOrderByViewCountDesc()
                     .stream().map(this::mapToDTO).collect(Collectors.toList());
-            recentlyUpdated = comicRepository.findTop15ByOrderByUpdatedAtDesc()
+            recentlyUpdated = comicRepository.findTop15ByIsDeletedFalseOrderByUpdatedAtDesc()
                     .stream().map(this::mapToDTO).collect(Collectors.toList());
-            newComics = comicRepository.findTop10ByOrderByCreatedAtDesc()
+            newComics = comicRepository.findTop10ByIsDeletedFalseOrderByCreatedAtDesc()
                     .stream().map(this::mapToDTO).collect(Collectors.toList());
         } else {
-            topTrending = comicRepository.findTop5ByContentTypeOrderByViewCountDesc(type)
+            topTrending = comicRepository.findTop5ByContentTypeAndIsDeletedFalseOrderByViewCountDesc(type)
                     .stream().map(this::mapToDTO).collect(Collectors.toList());
-            recentlyUpdated = comicRepository.findTop15ByContentTypeOrderByUpdatedAtDesc(type)
+            recentlyUpdated = comicRepository.findTop15ByContentTypeAndIsDeletedFalseOrderByUpdatedAtDesc(type)
                     .stream().map(this::mapToDTO).collect(Collectors.toList());
-            newComics = comicRepository.findTop10ByContentTypeOrderByCreatedAtDesc(type)
+            newComics = comicRepository.findTop10ByContentTypeAndIsDeletedFalseOrderByCreatedAtDesc(type)
                     .stream().map(this::mapToDTO).collect(Collectors.toList());
         }
+
+        // Đề xuất dựa trên lịch sử đọc (hoặc fallback trending nếu chưa login)
+        List<ComicDTO> recommended = recommendationService.getRecommendedComics(userId, type);
 
         return HomeDataResponse.builder()
                 .topTrending(topTrending)
                 .recentlyUpdated(recentlyUpdated)
                 .newComics(newComics)
-                .recommended(topTrending) // Fallback for recommended
+                .recommended(recommended)
                 .build();
     }
 
@@ -100,7 +128,7 @@ public class PublicComicServiceImpl implements PublicComicService {
         if (comicIds == null || comicIds.isEmpty()) {
             return List.of();
         }
-        List<Comic> comics = comicRepository.findAllById(comicIds);
+        List<Comic> comics = comicRepository.findByIdInAndIsDeletedFalse(comicIds);
         return comics.stream().map(comic -> {
             ReadingHistoryInfoDTO dto = ReadingHistoryInfoDTO.builder()
                     .comicId(comic.getId())
@@ -130,12 +158,22 @@ public class PublicComicServiceImpl implements PublicComicService {
                 .thumbnailUrl(comic.getThumbnailUrl())
                 .viewCount(comic.getViewCount())
                 .averageRating(comic.getAverageRating())
-                .totalChapters(comic.getTotalChapters())
+                .totalChapters(comic.getTotalChapters() != null && comic.getTotalChapters() > 0 ? comic.getTotalChapters() : getChapterCountSafely(comic.getId()))
                 .status(comic.getStatus() != null ? comic.getStatus().name() : null)
                 .contentType(comic.getContentType() != null ? comic.getContentType().name() : null)
                 .comicFormat(comic.getComicFormat() != null ? comic.getComicFormat().name() : null)
+                .accessType(comic.getAccessType() != null ? comic.getAccessType().name() : "FREE")
                 .createdAt(comic.getCreatedAt())
                 .updatedAt(comic.getUpdatedAt())
                 .build();
+    }
+
+    private int getChapterCountSafely(Integer comicId) {
+        try {
+            Long count = chapterRepository.countByComicId(comicId);
+            return count != null ? count.intValue() : 0;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 }

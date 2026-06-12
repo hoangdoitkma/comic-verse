@@ -1,27 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:paddingHorizontal="20dp"
-    android:paddingVertical="16dp"
-    android:background="?attr/selectableItemBackground">
+    android:layout_marginTop="8dp"
+    android:background="@drawable/bg_detail_chapter_row"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:minHeight="72dp"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/txtChapterIndex"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="@drawable/bg_detail_chapter_index"
+        android:gravity="center"
+        android:textColor="@color/brand_primary"
+        android:textSize="@dimen/text_size_small"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="205" />
 
     <TextView
         android:id="@+id/txtChapterTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Chương 205"
-        android:textColor="@android:color/white"
-        android:textSize="16sp" />
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="10dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/text_size_normal"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@id/txtChapterDate"
+        app:layout_constraintEnd_toStartOf="@id/txtChapterAccess"
+        app:layout_constraintStart_toEndOf="@id/txtChapterIndex"
+        app:layout_constraintTop_toTopOf="@id/txtChapterIndex"
+        app:layout_constraintVertical_chainStyle="packed"
+        tools:text="Chương 205: Quyết chiến" />
 
     <TextView
         android:id="@+id/txtChapterDate"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
         android:layout_marginTop="4dp"
-        android:text="14/05/2020 07:04"
-        android:textColor="#888888"
-        android:textSize="12sp" />
+        android:layout_marginEnd="10dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/text_tertiary"
+        android:textSize="@dimen/text_size_small"
+        app:layout_constraintBottom_toBottomOf="@id/txtChapterIndex"
+        app:layout_constraintEnd_toStartOf="@id/txtChapterAccess"
+        app:layout_constraintStart_toEndOf="@id/txtChapterIndex"
+        app:layout_constraintTop_toBottomOf="@id/txtChapterTitle"
+        tools:text="Vừa cập nhật" />
 
-</LinearLayout>
+    <TextView
+        android:id="@+id/txtChapterAccess"
+        android:layout_width="wrap_content"
+        android:layout_height="28dp"
+        android:gravity="center"
+        android:minWidth="50dp"
+        android:paddingHorizontal="10dp"
+        android:textColor="@color/icon_green"
+        android:textSize="@dimen/text_size_tiny"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@id/txtChapterIndex"
+        app:layout_constraintEnd_toStartOf="@id/icChapterArrow"
+        app:layout_constraintTop_toTopOf="@id/txtChapterIndex"
+        tools:background="@drawable/bg_detail_access_free"
+        tools:text="FREE" />
+
+    <ImageView
+        android:id="@+id/icChapterArrow"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/baseline_arrow_forward_ios_24"
+        app:layout_constraintBottom_toBottomOf="@id/txtChapterIndex"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/txtChapterIndex"
+        app:tint="@color/text_tertiary" />
+</androidx.constraintlayout.widget.ConstraintLayout>

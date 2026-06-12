@@ -1,0 +1,48 @@
+@startuml
+autonumber
+skinparam sequenceMessageAlign center
+
+actor "Người dùng (User)" as User
+participant "Android App" as App
+participant "AuthController" as Controller
+participant "AuthenticationManager" as AuthManager
+participant "JwtProvider" as JwtToken
+database "MySQL DB" as DB
+
+User -> App: Nhập Email và Password
+activate App
+User -> App: Nhấn "Đăng nhập"
+
+App -> Controller: POST /api/auth/login\n(LoginRequest)
+activate Controller
+
+Controller -> AuthManager: authenticate(email, password)
+activate AuthManager
+
+AuthManager -> DB: Truy vấn User theo Email
+activate DB
+DB --> AuthManager: Trả về thông tin User & Encrypted Password
+deactivate DB
+
+AuthManager -> AuthManager: So sánh mật khẩu (BCrypt)
+alt Sai mật khẩu / Không tồn tại
+    AuthManager --> Controller: BadCredentialsException
+    Controller --> App: 401 Unauthorized
+    App --> User: Hiển thị "Tài khoản/Mật khẩu sai"
+else Xác thực thành công
+    AuthManager --> Controller: Authentication Object
+    deactivate AuthManager
+    
+    Controller -> JwtToken: generateToken(Authentication)
+    activate JwtToken
+    JwtToken --> Controller: Chuỗi Access Token (JWT)
+    deactivate JwtToken
+    
+    Controller --> App: 200 OK (LoginResponse: Token, UserInfo)
+    deactivate Controller
+    
+    App -> App: Lưu JWT vào SharedPreferences/DataStore
+    App --> User: Chuyển hướng vào Màn hình Trang chủ
+end
+deactivate App
+@enduml

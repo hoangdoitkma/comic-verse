@@ -17,6 +17,8 @@ rxandroid = "3.0.2"
 hilt = "2.52"
 paging = "3.3.2"
 glide = "4.16.0"
+credentials = "1.3.0"
+googleid = "1.1.1"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -45,6 +47,9 @@ paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.r
 paging-rxjava3 = { group = "androidx.paging", name = "paging-rxjava3", version.ref = "paging" }
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 glide-compiler = { group = "com.github.bumptech.glide", name = "compiler", version.ref = "glide" }
+credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
+credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentials" }
+googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

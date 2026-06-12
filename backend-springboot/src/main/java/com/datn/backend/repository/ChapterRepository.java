@@ -20,6 +20,8 @@ public interface ChapterRepository extends JpaRepository<Chapter, Integer> {
     @Query("SELECT COALESCE(MAX(c.chapterNumber), 0) FROM Chapter c WHERE c.comic.id = :comicId")
     BigDecimal findMaxChapterNumberByComicId(@Param("comicId") Integer comicId);
 
+    long countByComicId(Integer comicId);
+
     long countByCreatedAtBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
 
     @Query(value = "SELECT DATE(created_at) as date, COUNT(*) as amount " +

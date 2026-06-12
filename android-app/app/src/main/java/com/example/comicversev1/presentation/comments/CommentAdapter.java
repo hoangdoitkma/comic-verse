@@ -16,21 +16,14 @@ import com.bumptech.glide.Glide;
 import com.example.comicversev1.R;
 import com.example.comicversev1.data.model.CommentDTO;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentViewHolder> {
 
     private final Context context;
     private final List<CommentDTO> comments;
     private final OnCommentInteractionListener listener;
-    // Format returned from backend usually ISO 8601 like 2026-03-31T04:30:12
-    private final SimpleDateFormat apiFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
-
     public interface OnCommentInteractionListener {
         void onReplyClick(CommentDTO comment);
         void onLoadRepliesClick(CommentDTO comment, int position);
@@ -44,7 +37,9 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
     public void setComments(List<CommentDTO> newComments) {
         this.comments.clear();
-        this.comments.addAll(newComments);
+        if (newComments != null) {
+            this.comments.addAll(newComments);
+        }
         notifyDataSetChanged();
     }
 
@@ -72,9 +67,9 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
         CommentDTO comment = comments.get(position);
 
-        holder.tvUsername.setText(comment.getUserDisplayName());
-        holder.tvContent.setText(comment.getContent());
-        holder.tvTime.setText(formatTimeAgo(comment.getCreatedAt()));
+        holder.tvUsername.setText(safeUserName(comment.getUserDisplayName()));
+        holder.tvContent.setText(safeContent(comment.getContent()));
+        holder.tvTime.setText(CommentTimeFormatter.formatTimeAgo(comment.getCreatedAt()));
 
         if (comment.getUserAvatarUrl() != null && !comment.getUserAvatarUrl().isEmpty()) {
             Glide.with(context)
@@ -104,7 +99,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             } else {
                 holder.tvViewReplies.setVisibility(View.VISIBLE);
                 holder.rvReplies.setVisibility(View.GONE);
-                holder.tvViewReplies.setText("View all " + comment.getReplyCount() + " replies");
+                holder.tvViewReplies.setText("Xem tất cả " + comment.getReplyCount() + " phản hồi");
                 holder.tvViewReplies.setOnClickListener(v -> {
                     if (listener != null) listener.onLoadRepliesClick(comment, position);
                 });
@@ -117,30 +112,6 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     @Override
     public int getItemCount() {
         return comments.size();
-    }
-
-    private String formatTimeAgo(String timeStr) {
-        if (timeStr == null) return "";
-        try {
-            Date date = apiFormat.parse(timeStr);
-            if (date == null) return timeStr;
-            long timeMs = date.getTime();
-            long nowMs = System.currentTimeMillis();
-            long diffMs = nowMs - timeMs;
-            
-            // basic formatting
-            long minutes = diffMs / 60000;
-            if (minutes < 1) return "Just now";
-            if (minutes < 60) return minutes + "m ago";
-            long hours = minutes / 60;
-            if (hours < 24) return hours + "h ago";
-            long days = hours / 24;
-            if (days < 30) return days + "d ago";
-            
-            return new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(date);
-        } catch (ParseException e) {
-            return timeStr;
-        }
     }
 
     static class CommentViewHolder extends RecyclerView.ViewHolder {
@@ -168,8 +139,6 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         private final List<CommentDTO> replies;
         private final OnCommentInteractionListener listener;
         private final Integer parentCommentId;
-        private final SimpleDateFormat apiFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
-
         public ReplyAdapter(Context context, List<CommentDTO> replies, OnCommentInteractionListener listener, Integer parentCommentId) {
             this.context = context;
             this.replies = replies;
@@ -187,9 +156,9 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         @Override
         public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
             CommentDTO comment = replies.get(position);
-            holder.tvUsername.setText(comment.getUserDisplayName());
-            holder.tvContent.setText(comment.getContent());
-            holder.tvTime.setText(formatTime(comment.getCreatedAt()));
+            holder.tvUsername.setText(safeUserName(comment.getUserDisplayName()));
+            holder.tvContent.setText(safeContent(comment.getContent()));
+            holder.tvTime.setText(CommentTimeFormatter.formatTimeAgo(comment.getCreatedAt()));
 
             if (comment.getUserAvatarUrl() != null && !comment.getUserAvatarUrl().isEmpty()) {
                 Glide.with(context).load(comment.getUserAvatarUrl())
@@ -206,7 +175,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             holder.tvReply.setOnClickListener(v -> {
                 CommentDTO fakedParent = new CommentDTO();
                 fakedParent.setId(parentCommentId);
-                fakedParent.setUserDisplayName(comment.getUserDisplayName()); 
+                fakedParent.setUserDisplayName(safeUserName(comment.getUserDisplayName())); 
                 if (listener != null) listener.onReplyClick(fakedParent);
             });
         }
@@ -215,10 +184,13 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         public int getItemCount() {
             return replies.size();
         }
-        
-        private String formatTime(String timeStr) {
-            // similar to above
-            return timeStr; // Simplified for length
-        }
+    }
+
+    private static String safeUserName(String value) {
+        return value == null || value.trim().isEmpty() ? "Người đọc" : value.trim();
+    }
+
+    private static String safeContent(String value) {
+        return value == null ? "" : value;
     }
 }

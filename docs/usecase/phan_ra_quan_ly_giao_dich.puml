@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+
+actor "Quản trị viên\n(Admin)" as Admin
+
+usecase "Quản lý Gói VIP & Giao dịch" as MainUC
+
+usecase "Thêm/Sửa gói VIP" as UC_Package
+usecase "Xem danh sách giao dịch" as UC_Transactions
+usecase "Xem thống kê doanh thu" as UC_Revenue
+
+Admin --> MainUC
+
+MainUC ..> UC_Package : <<include>>
+MainUC ..> UC_Transactions : <<include>>
+MainUC ..> UC_Revenue : <<include>>
+
+@enduml

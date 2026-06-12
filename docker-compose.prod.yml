@@ -1,0 +1,43 @@
+services:
+  redis:
+    image: redis:7.4-alpine
+    command:
+      - sh
+      - -c
+      - redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}"
+    env_file:
+      - ./.env.production
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $${REDIS_PASSWORD} ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend-springboot
+    image: comic-verse-backend:prod
+    env_file:
+      - ./.env.production
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web-admin:
+    build:
+      context: ./web-admin
+      args:
+        VITE_API_BASE_URL: /api
+    image: comic-verse-web-admin:prod
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  redis_data:

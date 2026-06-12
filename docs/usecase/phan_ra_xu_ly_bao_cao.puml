@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+
+actor "Người đăng truyện\n(Uploader)" as Uploader
+
+usecase "Xử lý báo cáo lỗi chương" as MainUC
+
+usecase "Xem danh sách báo cáo chờ xử lý" as UC_List
+usecase "Xác nhận đã khắc phục (Resolve)" as UC_Resolve
+usecase "Từ chối báo cáo (Reject)" as UC_Reject
+
+Uploader --> MainUC
+
+MainUC ..> UC_List : <<include>>
+MainUC ..> UC_Resolve : <<include>>
+MainUC ..> UC_Reject : <<include>>
+
+@enduml

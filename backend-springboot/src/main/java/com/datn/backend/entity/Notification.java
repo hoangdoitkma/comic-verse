@@ -43,4 +43,11 @@ public class Notification {
 
     @Column(name = "redirect_url", length = 500)
     private String redirectUrl;
+
+    @Column(name = "is_broadcast")
+    @Builder.Default
+    private Boolean isBroadcast = false;
+
+    @Column(name = "batch_id", length = 50)
+    private String batchId;
 }

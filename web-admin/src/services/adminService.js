@@ -145,11 +145,62 @@ const adminService = {
   // ==================== TRANSACTIONS ====================
 
   /**
-   * Lấy danh sách giao dịch VIP
+   * Lấy danh sách giao dịch (phân trang)
    * GET /api/admin/transactions?page=0&size=10
    */
   getTransactions: async (params = {}) => {
     const response = await axiosClient.get('/admin/transactions', { params });
+    return response.data;
+  },
+
+  // ==================== COMICS ====================
+
+  /**
+   * Lấy danh sách toàn bộ truyện (Admin)
+   * GET /api/admin/comics?page=0&size=10
+   */
+  getAllComicsForAdmin: async (params = {}) => {
+    const response = await axiosClient.get('/admin/comics', { params });
+    return response.data;
+  },
+
+  /**
+   * Tạo truyện mới (Admin làm Uploader)
+   * POST /api/admin/comics
+   */
+  createComic: async (data) => {
+    const response = await axiosClient.post('/admin/comics', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Sửa truyện
+   * PUT /api/admin/comics/{id}
+   */
+  updateComic: async (comicId, data) => {
+    const response = await axiosClient.put(`/admin/comics/${comicId}`, data);
+    return response.data;
+  },
+
+  /**
+   * Xóa truyện (Soft delete)
+   * DELETE /api/admin/comics/{id}
+   */
+  deleteComic: async (comicId) => {
+    const response = await axiosClient.delete(`/admin/comics/${comicId}`);
+    return response.data;
+  },
+
+  /**
+   * Khôi phục truyện
+   * POST /api/admin/comics/{id}/restore
+   */
+  restoreComic: async (comicId) => {
+    const response = await axiosClient.post(`/admin/comics/${comicId}/restore`);
     return response.data;
   },
 };

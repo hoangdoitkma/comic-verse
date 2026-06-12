@@ -28,7 +28,7 @@
             android:id="@+id/tvCommentCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Comments"
+            android:text="Bình luận"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
@@ -75,7 +75,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="Be the first to comment!"
+            android:text="Chưa có bình luận nào. Hãy là người đầu tiên!"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:visibility="gone" />
     </FrameLayout>
@@ -97,7 +97,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_media_previous"
             app:tint="?attr/colorOnSurfaceVariant"
-            android:contentDescription="Previous Page" />
+            android:contentDescription="Trang trước" />
 
         <TextView
             android:id="@+id/tvCurrentPage"
@@ -116,7 +116,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_media_next"
             app:tint="?attr/colorOnSurfaceVariant"
-            android:contentDescription="Next Page" />
+            android:contentDescription="Trang sau" />
     </LinearLayout>
 
     <View
@@ -139,7 +139,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/bg_search_box"
-            android:hint="Write a comment..."
+            android:hint="Viết bình luận..."
             android:paddingHorizontal="16dp"
             android:paddingVertical="12dp"
             android:textColorHint="?attr/colorOnSurfaceVariant"

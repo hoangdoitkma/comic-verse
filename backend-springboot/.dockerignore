@@ -1,0 +1,13 @@
+target
+*.log
+*.jar
+*.war
+*.ear
+.mvn
+.env
+.env.*
+compile_errors*.txt
+compile_output.txt
+out*.txt
+run_test*.txt
+c_log.txt

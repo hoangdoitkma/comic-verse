@@ -5,8 +5,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -17,22 +19,14 @@ import com.example.comicversev1.data.model.ChapterReportRequest;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 public class ReportChapterBottomSheet extends BottomSheetDialogFragment {
 
     private EditText etReportReason;
+    private Spinner spReportType;
     private View btnSubmitReport;
 
     private OnReportSubmitListener listener;
-
-    // Currently selected type code
-    private String selectedTypeCode = null;
-    // Map from view ID → type code
-    private final Map<Integer, String> typeMap = new LinkedHashMap<>();
-    // All clickable type views
-    private LinearLayout[] typeViews;
+    private String selectedTypeCode;
 
     public interface OnReportSubmitListener {
         void onSubmit(ChapterReportRequest request);
@@ -45,7 +39,6 @@ public class ReportChapterBottomSheet extends BottomSheetDialogFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Make background transparent so our custom bg_report_sheet is visible
         setStyle(STYLE_NORMAL, com.google.android.material.R.style.Theme_Design_BottomSheetDialog);
     }
 
@@ -54,8 +47,8 @@ public class ReportChapterBottomSheet extends BottomSheetDialogFragment {
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         BottomSheetDialog dialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
         dialog.setOnShowListener(d -> {
-            BottomSheetDialog bsd = (BottomSheetDialog) d;
-            View bottomSheet = bsd.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            BottomSheetDialog bottomSheetDialog = (BottomSheetDialog) d;
+            View bottomSheet = bottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
             if (bottomSheet != null) {
                 bottomSheet.setBackgroundResource(android.R.color.transparent);
             }
@@ -74,61 +67,79 @@ public class ReportChapterBottomSheet extends BottomSheetDialogFragment {
         super.onViewCreated(view, savedInstanceState);
 
         etReportReason = view.findViewById(R.id.etReportReason);
+        spReportType = view.findViewById(R.id.spReportType);
         btnSubmitReport = view.findViewById(R.id.btnSubmitReport);
 
-        // Build type mapping
-        typeMap.put(R.id.reportTypeImage, "IMAGE_NOT_LOADING");
-        typeMap.put(R.id.reportTypeWrongContent, "WRONG_CONTENT");
-        typeMap.put(R.id.reportTypeTypo, "TYPO_ERROR");
-        typeMap.put(R.id.reportTypeDuplicate, "DUPLICATE_CHAPTER");
-        typeMap.put(R.id.reportTypeOther, "OTHER");
+        setupReportTypes();
+        updateSubmitState();
 
-        // Find all type views
-        typeViews = new LinearLayout[]{
-                view.findViewById(R.id.reportTypeImage),
-                view.findViewById(R.id.reportTypeWrongContent),
-                view.findViewById(R.id.reportTypeTypo),
-                view.findViewById(R.id.reportTypeDuplicate),
-                view.findViewById(R.id.reportTypeOther),
+        btnSubmitReport.setOnClickListener(v -> submitReport());
+    }
+
+    private void setupReportTypes() {
+        ReportTypeOption[] options = new ReportTypeOption[]{
+                new ReportTypeOption("Chọn loại lỗi", null),
+                new ReportTypeOption("Lỗi tải ảnh", "IMAGE_NOT_LOADING"),
+                new ReportTypeOption("Sai nội dung chương", "WRONG_CONTENT"),
+                new ReportTypeOption("Lỗi chính tả", "TYPO_ERROR"),
+                new ReportTypeOption("Trùng chương", "DUPLICATE_CHAPTER"),
+                new ReportTypeOption("Khác", "OTHER")
         };
 
-        // Set click listeners on each type card
-        for (LinearLayout typeView : typeViews) {
-            typeView.setOnClickListener(v -> selectType(v.getId()));
-        }
-
-        // Submit button
-        btnSubmitReport.setOnClickListener(v -> {
-            if (selectedTypeCode == null) {
-                Toast.makeText(requireContext(), "Vui lòng chọn loại lỗi", Toast.LENGTH_SHORT).show();
-                return;
+        ArrayAdapter<ReportTypeOption> adapter = new ArrayAdapter<>(
+                requireContext(),
+                R.layout.item_report_type_spinner,
+                options
+        );
+        adapter.setDropDownViewResource(R.layout.item_report_type_spinner_dropdown);
+        spReportType.setAdapter(adapter);
+        spReportType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View itemView, int position, long id) {
+                selectedTypeCode = options[position].code;
+                updateSubmitState();
             }
 
-            String reason = etReportReason.getText().toString().trim();
-
-            if (listener != null) {
-                listener.onSubmit(new ChapterReportRequest(selectedTypeCode, reason));
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                selectedTypeCode = null;
+                updateSubmitState();
             }
-            dismiss();
         });
     }
 
-    /**
-     * Highlights the selected type card and deselects others.
-     */
-    private void selectType(int viewId) {
-        selectedTypeCode = typeMap.get(viewId);
+    private void submitReport() {
+        if (selectedTypeCode == null) {
+            Toast.makeText(requireContext(), "Chọn loại lỗi trước khi gửi", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        for (LinearLayout typeView : typeViews) {
-            boolean isSelected = typeView.getId() == viewId;
-            typeView.setSelected(isSelected);
+        String reason = etReportReason.getText().toString().trim();
+        if (listener != null) {
+            listener.onSubmit(new ChapterReportRequest(selectedTypeCode, reason));
+        }
+        dismiss();
+    }
 
-            // Animate a subtle scale to give tactile feedback
-            typeView.animate()
-                    .scaleX(isSelected ? 1.03f : 1.0f)
-                    .scaleY(isSelected ? 1.03f : 1.0f)
-                    .setDuration(150)
-                    .start();
+    private void updateSubmitState() {
+        boolean canSubmit = selectedTypeCode != null;
+        btnSubmitReport.setEnabled(canSubmit);
+        btnSubmitReport.setAlpha(canSubmit ? 1f : 0.55f);
+    }
+
+    private static class ReportTypeOption {
+        final String label;
+        final String code;
+
+        ReportTypeOption(String label, String code) {
+            this.label = label;
+            this.code = code;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return label;
         }
     }
 }

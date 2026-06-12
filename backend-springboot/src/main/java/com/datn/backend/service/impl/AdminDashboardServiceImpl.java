@@ -44,7 +44,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         LocalDateTime endDate = currentMonth.plusMonths(1).atDay(1).atStartOfDay();
 
         long newUsers = userRepository.countByCreatedAtBetween(startDate, endDate);
-        long newComics = comicRepository.countByCreatedAtBetween(startDate, endDate);
+        long newComics = comicRepository.countByCreatedAtBetweenAndIsDeletedFalse(startDate, endDate);
         
         BigDecimal revenue = transactionRepository.sumAmountByStatusAndDateRange(TransactionStatus.SUCCESS, startDate, endDate);
         if (revenue == null) {
@@ -124,7 +124,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         }
 
         // 6. Top Comics
-        List<Comic> topVipComics = comicRepository.findTop5ByOrderByViewCountDesc();
+        List<Comic> topVipComics = comicRepository.findTop5ByIsDeletedFalseOrderByViewCountDesc();
         List<TopComicsDto> topComics = topVipComics.stream().map(c -> 
             TopComicsDto.builder()
                 .id(c.getId())
@@ -161,7 +161,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         }).collect(Collectors.toList());
 
         // 8. Recent Comics (last 15 updated)
-        List<Comic> recentComicsEntities = comicRepository.findTop15ByOrderByUpdatedAtDesc();
+        List<Comic> recentComicsEntities = comicRepository.findTop15ByIsDeletedFalseOrderByUpdatedAtDesc();
         List<RecentComicsDto> recentComics = recentComicsEntities.stream().map(c ->
             RecentComicsDto.builder()
                 .id(c.getId())

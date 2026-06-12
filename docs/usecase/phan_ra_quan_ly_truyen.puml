@@ -1,0 +1,20 @@
+@startuml
+left to right direction
+
+actor "Người đăng truyện\n(Uploader)" as Uploader
+
+usecase "Quản lý Truyện (Cá nhân)" as MainUC
+
+usecase "Thêm truyện mới" as UC_Add
+usecase "Sửa thông tin truyện" as UC_Edit
+usecase "Xóa truyện" as UC_Delete
+usecase "Xem danh sách truyện" as UC_List
+
+Uploader --> MainUC
+
+MainUC ..> UC_Add : <<include>>
+MainUC ..> UC_Edit : <<include>>
+MainUC ..> UC_Delete : <<include>>
+MainUC ..> UC_List : <<include>>
+
+@enduml

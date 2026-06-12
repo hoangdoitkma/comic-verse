@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+
+actor "Khách\n(Guest)" as Guest
+actor "Thành viên\n(User)" as User
+
+usecase "Quản lý Lịch sử đọc" as MainUC
+
+usecase "Lưu tiến độ đọc ẩn danh (Room DB Local)" as UC_Local
+usecase "Đồng bộ lịch sử lên Server (API)" as UC_Sync
+
+Guest --> UC_Local
+User --> MainUC
+
+MainUC ..> UC_Local : <<include>>
+MainUC ..> UC_Sync : <<include>>
+
+@enduml

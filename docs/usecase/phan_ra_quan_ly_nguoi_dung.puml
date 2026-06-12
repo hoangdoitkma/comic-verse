@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+
+actor "Quản trị viên\n(Admin)" as Admin
+
+usecase "Quản lý Người dùng" as MainUC
+
+usecase "Xem danh sách người dùng" as UC_View
+usecase "Khóa/Mở khóa tài khoản" as UC_Ban
+usecase "Phân quyền (Cấp Role)" as UC_Role
+
+Admin --> MainUC
+
+MainUC ..> UC_View : <<include>>
+MainUC ..> UC_Ban : <<include>>
+MainUC ..> UC_Role : <<include>>
+
+@enduml

@@ -1,8 +1,11 @@
 package com.datn.backend.entity;
 
+import com.datn.backend.entity.enums.AccessType;
 import com.datn.backend.entity.enums.ComicFormat;
 import com.datn.backend.entity.enums.ComicStatus;
 import com.datn.backend.entity.enums.ContentType;
+import com.datn.backend.entity.enums.PublishStatus;
+import com.datn.backend.entity.enums.OriginCountry;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -54,8 +57,20 @@ public class Comic {
     private ComicFormat comicFormat;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "access_type", length = 20)
+    private AccessType accessType;
+
+    @Enumerated(EnumType.STRING)
     @Column(length = 30)
     private ComicStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "publish_status", length = 30)
+    private PublishStatus publishStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "origin_country", length = 50)
+    private OriginCountry originCountry;
 
     @Column(name = "total_chapters")
     private Integer totalChapters;
@@ -74,6 +89,10 @@ public class Comic {
     @Builder.Default
     private List<Chapter> chapters = new ArrayList<>();
 
+    @OneToMany(mappedBy = "comic", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ComicGenre> comicGenres = new ArrayList<>();
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -81,4 +100,8 @@ public class Comic {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
 }

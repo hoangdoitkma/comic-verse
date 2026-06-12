@@ -37,6 +37,12 @@ public class User {
     @Column(name = "avatar_url", columnDefinition = "TEXT")
     private String avatarUrl;
 
+    @Column(name = "auth_provider", length = 20)
+    private String authProvider;
+
+    @Column(name = "provider_id", length = 100)
+    private String providerId;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 8)
     private Role role;

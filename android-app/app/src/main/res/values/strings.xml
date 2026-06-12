@@ -1,12 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ComicVerseV1</string>
-    <string name="action_subscribe">Đăng ký</string>
+    <string name="app_name">ComicVerse</string>
+    <string name="action_subscribe">Yêu thích</string>
     <string name="action_report">Báo cáo</string>
-    <string name="action_start_reading">Tiếp tục đọc</string>
+    <string name="action_start_reading">Bắt đầu đọc</string>
     <string name="action_comment_now">Bình luận ngay</string>
-    <string name="title_synopsis">Nội dung:</string>
-    <string name="title_latest_chapters">Chương mới nhất:</string>
-    <string name="title_comments">Bình luận:</string>
+    <string name="action_view_all">Tất cả</string>
+    <string name="action_reply">Trả lời</string>
+    <string name="action_send_comment">Gửi bình luận</string>
+    <string name="hint_write_comment">Viết bình luận...</string>
+    <string name="title_synopsis">Nội dung</string>
+    <string name="title_latest_chapters">Chương mới nhất</string>
+    <string name="title_comments">Bình luận</string>
     <string name="empty_comments">Không có bình luận nào cả</string>
-    <string name="title_similar_novels">Cùng thể loại:</string>
+    <string name="empty_comments_detail">Chưa có bình luận nào. Hãy là người đầu tiên!</string>
+    <string name="title_similar_novels">Cùng thể loại</string>
 </resources>

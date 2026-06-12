@@ -7,6 +7,7 @@ import com.example.comicversev1.data.model.BaseResponse;
 import com.example.comicversev1.data.model.ChapterDetailDTO;
 import com.example.comicversev1.data.model.ComicDTO;
 import com.example.comicversev1.data.model.ComicDetailDTO;
+import com.example.comicversev1.data.model.GenreDTO;
 import com.example.comicversev1.data.model.ChapterItemDTO;
 import com.example.comicversev1.domain.entity.ChapterEntity;
 import com.example.comicversev1.domain.entity.ComicEntity;
@@ -37,7 +38,17 @@ public class ComicRepositoryImpl implements ComicRepository {
 
     @Override
     public Single<List<ComicEntity>> getComics(int page, int limit) {
-        return apiService.getComics(page, limit)
+        return getComics(page, limit, null, null);
+    }
+
+    @Override
+    public Single<List<ComicEntity>> getComics(int page, int limit, String keyword, String type) {
+        return getComics(page, limit, keyword, type, null, null, null);
+    }
+
+    @Override
+    public Single<List<ComicEntity>> getComics(int page, int limit, String keyword, String type, String country, Integer genreId, String status) {
+        return apiService.getComics(page, limit, keyword, type, country, genreId, status)
                 .flatMap(response -> {
                     List<ComicEntity> comics = mapComics(response.getData());
                     return cacheComics(comics).andThen(Single.just(comics));
@@ -46,7 +57,20 @@ public class ComicRepositoryImpl implements ComicRepository {
 
     @Override
     public Single<ComicDetailEntity> getComicDetail(String slug) {
-        return apiService.getComicDetail(slug).map(response -> mapComicDetail(response.getData()));
+        return apiService.getComicDetail(slug)
+                .map(response -> mapComicDetail(response.getData()))
+                .flatMap(detail -> {
+                    ComicCacheEntity e = new ComicCacheEntity();
+                    e.comicId = detail.getId();
+                    e.slug = detail.getSlug();
+                    e.title = detail.getTitle();
+                    e.coverImage = detail.getCoverImage();
+                    e.author = detail.getAuthorName();
+                    e.viewCount = detail.getViewCount();
+                    e.updatedAt = System.currentTimeMillis();
+                    return cacheDao.upsertAll(java.util.Collections.singletonList(e))
+                            .andThen(Single.just(detail));
+                });
     }
 
     @Override
@@ -55,8 +79,38 @@ public class ComicRepositoryImpl implements ComicRepository {
     }
 
     @Override
+    public Single<List<GenreDTO>> getGenres() {
+        return apiService.getGenres()
+                .map(response -> response.isSuccess() && response.getData() != null
+                        ? response.getData()
+                        : java.util.Collections.<GenreDTO>emptyList())
+                .onErrorReturnItem(java.util.Collections.emptyList());
+    }
+
+    @Override
     public Single<ChapterEntity> getChapterDetail(int chapterId) {
-        return apiService.getChapterContent(chapterId).map(response -> mapChapter(response.getData()));
+        return apiService.getChapterContent(chapterId)
+                .map(response -> mapChapter(response.getData()))
+                .onErrorResumeNext(throwable -> {
+                    if (throwable instanceof retrofit2.adapter.rxjava3.HttpException) {
+                        retrofit2.adapter.rxjava3.HttpException httpException = (retrofit2.adapter.rxjava3.HttpException) throwable;
+                        if (httpException.code() == 403) {
+                            try {
+                                String errorBody = httpException.response().errorBody() != null ? httpException.response().errorBody().string() : "";
+                                if (errorBody.contains("VIP_REQUIRED_ANONYMOUS")) {
+                                    return Single.error(new Exception("VIP_REQUIRED_ANONYMOUS"));
+                                } else if (errorBody.contains("VIP_REQUIRED_USER_NOT_FOUND")) {
+                                    return Single.error(new Exception("VIP_REQUIRED_ANONYMOUS"));
+                                } else if (errorBody.contains("VIP_REQUIRED_SUBSCRIPTION_EXPIRED")) {
+                                    return Single.error(new Exception("VIP_REQUIRED"));
+                                }
+                            } catch (Exception ignored) {
+                            }
+                            return Single.error(new Exception("VIP_REQUIRED"));
+                        }
+                    }
+                    return Single.error(throwable);
+                });
     }
 
     @Override
@@ -94,8 +148,8 @@ public class ComicRepositoryImpl implements ComicRepository {
     }
 
     private ComicEntity mapComic(ComicDTO dto) {
-        if (dto == null) return new ComicEntity(0, "", "", "");
-        return new ComicEntity(dto.getId(), dto.getSlug(), dto.getTitle(), dto.getCoverImage());
+        if (dto == null) return new ComicEntity(0, "", "", "", "FREE");
+        return new ComicEntity(dto.getId(), dto.getSlug(), dto.getTitle(), dto.getCoverImage(), dto.getAccessType() != null ? dto.getAccessType() : "FREE");
     }
 
     private ChapterEntity mapChapter(ChapterDetailDTO dto) {
@@ -110,17 +164,18 @@ public class ComicRepositoryImpl implements ComicRepository {
         List<ComicEntity> list = new ArrayList<>();
         if (entities == null) return list;
         for (ComicCacheEntity e : entities) {
-            list.add(new ComicEntity(e.comicId, e.slug, e.title, e.coverImage));
+            list.add(new ComicEntity(e.comicId, e.slug, e.title, e.coverImage, "FREE"));
         }
         return list;
     }
 
     private ComicDetailEntity mapComicDetail(ComicDetailDTO dto) {
-        if (dto == null) return new ComicDetailEntity(0, "", "", "", "", "", "", "", "", 0, new ArrayList<>());
+        if (dto == null) return new ComicDetailEntity(0, "", "", "", "", "", "", "", "", 0, new ArrayList<>(), "FREE");
         return new ComicDetailEntity(
             dto.getId(), dto.getSlug(), dto.getTitle(), dto.getCoverImage(), dto.getAiSummary(),
             dto.getSynopsis(), dto.getAuthorName(), dto.getStatus(), dto.getUpdatedAt(), dto.getViewCount(),
-            dto.getGenres() != null ? dto.getGenres() : new ArrayList<>()
+            dto.getGenres() != null ? dto.getGenres() : new ArrayList<>(),
+            dto.getAccessType() != null ? dto.getAccessType() : "FREE"
         );
     }
 

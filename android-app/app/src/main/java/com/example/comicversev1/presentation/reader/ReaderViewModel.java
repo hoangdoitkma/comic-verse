@@ -11,6 +11,7 @@ import com.example.comicversev1.data.local.dao.ReadingHistoryDao;
 import com.example.comicversev1.data.local.entity.ReadingHistoryEntity;
 import com.example.comicversev1.domain.entity.ChapterEntity;
 import com.example.comicversev1.domain.usecase.GetChapterDetailUseCase;
+import com.example.comicversev1.data.local.dao.ComicCacheDao;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,8 +26,7 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
-import com.example.comicversev1.data.api.ApiService;
-import com.example.comicversev1.data.model.ViewTrackingRequest;
+import com.example.comicversev1.data.repository.ReaderActionRepository;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,11 +37,19 @@ public class ReaderViewModel extends ViewModel {
 
     private final GetChapterDetailUseCase getChapterDetailUseCase;
     private final ReadingHistoryDao readingHistoryDao;
-    private final ApiService apiService;
+    private final ComicCacheDao comicCacheDao;
+    private final ReaderActionRepository readerActionRepository;
     private final CompositeDisposable disposables = new CompositeDisposable();
 
     private final int initialChapterId;
     private final int comicId;
+    
+    // Cached variables config UI for history
+    private String cachedComicTitle = "Comic";
+    private String cachedCoverUrl = "";
+    private String cachedSlug = "";
+    private String cachedAuthorName = "Unknown";
+    private long cachedViewCount = 0;
 
     // Track loaded chapters to avoid duplicates
     private final Set<Integer> loadedChapterIds = new HashSet<>();
@@ -88,13 +96,29 @@ public class ReaderViewModel extends ViewModel {
     @Inject
     public ReaderViewModel(GetChapterDetailUseCase getChapterDetailUseCase,
                            ReadingHistoryDao readingHistoryDao,
+                           ComicCacheDao comicCacheDao,
                            SavedStateHandle handle,
-                           ApiService apiService) {
+                           ReaderActionRepository readerActionRepository) {
         this.getChapterDetailUseCase = getChapterDetailUseCase;
         this.readingHistoryDao = readingHistoryDao;
-        this.apiService = apiService;
+        this.comicCacheDao = comicCacheDao;
+        this.readerActionRepository = readerActionRepository;
         this.initialChapterId = handle.get("chapterId");
         this.comicId = handle.get("comicId");
+
+        // Load cached properties for historic saves
+        disposables.add(comicCacheDao.getComicById(this.comicId)
+                .subscribeOn(Schedulers.io())
+                .subscribe(cached -> {
+                    this.cachedComicTitle = cached.title != null ? cached.title : "Truyện";
+                    this.cachedCoverUrl = cached.coverImage != null ? cached.coverImage : "";
+                    this.cachedSlug = cached.slug != null ? cached.slug : "";
+                    this.cachedAuthorName = cached.author != null ? cached.author : "Unknown";
+                    this.cachedViewCount = cached.viewCount;
+                }, throwable -> {
+                    Log.e(TAG, "Not found in comicCache: " + throwable.getMessage());
+                })
+        );
 
         setupSaveDebouncer();
 
@@ -107,7 +131,8 @@ public class ReaderViewModel extends ViewModel {
                 saveProgressSubject
                         .throttleLatest(1000, TimeUnit.MILLISECONDS) // Prevent rapid DB spam
                         .observeOn(Schedulers.io())
-                        .flatMapCompletable(entity -> readingHistoryDao.insertOrUpdate(entity))
+                        .flatMapCompletable(entity -> readingHistoryDao.insertOrUpdate(entity)
+                                .andThen(syncHistoryToServer(entity)))
                         .subscribe(
                                 () -> Log.d(TAG, ">>> DEBOUNCED SAVE OK"),
                                 throwable -> Log.e(TAG, ">>> DEBOUNCED SAVE FAILED: " + throwable.getMessage())
@@ -192,7 +217,32 @@ public class ReaderViewModel extends ViewModel {
                         }, throwable -> {
                             isLoadingMore = false;
                             if (isInitial) {
-                                _uiState.setValue(ReaderUiState.error(throwable.getMessage()));
+                                boolean is404 = false;
+                                boolean isVip = false;
+                                if (throwable instanceof com.example.comicversev1.data.model.NetworkException) {
+                                    if (((com.example.comicversev1.data.model.NetworkException) throwable).getErrorCode() == 404) is404 = true;
+                                } else if (throwable instanceof retrofit2.HttpException) {
+                                    if (((retrofit2.HttpException) throwable).code() == 404) is404 = true;
+                                    if (((retrofit2.HttpException) throwable).code() == 403) isVip = true;
+                                }
+
+                                if (throwable.getMessage() != null && throwable.getMessage().contains("VIP_REQUIRED")) {
+                                    isVip = true;
+                                }
+
+                                if (is404) {
+                                    _uiState.setValue(ReaderUiState.error("CHAPTER_DELETED"));
+                                    // Make sure it deletes history on background
+                                    disposables.add(readingHistoryDao.deleteHistoryByComicId(comicId).subscribeOn(Schedulers.io()).subscribe());
+                                } else if (isVip) {
+                                    if (throwable.getMessage() != null && throwable.getMessage().contains("VIP_REQUIRED_ANONYMOUS")) {
+                                        _uiState.setValue(ReaderUiState.error("VIP_REQUIRED_ANONYMOUS"));
+                                    } else {
+                                        _uiState.setValue(ReaderUiState.error("VIP_REQUIRED"));
+                                    }
+                                } else {
+                                    _uiState.setValue(ReaderUiState.error(throwable.getMessage()));
+                                }
                             }
                         })
         );
@@ -226,18 +276,12 @@ public class ReaderViewModel extends ViewModel {
         if (isChapterListLoaded) return;
         
         disposables.add(
-            apiService.getChaptersById(comicId)
+            readerActionRepository.getChaptersByComicId(comicId)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(response -> {
-                    if (response != null && response.getData() != null) {
-                        List<com.example.comicversev1.domain.entity.ChapterItem> list = new ArrayList<>();
-                        for (com.example.comicversev1.data.model.ChapterItemDTO dto : response.getData()) {
-                            list.add(new com.example.comicversev1.domain.entity.ChapterItem(dto.getId(), dto.getTitle(), dto.getAccessType()));
-                        }
-                        _chapterListEvent.setValue(list);
-                        isChapterListLoaded = true;
-                    }
+                .subscribe(list -> {
+                    _chapterListEvent.setValue(list);
+                    isChapterListLoaded = true;
                 }, throwable -> {
                     // Xử lý lỗi lấy danh sách chương nếu cần thiết
                     Log.e(TAG, "Lỗi fetch chapter list: " + throwable.getMessage());
@@ -256,12 +300,24 @@ public class ReaderViewModel extends ViewModel {
         entity.chapterId = chapterId;
         entity.pageIndex = pageIndex;
         entity.readAt = System.currentTimeMillis();
+        
+        entity.comicTitle = this.cachedComicTitle;
+        entity.coverUrl = this.cachedCoverUrl;
+        entity.slug = this.cachedSlug;
+        entity.comicType = "COMIC";
+        entity.authorName = this.cachedAuthorName;
+        entity.viewCount = this.cachedViewCount;
 
         int percent = 0;
         ChapterEntity chapter = getChapterById(chapterId);
-        if (chapter != null && chapter.getImages() != null && !chapter.getImages().isEmpty()) {
-            int totalPages = chapter.getImages().size();
-            percent = (int) (((pageIndex + 1) / (float) totalPages) * 100);
+        if (chapter != null) {
+            entity.chapterTitle = chapter.getTitle();
+            if (chapter.getImages() != null && !chapter.getImages().isEmpty()) {
+                int totalPages = chapter.getImages().size();
+                percent = (int) (((pageIndex + 1) / (float) totalPages) * 100);
+            }
+        } else {
+            entity.chapterTitle = "Chương " + chapterId;
         }
         entity.percent = percent;
 
@@ -299,6 +355,10 @@ public class ReaderViewModel extends ViewModel {
     public int getComicId() {
         return comicId;
     }
+    
+    public String getCachedCoverUrl() {
+        return cachedCoverUrl;
+    }
 
     /**
      * Save progress immediately asynchronously.
@@ -313,17 +373,30 @@ public class ReaderViewModel extends ViewModel {
         entity.chapterId = chapterId;
         entity.pageIndex = pageIndex;
         entity.readAt = System.currentTimeMillis();
+        
+        entity.comicTitle = this.cachedComicTitle;
+        entity.coverUrl = this.cachedCoverUrl;
+        entity.slug = this.cachedSlug;
+        entity.comicType = "COMIC";
+        entity.authorName = this.cachedAuthorName;
+        entity.viewCount = this.cachedViewCount;
 
         int percent = 0;
         ChapterEntity chapter = getChapterById(chapterId);
-        if (chapter != null && chapter.getImages() != null && !chapter.getImages().isEmpty()) {
-            int totalPages = chapter.getImages().size();
-            percent = (int) (((pageIndex + 1) / (float) totalPages) * 100);
+        if (chapter != null) {
+            entity.chapterTitle = chapter.getTitle();
+            if (chapter.getImages() != null && !chapter.getImages().isEmpty()) {
+                int totalPages = chapter.getImages().size();
+                percent = (int) (((pageIndex + 1) / (float) totalPages) * 100);
+            }
+        } else {
+            entity.chapterTitle = "Chương " + chapterId;
         }
         entity.percent = percent;
 
         // Fire and forget - not added to disposables so it completes even if ViewModel is cleared
         readingHistoryDao.insertOrUpdate(entity)
+                .andThen(syncHistoryToServer(entity))
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         () -> Log.d(TAG, ">>> ASYNC SAVED OK: comicId=" + entity.comicId + ", page=" + pageIndex),
@@ -331,10 +404,14 @@ public class ReaderViewModel extends ViewModel {
                 );
     }
 
+    private io.reactivex.rxjava3.core.Completable syncHistoryToServer(ReadingHistoryEntity entity) {
+        return readerActionRepository.syncReadingHistory(entity);
+    }
+
     public void trackChapterView(int chapterId) {
         if (comicId <= 0 || chapterId <= 0) return;
         disposables.add(
-                apiService.trackView(new ViewTrackingRequest(comicId, chapterId))
+                readerActionRepository.trackView(comicId, chapterId)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
@@ -346,7 +423,7 @@ public class ReaderViewModel extends ViewModel {
 
     public void reportChapter(int chapterId, com.example.comicversev1.data.model.ChapterReportRequest request) {
         disposables.add(
-                apiService.reportChapter(chapterId, request)
+                readerActionRepository.reportChapter(chapterId, request)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(

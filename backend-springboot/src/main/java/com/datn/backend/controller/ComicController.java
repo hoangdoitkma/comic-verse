@@ -32,10 +32,11 @@ public class ComicController {
         return ApiResponse.success(comics);
     }
 
-    @PutMapping("/{comicId}")
+    @PutMapping(value = "/{comicId}", consumes = { "multipart/form-data" })
     public ApiResponse<ComicResponse> updateComic(@PathVariable Integer comicId,
-                                                  @RequestBody ComicRequest request) {
-        ComicResponse response = comicService.updateComic(comicId, request);
+                                                  @ModelAttribute ComicRequest request,
+                                                  @RequestParam(value = "thumbnail", required = false) MultipartFile thumbnail) {
+        ComicResponse response = comicService.updateComic(comicId, request, thumbnail);
         return ApiResponse.success(response);
     }
 }

@@ -35,6 +35,24 @@ public class ChapterReport {
     @Column(columnDefinition = "TEXT")
     private String reason;
 
+    @Column(name = "reader_mode", length = 20)
+    private String readerMode;
+
+    @Column(name = "page_index")
+    private Integer pageIndex;
+
+    @Column(name = "paragraph_index")
+    private Integer paragraphIndex;
+
+    @Column(name = "content_snapshot", columnDefinition = "TEXT")
+    private String contentSnapshot;
+
+    @Column(name = "page_image_url_snapshot", columnDefinition = "TEXT")
+    private String pageImageUrlSnapshot;
+
+    @Column(name = "admin_notes", columnDefinition = "TEXT")
+    private String adminNotes;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     @Builder.Default

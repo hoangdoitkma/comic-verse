@@ -25,14 +25,63 @@ public class PaymentController {
     public ResponseEntity<?> createVipOrder(@RequestBody VipOrderRequest request, @AuthenticationPrincipal com.datn.backend.security.services.UserDetailsImpl userDetails) {
         try {
             Integer userId = userDetails.getId();
-            String checkoutUrl = payOsService.createVipPaymentLink(userId, request.getPackageId());
+            PayOsService.VipPaymentLink paymentLink = payOsService.createVipPaymentLink(userId, request.getPackageId());
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "checkoutUrl", checkoutUrl
+                    "checkoutUrl", paymentLink.checkoutUrl(),
+                    "orderCode", paymentLink.orderCode(),
+                    "paymentLinkId", paymentLink.paymentLinkId()
             ));
         } catch (Exception e) {
             log.error("Create VIP order failed", e);
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/confirm-vip-order")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> confirmVipOrder(@RequestBody ConfirmVipOrderRequest request,
+                                             @AuthenticationPrincipal com.datn.backend.security.services.UserDetailsImpl userDetails) {
+        try {
+            PayOsService.PaymentConfirmation confirmation =
+                    payOsService.confirmVipPayment(userDetails.getId(), request.getOrderCode());
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "vipActivated", confirmation.vipActivated(),
+                    "status", confirmation.status(),
+                    "message", confirmation.message()
+            ));
+        } catch (Exception e) {
+            log.error("Confirm VIP order failed", e);
+            String message = e.getMessage() != null ? e.getMessage() : "Confirm VIP order failed";
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "vipActivated", false,
+                    "message", message
+            ));
+        }
+    }
+
+    @PostMapping("/admin/confirm-vip-order")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> confirmVipOrderAsAdmin(@RequestBody ConfirmVipOrderRequest request) {
+        try {
+            PayOsService.PaymentConfirmation confirmation =
+                    payOsService.confirmVipPaymentAsAdmin(request.getOrderCode());
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "vipActivated", confirmation.vipActivated(),
+                    "status", confirmation.status(),
+                    "message", confirmation.message()
+            ));
+        } catch (Exception e) {
+            log.error("Admin confirm VIP order failed", e);
+            String message = e.getMessage() != null ? e.getMessage() : "Admin confirm VIP order failed";
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "vipActivated", false,
+                    "message", message
+            ));
         }
     }
 
@@ -53,5 +102,10 @@ public class PaymentController {
     public static class VipOrderRequest {
         private Integer packageId;
         private Integer userId; // Optional for testing if auth is not set up properly
+    }
+
+    @Data
+    public static class ConfirmVipOrderRequest {
+        private Long orderCode;
     }
 }

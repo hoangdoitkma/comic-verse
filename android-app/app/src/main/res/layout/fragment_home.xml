@@ -1,118 +1,141 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black">
+    android:background="@color/bg_dark_primary">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/black">
+        android:background="#E61A1D24"
+        app:elevation="0dp">
 
-        <com.google.android.material.appbar.MaterialToolbar
+        <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbarGreeting"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="72dp"
-            android:paddingHorizontal="20dp"
-            android:paddingTop="32dp"
-            android:paddingBottom="16dp"
-            android:background="@android:color/black"
+            android:minHeight="?attr/actionBarSize"
+            app:contentInsetStart="0dp"
             app:contentInsetStartWithNavigation="0dp"
-            app:contentInsetStart="0dp">
+            android:paddingHorizontal="@dimen/margin_medium"
+            android:paddingVertical="@dimen/margin_small">
 
-            <LinearLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content">
 
                 <de.hdodenhof.circleimageview.CircleImageView
                     android:id="@+id/imageAvatar"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
+                    android:layout_marginStart="8dp"
+                    android:clickable="true"
+                    android:contentDescription="Hồ sơ"
+                    android:focusable="true"
                     android:scaleType="centerCrop"
-                    android:src="@mipmap/ic_launcher" />
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    tools:src="@mipmap/ic_launcher" />
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/textGreetingTitle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:layout_marginStart="@dimen/margin_small"
+                    android:layout_marginEnd="@dimen/margin_small"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_size_small"
+                    app:layout_constraintStart_toEndOf="@id/imageAvatar"
+                    app:layout_constraintEnd_toStartOf="@id/btnBell"
+                    app:layout_constraintTop_toTopOf="@id/imageAvatar"
+                    app:layout_constraintBottom_toTopOf="@id/textGreetingSubtitle"
+                    app:layout_constraintVertical_chainStyle="packed"
+                    tools:text="Hi, Hàn Lập!" />
 
-                    <TextView
-                        android:id="@+id/textGreetingTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Hi, Hàn Lập!"
-                        android:textColor="@android:color/white"
-                        android:textSize="16sp" />
-
-                    <TextView
-                        android:id="@+id/textGreetingSubtitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Chào mừng trở lại ✨"
-                        android:textColor="@android:color/white"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                <TextView
+                    android:id="@+id/textGreetingSubtitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginStart="@dimen/margin_small"
+                    android:layout_marginEnd="@dimen/margin_small"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_size_large"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toEndOf="@id/imageAvatar"
+                    app:layout_constraintEnd_toStartOf="@id/btnBell"
+                    app:layout_constraintTop_toBottomOf="@id/textGreetingTitle"
+                    app:layout_constraintBottom_toBottomOf="@id/imageAvatar"
+                    tools:text="Chào mừng trở lại ✨" />
 
                 <!-- Bell Icon with Badge -->
                 <FrameLayout
                     android:id="@+id/btnBell"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:layout_marginStart="8dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
-                    android:focusable="true">
+                    android:focusable="true"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent">
 
                     <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                        android:layout_width="@dimen/icon_size_medium"
+                        android:layout_height="@dimen/icon_size_medium"
                         android:layout_gravity="center"
-                        android:src="@drawable/ic_bell" />
+                        android:src="@drawable/ic_bell"
+                        app:tint="@color/text_primary" />
 
                     <TextView
                         android:id="@+id/textBadge"
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
                         android:layout_gravity="top|end"
-                        android:layout_marginTop="2dp"
-                        android:layout_marginEnd="2dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginEnd="4dp"
                         android:background="@drawable/bg_notification_badge"
                         android:gravity="center"
                         android:text="0"
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="9sp"
                         android:textStyle="bold"
-                        android:visibility="gone" />
+                        android:visibility="gone"
+                        tools:visibility="visible" />
                 </FrameLayout>
-            </LinearLayout>
-        </com.google.android.material.appbar.MaterialToolbar>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerMain"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:paddingBottom="88dp"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerMain"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="@dimen/scroll_padding_bottom" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="@android:color/black"
-        app:itemIconTint="@android:color/white"
-        app:itemRippleColor="@android:color/white"
-        app:itemTextColor="@android:color/white"
-        app:menu="@menu/menu_home_bottom" />
+        android:background="#F21A1D24"
+        app:itemIconTint="@color/text_primary"
+        app:itemRippleColor="@color/text_secondary"
+        app:itemTextColor="@color/text_primary"
+        app:menu="@menu/menu_home_bottom"
+        app:elevation="16dp" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

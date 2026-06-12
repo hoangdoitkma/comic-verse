@@ -1,0 +1,37 @@
+@startuml
+autonumber
+skinparam sequenceMessageAlign center
+
+actor "Người dùng" as User
+participant "Android App" as App
+participant "ReportController" as Controller
+participant "ReportService" as Service
+database "MySQL DB" as DB
+
+User -> App: Đang đọc truyện, gặp lỗi
+User -> App: Nhấn biểu tượng "Báo cáo lỗi"
+activate App
+
+App --> User: Hiển thị form Báo cáo (Lý do, Mô tả)
+User -> App: Điền thông tin và nhấn "Gửi"
+
+App -> Controller: POST /api/reports\n(comicId, chapterId, reason)
+activate Controller
+
+Controller -> Service: createReport(request, userId)
+activate Service
+
+Service -> DB: INSERT INTO reports\n(user_id, comic_id, reason, status='PENDING')
+activate DB
+DB --> Service: success (report entity)
+deactivate DB
+
+Service --> Controller: ReportResponse
+deactivate Service
+
+Controller --> App: 200 OK (Message: Gửi báo cáo thành công)
+deactivate Controller
+
+App --> User: Hiển thị Toast "Cảm ơn bạn đã báo cáo"
+deactivate App
+@enduml

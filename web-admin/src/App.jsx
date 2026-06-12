@@ -19,6 +19,7 @@ import AuthorsPage from './pages/admin/AuthorsPage';
 import VipPackagesPage from './pages/admin/VipPackagesPage';
 import AdminComicApprovalPage from './pages/admin/AdminComicApprovalPage';
 import NotificationsPage from './pages/admin/NotificationsPage';
+import AdminComicsPage from './pages/admin/AdminComicsPage';
 
 // Shared
 import ChapterReportsPage from './pages/shared/ChapterReportsPage';
@@ -46,6 +47,7 @@ function App() {
             <Route path="users" element={<UsersPage />} />
             <Route path="genres" element={<GenresPage />} />
             <Route path="authors" element={<AuthorsPage />} />
+            <Route path="comics" element={<AdminComicsPage />} />
             <Route path="vip-packages" element={<VipPackagesPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="revenue" element={<RevenuePage />} />

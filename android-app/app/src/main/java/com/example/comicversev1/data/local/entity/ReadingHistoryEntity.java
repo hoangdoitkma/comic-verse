@@ -23,5 +23,25 @@ public class ReadingHistoryEntity {
 
     @ColumnInfo(name = "percent")
     public int percent;
-}
 
+    @ColumnInfo(name = "comic_title")
+    public String comicTitle;
+
+    @ColumnInfo(name = "chapter_title")
+    public String chapterTitle;
+
+    @ColumnInfo(name = "cover_url")
+    public String coverUrl;
+
+    @ColumnInfo(name = "slug")
+    public String slug;
+
+    @ColumnInfo(name = "author_name")
+    public String authorName;
+
+    @ColumnInfo(name = "view_count")
+    public long viewCount;
+
+    @ColumnInfo(name = "comic_type")
+    public String comicType;
+}

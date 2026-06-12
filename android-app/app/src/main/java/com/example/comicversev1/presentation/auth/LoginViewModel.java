@@ -40,6 +40,19 @@ public class LoginViewModel extends ViewModel {
         );
     }
 
+    public void loginWithGoogle(String idToken) {
+        _uiState.setValue(LoginUiState.loading());
+        disposables.add(
+                loginUseCase.executeGoogle(idToken)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                response -> _uiState.setValue(LoginUiState.success()),
+                                throwable -> _uiState.setValue(LoginUiState.error(throwable.getMessage()))
+                        )
+        );
+    }
+
     @Override
     protected void onCleared() {
         disposables.clear();

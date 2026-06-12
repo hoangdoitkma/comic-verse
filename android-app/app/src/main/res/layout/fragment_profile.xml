@@ -3,56 +3,74 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212">
+    android:background="@color/bg_dark_primary">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingBottom="88dp">
+        android:paddingBottom="@dimen/scroll_padding_bottom">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="@dimen/margin_medium">
 
             <!-- Profile Card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardProfile"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="#1E1E1E"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp">
+                app:cardBackgroundColor="@color/bg_dark_surface"
+                app:cardCornerRadius="@dimen/radius_large"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/stroke_divider">
 
-                <LinearLayout
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="20dp">
+                    android:padding="@dimen/margin_large">
 
                     <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@android:drawable/ic_menu_revert"
-                        app:tint="#FFFFFF" />
+                        android:id="@+id/btnBack"
+                        android:layout_width="@dimen/icon_size_medium"
+                        android:layout_height="@dimen/icon_size_medium"
+                        android:src="@drawable/baseline_arrow_back_24"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        app:tint="@color/text_primary"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/imageAvatar"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:src="@mipmap/ic_launcher"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent" />
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:layout_marginStart="@dimen/margin_medium"
+                        android:layout_marginEnd="@dimen/margin_medium"
+                        android:orientation="vertical"
+                        app:layout_constraintStart_toEndOf="@id/btnBack"
+                        app:layout_constraintEnd_toStartOf="@id/imageAvatar"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent">
 
                         <TextView
                             android:id="@+id/textProfileName"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Đăng nhập hoặc đăng ký"
-                            android:textColor="#FFFFFF"
-                            android:textSize="18sp"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_size_large"
                             android:textStyle="bold" />
 
                         <TextView
@@ -60,37 +78,39 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text=""
-                            android:textColor="#FFD700"
-                            android:textSize="14sp"
+                            android:background="@drawable/bg_rank_badge"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="2dp"
+                            android:text="Thành viên VIP"
+                            android:textColor="@color/icon_yellow"
+                            android:textSize="@dimen/text_size_small"
+                            android:textStyle="bold"
                             android:visibility="gone" />
                     </LinearLayout>
 
-                    <de.hdodenhof.circleimageview.CircleImageView
-                        android:id="@+id/imageAvatar"
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
-                        android:src="@mipmap/ic_launcher" />
-                </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginTop="@dimen/margin_xxlarge"
+                android:layout_marginBottom="@dimen/margin_small"
+                android:layout_marginStart="@dimen/margin_small"
                 android:text="Tính năng"
-                android:textColor="#B3B3B3"
-                android:textSize="16sp"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_size_medium"
                 android:textStyle="bold" />
 
             <!-- Features Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="#1E1E1E"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp">
+                app:cardBackgroundColor="@color/bg_dark_surface"
+                app:cardCornerRadius="@dimen/radius_medium"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/stroke_divider">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -98,25 +118,43 @@
                     android:orientation="vertical">
 
                     <include
+                        android:id="@+id/rowTheme"
+                        layout="@layout/item_setting_row" />
+                    
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/stroke_divider" />
+
+                    <include
+                        android:id="@+id/rowNotification"
+                        layout="@layout/item_setting_row" />
+                    
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/stroke_divider" />
+
+                    <include
                         android:id="@+id/rowReaderSettings"
                         layout="@layout/item_setting_row" />
                     
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2C2C2C" />
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/stroke_divider" />
 
                     <include
                         android:id="@+id/rowReadingHistory"
                         layout="@layout/item_setting_row" />
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2C2C2C" />
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/stroke_divider" />
 
                     <include
                         android:id="@+id/rowDownloadList"
                         layout="@layout/item_setting_row" />
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2C2C2C" />
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/stroke_divider" />
 
                     <include
                         android:id="@+id/rowClearCache"
+                        layout="@layout/item_setting_row" />
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/stroke_divider" />
+
+                    <include
+                        android:id="@+id/rowCheckUpdate"
                         layout="@layout/item_setting_row" />
 
                 </LinearLayout>
@@ -125,20 +163,23 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginTop="@dimen/margin_xlarge"
+                android:layout_marginBottom="@dimen/margin_small"
+                android:layout_marginStart="@dimen/margin_small"
                 android:text="Liên hệ và hỗ trợ"
-                android:textColor="#B3B3B3"
-                android:textSize="16sp"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_size_medium"
                 android:textStyle="bold" />
 
             <!-- Support Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="#1E1E1E"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp">
+                app:cardBackgroundColor="@color/bg_dark_surface"
+                app:cardCornerRadius="@dimen/radius_medium"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/stroke_divider">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -149,13 +190,13 @@
                         android:id="@+id/rowEmail"
                         layout="@layout/item_setting_row" />
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2C2C2C" />
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/stroke_divider" />
 
                     <include
                         android:id="@+id/rowFacebook"
                         layout="@layout/item_setting_row" />
 
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2C2C2C" />
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/stroke_divider" />
 
                     <include
                         android:id="@+id/rowWebsite"
@@ -168,47 +209,47 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="@dimen/margin_xxlarge"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:paddingHorizontal="16dp">
+                android:paddingHorizontal="@dimen/margin_medium">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Miễn trừ trách nhiệm"
-                    android:textColor="#FFFFFF"
-                    android:textSize="16sp"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_size_medium"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="@dimen/margin_small"
                     android:gravity="center"
                     android:text="Ứng dụng này cung cấp nội dung giải trí không chịu trách nhiệm pháp lý. Nguồn dữ liệu từ internet..."
-                    android:textColor="#888888"
-                    android:textSize="12sp" />
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="@dimen/text_size_small" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="@dimen/margin_medium"
                     android:text="Email: comicfan.official@gmail.com"
-                    android:textColor="#2196F3"
-                    android:textSize="14sp" />
+                    android:textColor="@color/icon_light_blue"
+                    android:textSize="@dimen/text_size_normal" />
 
                 <TextView
                     android:id="@+id/textVersion"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="@dimen/margin_medium"
                     android:background="@drawable/bg_version_badge"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="@dimen/margin_medium_small"
+                    android:paddingVertical="@dimen/margin_tiny"
                     android:text="Phiên bản: 1.0.0"
-                    android:textColor="#B3B3B3"
-                    android:textSize="12sp" />
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_size_tiny" />
             </LinearLayout>
 
         </LinearLayout>
@@ -217,12 +258,13 @@
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="@android:color/black"
-        app:itemIconTint="@android:color/white"
-        app:itemRippleColor="@android:color/white"
-        app:itemTextColor="@android:color/white"
-        app:menu="@menu/menu_home_bottom" />
+        android:background="#F21A1D24"
+        app:itemIconTint="@color/text_primary"
+        app:itemRippleColor="@color/text_secondary"
+        app:itemTextColor="@color/text_primary"
+        app:menu="@menu/menu_home_bottom"
+        app:elevation="16dp" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

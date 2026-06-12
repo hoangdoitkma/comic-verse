@@ -1,5 +1,7 @@
 package com.example.comicversev1.presentation.home;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,14 +18,15 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.comicversev1.R;
-import com.example.comicversev1.data.api.ApiService;
+import com.example.comicversev1.data.repository.NotificationRepository;
 import com.example.comicversev1.databinding.FragmentHomeBinding;
 import com.example.comicversev1.presentation.shared.adapter.AdSearchSectionAdapter;
+import com.example.comicversev1.utils.Constants;
+import com.bumptech.glide.Glide;
 
 import com.example.comicversev1.presentation.shared.adapter.HeroSectionAdapter;
 import com.example.comicversev1.presentation.shared.adapter.QuickActionSectionAdapter;
 import com.example.comicversev1.presentation.shared.adapter.ShelfSectionAdapter;
-import com.example.comicversev1.domain.entity.HomeContent;
 
 import javax.inject.Inject;
 
@@ -36,7 +39,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 public class HomeFragment extends Fragment {
 
     @Inject
-    ApiService apiService;
+    NotificationRepository notificationRepository;
 
     private FragmentHomeBinding binding;
     private HomeViewModel viewModel;
@@ -65,8 +68,14 @@ public class HomeFragment extends Fragment {
         heroAdapter = new HomeHeroAdapter();
         quickActionAdapter = new HomeQuickActionAdapter();
         quickActionAdapter.setOnItemClickListener(action -> {
-            if ("vip".equals(action.getId())) {
-                NavHostFragment.findNavController(this).navigate(R.id.action_global_vipCenter);
+            try {
+                if ("vip".equals(action.getId())) {
+                    androidx.navigation.Navigation.findNavController(requireView()).navigate(R.id.action_global_vipCenter);
+                } else if ("history".equals(action.getId())) {
+                    androidx.navigation.Navigation.findNavController(requireView()).navigate(R.id.action_global_historyFragment);
+                }
+            } catch (Exception e) {
+                android.widget.Toast.makeText(requireContext(), "Không thể mở: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
             }
         });
         recentAdapter = new RecentAdapter();
@@ -98,7 +107,7 @@ public class HomeFragment extends Fragment {
         });
 
         // Initialize wrapper section adapters
-        AdSearchSectionAdapter adSearchSection = new AdSearchSectionAdapter();
+        AdSearchSectionAdapter adSearchSection = new AdSearchSectionAdapter(query -> navigateToSearch(query, "COMIC"));
         HeroSectionAdapter heroSection = new HeroSectionAdapter(heroAdapter);
         QuickActionSectionAdapter quickActionSection = new QuickActionSectionAdapter(quickActionAdapter);
 
@@ -127,8 +136,26 @@ public class HomeFragment extends Fragment {
         binding.recyclerMain.setAdapter(concatAdapter);
     }
 
+    private void setupPullToRefresh() {
+        binding.swipeRefresh.setColorSchemeResources(R.color.brand_primary, R.color.brand_secondary);
+        binding.swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.bg_dark_surface_elevated);
+        binding.swipeRefresh.setOnRefreshListener(() -> {
+            viewModel.refresh();
+            fetchUnreadCount();
+        });
+    }
+
+    private void navigateToSearch(String query, String type) {
+        Bundle args = new Bundle();
+        args.putString("initialQuery", query);
+        args.putString("contentType", type);
+        NavHostFragment.findNavController(this).navigate(R.id.discoverFragment, args);
+    }
+
     private void observeState() {
         viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
+            binding.swipeRefresh.setRefreshing(false);
+            renderUserAvatar();
             binding.textGreetingTitle.setText(state.getGreetingTitle());
             binding.textGreetingSubtitle.setText(state.getGreetingSubtitle());
             
@@ -154,8 +181,11 @@ public class HomeFragment extends Fragment {
 
         // Observe local reading history (from Room DB + API enrichment)
         viewModel.recentlyReadCards().observe(getViewLifecycleOwner(), cards -> {
-            if (cards != null && !cards.isEmpty()) {
+            if (cards != null) {
                 recentAdapter.submitList(cards);
+                if (binding.recyclerMain.getAdapter() != null) {
+                    binding.recyclerMain.getAdapter().notifyDataSetChanged();
+                }
             }
         });
     }
@@ -167,6 +197,10 @@ public class HomeFragment extends Fragment {
             }
             if (item.getItemId() == R.id.menu_novel) {
                 NavHostFragment.findNavController(this).navigate(R.id.novelFragment);
+                return true;
+            }
+            if (item.getItemId() == R.id.menu_favorite) {
+                NavHostFragment.findNavController(this).navigate(R.id.favoriteFragment);
                 return true;
             }
             if (item.getItemId() == R.id.menu_more) {
@@ -187,6 +221,32 @@ public class HomeFragment extends Fragment {
         fetchUnreadCount();
     }
 
+    private void setupAvatarAction() {
+        binding.imageAvatar.setOnClickListener(v -> {
+            SharedPreferences prefs = requireActivity().getSharedPreferences(Constants.PREF_AUTH, Context.MODE_PRIVATE);
+            String token = prefs.getString(Constants.KEY_ACCESS_TOKEN, "");
+            if (token == null || token.isEmpty()) {
+                NavHostFragment.findNavController(this).navigate(R.id.loginFragment);
+            } else {
+                NavHostFragment.findNavController(this).navigate(R.id.profileDetailFragment);
+            }
+        });
+    }
+
+    private void renderUserAvatar() {
+        SharedPreferences prefs = requireActivity().getSharedPreferences(Constants.PREF_AUTH, Context.MODE_PRIVATE);
+        String avatarUrl = prefs.getString(Constants.KEY_AVATAR_URL, "");
+        if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
+            Glide.with(this)
+                    .load(avatarUrl)
+                    .placeholder(R.mipmap.ic_launcher)
+                    .error(R.mipmap.ic_launcher)
+                    .into(binding.imageAvatar);
+        } else {
+            binding.imageAvatar.setImageResource(R.mipmap.ic_launcher);
+        }
+    }
+
     private void fetchUnreadCount() {
         android.content.SharedPreferences prefs = requireActivity().getSharedPreferences(
                 com.example.comicversev1.utils.Constants.PREF_AUTH, android.content.Context.MODE_PRIVATE);
@@ -199,15 +259,10 @@ public class HomeFragment extends Fragment {
         }
 
         disposables.add(
-                apiService.getUnreadNotificationCount()
+                notificationRepository.getUnreadCount()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(response -> {
-                            if (response.isSuccess() && response.getData() != null) {
-                                long count = response.getData();
-                                updateBadge(count);
-                            }
-                        }, error -> {
+                        .subscribe(this::updateBadge, error -> {
                             // Silently ignore — badge just won't show
                             binding.textBadge.setVisibility(View.GONE);
                         })
@@ -226,11 +281,22 @@ public class HomeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
+        viewModel = new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
         setupRecyclerView();
+        setupPullToRefresh();
         setupBottomNav();
         setupNotificationBell();
+        setupAvatarAction();
+        renderUserAvatar();
         observeState();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (binding != null) {
+            renderUserAvatar();
+        }
     }
 
     @Override
@@ -240,4 +306,3 @@ public class HomeFragment extends Fragment {
         super.onDestroyView();
     }
 }
-

@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+
+actor "Thành viên\n(User)" as User
+
+usecase "Bình luận truyện" as MainUC
+
+usecase "Viết bình luận mới" as UC_Write
+usecase "Xóa bình luận của chính mình" as UC_Delete
+usecase "Xem bình luận của người khác" as UC_View
+
+User --> MainUC
+
+MainUC ..> UC_Write : <<include>>
+MainUC ..> UC_Delete : <<include>>
+MainUC ..> UC_View : <<include>>
+
+@enduml

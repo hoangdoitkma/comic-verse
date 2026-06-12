@@ -1,0 +1,224 @@
+# TÀI LIỆU PHÂN TÍCH HỆ THỐNG COMICVERSE
+
+Tài liệu phân tích chi tiết luồng hoạt động, kiến trúc, và các thành phần trong hệ thống đọc truyện ComicVerse dựa trên mã nguồn thực tế.
+
+---
+
+## 1. TỔNG QUAN KIẾN TRÚC HỆ THỐNG
+
+Hệ thống ComicVerse được thiết kế theo mô hình **Client-Server** truyền thống kết hợp với dịch vụ Cloud (AWS S3) để lưu trữ tĩnh.
+
+### Kiến trúc tổng thể:
+- **Client 1 (Android App):** Ứng dụng di động dành cho người dùng cuối (User) để duyệt, tìm kiếm và đọc truyện. Giao tiếp với Backend qua REST API.
+- **Client 2 (Web Admin/Uploader):** Ứng dụng SPA (Single Page Application) xây dựng bằng ReactJS. Dành cho Admin (Quản trị viên) và Uploader (Người đăng truyện).
+- **Backend (Spring Boot 3):** Xử lý logic nghiệp vụ, xác thực (Authentication), phân quyền (Authorization) và tương tác với Database.
+- **Database (MySQL):** Hệ quản trị cơ sở dữ liệu quan hệ, được host trên một EC2 instance riêng biệt (IP nội bộ: `172.31.46.47:3306`).
+- **Storage (AWS S3):** Lưu trữ toàn bộ ảnh avatar, ảnh bìa truyện (thumbnail), và ảnh nội dung từng trang truyện. Tên bucket: `comicverse-storage`.
+- **Payment Gateway:** Tích hợp PayOS để xử lý giao dịch nâng cấp VIP.
+
+### Giao tiếp giữa các thành phần:
+- **Android / Web -> Backend:** Sử dụng HTTP/REST (JSON data). Xác thực thông qua **JWT (JSON Web Token)**.
+- **Backend -> Database:** Sử dụng **Spring Data JPA / Hibernate** để ánh xạ Object-Relational (ORM).
+- **Backend -> AWS S3:** Sử dụng **AWS SDK for Java v2** (`S3Client`) để upload/delete file và tạo URL public truy cập ảnh.
+- **Android / Web -> AWS S3:** Client tải và hiển thị ảnh trực tiếp từ S3 public URL được Backend trả về.
+
+---
+
+## 2. PHÂN TÍCH API VÀ CÁC LAYER (API ANALYSIS)
+
+Các API được định nghĩa chi tiết tại `ApiService.java` (Android) và cấu trúc `controller` (Backend).
+
+### 2.1. Module Xác thực (Authentication)
+- **Endpoint:** `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/public/refresh`
+- **Controller:** `AuthController.java`
+- **Request Body:** `LoginRequest` (email, password)
+- **Response:** `LoginResponse` chứa `accessToken`, `refreshToken` và thông tin User.
+- **Luồng xử lý:** Client gửi credentials -> `AuthController` -> `AuthService` kiểm tra với DB qua `UserRepository` -> Tạo JWT token -> Trả về Client.
+
+### 2.2. Module Truyện và Nội dung (Comics & Chapters)
+- **Endpoint lấy danh sách:** `GET /api/comics`, `GET /api/comics/home`
+- **Endpoint chi tiết truyện:** `GET /api/comics/{slug}`
+- **Endpoint lấy danh sách chương:** `GET /api/comics/{slug}/chapters`
+- **Endpoint đọc chương truyện:** `GET /api/chapters/{id}`
+- **Controller xử lý:** `ComicController.java`, `ChapterController.java` / `PublicDataController.java`
+- **Response `ChapterDetailDTO`:** Trả về JSON chứa danh sách `pages`, mỗi page có `pageNumber` và `imageUrl` (URL của AWS S3).
+
+### 2.3. Module Lịch sử đọc & Tracking
+- **Endpoint:** `POST /api/reading-history`, `POST /api/tracking/view`
+- **Luồng xử lý:** Android App gọi ngầm (background) các API này khi user mở một chương truyện. Dữ liệu ghi vào bảng `reading_history` và `comic_view` qua `TrackingService.java`.
+
+### 2.4. Module Upload (Uploader/Admin)
+- **Endpoint tạo truyện:** `POST /api/uploader/comics`
+- **Endpoint upload chương (Bulk 2 bước):** 
+  + Bước 1: `POST /api/uploader/chapters/{comicId}/bulk-init` (Tạo meta-data, trả về danh sách mapping `pageId`).
+  + Bước 2: `POST /api/uploader/chapters/bulk-upload-page/{pageId}` (Upload file vật lý MultipartFile).
+- **Controller:** `ChapterController.java`
+- **Luồng xử lý Upload Ảnh:** Web gọi API kèm file -> `ChapterService` gọi `S3Service.uploadFileWithKey()` -> SDK upload stream lên S3 -> Nhận URL -> Cập nhật `imageUrl` vào bảng `chapter_pages`.
+
+---
+
+## 3. MAPPING CHỨC NĂNG THEO USER ROLE
+
+### 👤 User (Android App)
+- **Đăng ký / Đăng nhập:** Giao tiếp API auth, lưu token tại `SharedPreferences` hoặc `EncryptedSharedPreferences`.
+- **Đọc truyện:** Gọi `/api/chapters/{id}` lấy S3 URL. App sử dụng thư viện load ảnh (ví dụ: Glide/Coil) để hiển thị danh sách trang truyện từ S3.
+- **Đồng bộ lịch sử:** Ghi nhận trang đang đọc và sync lên backend qua `/api/reading-history/sync`. Hỗ trợ fetch lại lịch sử trên nhiều thiết bị.
+- **Bình luận (Comments):** Có thể đọc và gửi comment trên từng chương hoặc toàn bộ truyện (`/api/chapters/{id}/comments`).
+- **Mua VIP:** Gọi `/api/payment/create-vip-order`, nhận link thanh toán PayOS.
+
+### 🛠️ Uploader (Web)
+- **Quản lý Upload:** Truy cập màn hình Uploader để thêm mới truyện, đăng chương mới.
+- **Upload Flow Đặc Biệt:** Hệ thống dùng bảng `UploadLog` để kiểm duyệt. Các chương uploader đăng lên mặc định có trạng thái `PENDING`. Uploader chỉ được đăng tiếp nếu chương trước đó không bị `REJECTED` (Trừ khi xoá bản nháp).
+
+### 👑 Admin (Web)
+- **Quản trị User & Data:** Cấp quyền, khoá tài khoản.
+- **Duyệt truyện (Moderation):** Admin xem các log trong `UploadLog` có status `PENDING` -> Chuyển thành `APPROVED` (hiển thị public) hoặc `REJECTED` (kèm lý do).
+- **Dashboard:** Xem thống kê qua `DashboardService`.
+
+---
+
+## 4. PHÂN TÍCH DATABASE
+
+Hệ thống dùng MySQL và Hibernate ORM (`ddl-auto: update`).
+
+### Các Entity chính và Quan hệ (Relationships):
+1. **User (Tài khoản):** 
+   - Có cột `role` dạng Enum (`ADMIN`, `UPLOADER`, `USER`).
+2. **Comic (Truyện):**
+   - Thông tin cơ bản: `title`, `slug`, `thumbnailUrl`, `status`.
+   - Quan hệ `1-N` với `Chapter` và `ComicGenre`.
+   - Quan hệ `N-1` với `Author`, `AgeRating`.
+3. **Chapter (Chương truyện):**
+   - Quan hệ `N-1` với `Comic`. Chứa thông tin `chapterNumber`, `title`, `accessType` (Miễn phí/VIP).
+4. **ChapterPage (Trang truyện):**
+   - Quan hệ `N-1` với `Chapter`.
+   - Lưu trữ `pageNumber` và `imageUrl` (chứa URL S3 của ảnh trang truyện).
+5. **UploadLog (Nhật ký Upload/Kiểm duyệt):**
+   - Quan hệ `N-1` với `User` (Uploader), `Comic`, `Chapter`.
+   - Có trạng thái `PENDING`, `APPROVED`, `REJECTED`. Đây là trái tim của hệ thống kiểm duyệt.
+
+### Index & Tối ưu:
+- Các trường `slug` trong `Comic`, `email` trong `User` đều được đánh `unique = true` giúp tăng tốc độ tìm kiếm `findBySlug` hoặc `findByEmail`.
+
+---
+
+## 5. LUỒNG ĐỌC TRUYỆN CHI TIẾT (READING FLOW)
+
+Đây là luồng hoạt động có cường độ truy cập cao nhất hệ thống.
+
+1. **User chọn chương truyện trên Android:** App gọi API `GET /api/chapters/{chapterId}`.
+2. **Backend xử lý:**
+   - Kiểm tra `accessType` của Chapter. Nếu là VIP, kiểm tra User có đang active VIP hay không.
+   - `ChapterService` lấy danh sách `ChapterPage` theo `chapterId`, sắp xếp theo `pageNumber` ASC.
+   - Trả về JSON Response cho App, chứa array `pages`: `[{"pageNumber": 1, "imageUrl": "https://comicverse-storage.s3..."}, ...]`.
+3. **App hiển thị:**
+   - App (RecyclerView/LazyColumn) render danh sách các item.
+   - Khi item (trang) scroll vào màn hình, thư viện Image Loader (Glide/Coil) sẽ tạo HTTP GET Request trực tiếp tới `imageUrl` (S3).
+4. **Tracking:** Đồng thời, App gọi background API `POST /api/tracking/view` để tăng view count và lưu lịch sử đọc của User.
+
+> **💡 Lưu ý về S3 URL:** URL sinh ra từ backend (`s3Client.utilities().getUrl`) là URL Public, không phải Presigned URL. Bất kỳ ai có URL đều có thể xem ảnh, quyền truy cập được set Public-Read tại cấp độ S3 Object/Bucket.
+
+---
+
+## 6. AWS FLOW (HẠ TẦNG)
+
+- **S3 Bucket (`comicverse-storage`):**
+  - Cấu trúc thư mục (Folder structure): `comics/{comic-slug}/chapters/chapter-{number}/{baseName}-{uuid}.{ext}`
+  - Upload ảnh sử dụng Java SDK `PutObjectRequest` đính kèm file InputStream.
+  - Xoá truyện hoặc thay đổi cấu trúc sẽ gọi API delete object hoặc copy-delete (chuyển thư mục).
+- **EC2 Deployment:**
+  - Database được deploy tại Private IP `172.31.46.47`, giúp bảo mật tuyệt đối, Backend Server giao tiếp với DB qua mạng nội bộ VPC.
+- **Network:**
+  - Backend mở port API. Toàn bộ lượng tải băng thông ảnh (bandwidth-heavy) đều do AWS S3 gánh, EC2 Backend không bị nghẽn băng thông do không stream ảnh qua server.
+
+---
+
+## 7. SEQUENCE DIAGRAMS
+
+### 7.1. Luồng Đăng nhập (Login Flow)
+```mermaid
+sequenceDiagram
+    participant App as Android App
+    participant API as AuthController
+    participant Serv as AuthService
+    participant DB as MySQL
+
+    App->>API: POST /auth/login (email, pass)
+    API->>Serv: authenticate()
+    Serv->>DB: findByEmail()
+    DB-->>Serv: User entity
+    Serv->>Serv: Check Password Hash
+    Serv->>Serv: Generate JWT (Access + Refresh)
+    Serv-->>API: TokenResponse
+    API-->>App: 200 OK + JSON(Tokens, Profile)
+    App->>App: Lưú Token Local (SharedPrefs)
+```
+
+### 7.2. Luồng Đọc Truyện (Read Comic Flow)
+```mermaid
+sequenceDiagram
+    participant App as Android App
+    participant API as ChapterController (Public)
+    participant DB as MySQL
+    participant S3 as AWS S3
+
+    App->>API: GET /api/chapters/{id}
+    API->>DB: Query Chapter & ChapterPages (sorted)
+    DB-->>API: List of Pages (pageNumber, imageUrl)
+    API-->>App: 200 OK (JSON with S3 URLs)
+    App->>App: Render List UI
+    loop Từng trang truyện
+        App->>S3: GET {imageUrl} (Trực tiếp từ App)
+        S3-->>App: Trả về file ảnh tĩnh (JPEG/WEBP)
+    end
+    App->>API: POST /api/tracking/view (background)
+```
+
+### 7.3. Luồng Upload Bulk (Của Uploader)
+```mermaid
+sequenceDiagram
+    participant Web as Web Admin
+    participant API as ChapterController
+    participant DB as MySQL
+    participant S3 as AWS S3
+
+    Note over Web, API: Bước 1: Khởi tạo Meta-data
+    Web->>API: POST /bulk-init (Gửi số chương, tên trang ảnh)
+    API->>DB: INSERT Chapter (Trạng thái PENDING)
+    API->>DB: INSERT ChapterPages (imageUrl = null)
+    API->>DB: INSERT UploadLog (PENDING)
+    DB-->>API: Trả về danh sách mapping (pageId)
+    API-->>Web: JSON Mapping pageId -> Tên file
+
+    Note over Web, S3: Bước 2: Upload file vật lý (Parallel)
+    loop Các pageId nhận được
+        Web->>API: POST /bulk-upload-page/{pageId} (multipart file)
+        API->>S3: PutObjectRequest (Stream ảnh)
+        S3-->>API: Trả về S3 Public URL
+        API->>DB: UPDATE ChapterPage SET imageUrl = {S3 URL} WHERE id = {pageId}
+        API-->>Web: 200 OK
+    end
+    Note over API, DB: Chờ Admin vào duyệt đổi trạng thái
+```
+
+---
+
+## 8. PHÁT HIỆN VẤN ĐỀ & ĐỀ XUẤT CẢI THIỆN
+
+### 🔴 1. Nút thắt hiệu năng (Bottleneck)
+- **Vấn đề:** Ứng dụng hiện tải ảnh trực tiếp qua URL của AWS S3 bucket (`comicverse-storage.s3...`). Tuy AWS S3 nhanh, nhưng tốc độ phụ thuộc vào vị trí địa lý của User (Bucket đang ở `ap-southeast-1`), và chi phí Data Transfer Out của S3 khá đắt.
+- **Đề xuất (CloudFront CDN):** Chèn **AWS CloudFront** đứng trước S3 Bucket. Backend chỉ cần thay thế chuỗi domain S3 thành domain CloudFront khi lưu hoặc khi trả về API. CDN sẽ giúp cache ảnh tại các edge location gần User nhất, tăng tốc tải trang truyện lên 2-5 lần và giảm chi phí AWS.
+
+### 🔴 2. Thiếu hụt bộ nhớ đệm (Caching)
+- **Vấn đề:** Các trang chủ (`GET /api/comics/home`) và chi tiết truyện bị hit vào Database quá nhiều (nhiều Query JOIN) cho mỗi người dùng mở app. Đây là dữ liệu ít thay đổi.
+- **Đề xuất (Redis Cache):** Cài đặt **Redis** trên EC2 hoặc dùng Amazon ElastiCache. Thêm `@Cacheable` vào Spring Boot cho các API `getHomeContent()`, `getComicDetail()`. Đặt TTL (Time-To-Live) khoảng 5-15 phút.
+
+### 🔴 3. Vấn đề bảo mật (Security Risk)
+- **Vấn đề:** Ảnh trên S3 hiện được lưu và truy cập dạng Public URL. Nghĩa là ai đó có thể dùng tool cào (Crawl) toàn bộ URL ảnh để tải lậu truyện, hoặc nhúng (hotlink) ảnh sang web khác làm hao tốn băng thông S3 của hệ thống.
+- **Đề xuất:**
+  - Thiết lập **CORS Policy** và **Referrer Policy** chặn request lấy ảnh từ các domain không cho phép trên S3/CloudFront.
+  - Sử dụng **AWS S3 Presigned URLs** (có thời hạn 15 phút) thay vì Public URL cố định, đặc biệt đối với các chương VIP để chống thất thoát dữ liệu.
+
+### 🔴 4. Database Scaling & Logic
+- **Vấn đề:** Bảng `ChapterPage` và `ReadingHistory` sẽ phình to cực nhanh (ví dụ 100 truyện x 100 chương x 20 trang = 200,000 dòng). Truy truy vấn lịch sử có thể chậm đi.
+- **Đề xuất:** Đảm bảo đánh Index trên các cột `(comic_id, chapter_number)`, `(chapter_id, page_number)`. Trên Client, dùng Room Database cache lịch sử cục bộ, chỉ push (sync) lên server dạng Batch định kỳ để giảm tải số lượng request API.

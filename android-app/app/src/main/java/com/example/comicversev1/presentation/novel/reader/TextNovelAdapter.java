@@ -32,7 +32,7 @@ public class TextNovelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     public interface OnParagraphLongClickListener {
-        void onLongClick(int chapterId);
+        void onLongClick(int chapterId, int paragraphIndex, String content);
     }
 
     public void setOnPaywallUnlockClickListener(OnPaywallUnlockClickListener listener) {
@@ -183,7 +183,7 @@ public class TextNovelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             
             tvParagraph.setOnLongClickListener(v -> {
                 if (listener != null) {
-                    listener.onLongClick(item.getChapterId());
+                    listener.onLongClick(item.getChapterId(), item.getParagraphIndex(), item.getContent());
                     return true;
                 }
                 return false;

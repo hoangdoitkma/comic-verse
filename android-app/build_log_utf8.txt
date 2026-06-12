@@ -1,0 +1,72 @@
+﻿> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:generateSafeArgsDebug UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:compileDebugKotlin UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+
+> Task :app:compileDebugJavaWithJavac
+.\gradlew.bat : D:\Learn\DATN\datn\android-app\app\src\mai
+n\java\com\example\comicversev1\presentation\profile\Profi
+leDetailFragment.java:248: error: cannot find symbol
+At line:1 char:1
++ .\gradlew.bat assembleDebug > build_log.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Learn\DAT 
+   N\d...not find symbol:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+            ).flatMapCompletable(responseObj -> {
+             ^
+  symbol:   method flatMapCompletable((responseO[...]; } 
+})
+  location: class Completable
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+1 error
+
+> Task :app:compileDebugJavaWithJavac FAILED
+[Incubating] Problems report is available at: file:///D:/Learn/DATN/datn/android-app/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task 
+':app:compileDebugJavaWithJavac'.
+> Compilation failed; see the compiler output below.
+  Note: Recompile with -Xlint:deprecation for details.
+  Note: Some input files use or override a deprecated API.
+  D:\Learn\DATN\datn\android-app\app\src\main\java\com\exa
+mple\comicversev1\presentation\profile\ProfileDetailFragme
+nt.java:248: error: cannot find symbol
+              ).flatMapCompletable(responseObj -> {
+               ^
+    symbol:   method flatMapCompletable((responseO[...]; 
+} })
+    location: class Completable
+  1 error
+
+* Try:
+> Check your code and dependencies to fix the compilation 
+error(s)
+> Run with --scan to get full insights.
+
+BUILD FAILED in 6s
+21 actionable tasks: 2 executed, 19 up-to-date

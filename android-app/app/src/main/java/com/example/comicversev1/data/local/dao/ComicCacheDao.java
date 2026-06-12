@@ -23,5 +23,11 @@ public interface ComicCacheDao {
 
     @Query("SELECT * FROM comic_cache ORDER BY updated_at DESC")
     Flowable<List<ComicCacheEntity>> observeAll();
+
+    @Query("SELECT * FROM comic_cache WHERE comic_id = :comicId LIMIT 1")
+    io.reactivex.rxjava3.core.Single<ComicCacheEntity> getComicById(int comicId);
+
+    @Query("DELETE FROM comic_cache WHERE slug = :slug")
+    Completable deleteBySlug(String slug);
 }
 

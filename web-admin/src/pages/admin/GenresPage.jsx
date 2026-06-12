@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import DataTable from '../../components/DataTable';
 import ActionModal from '../../components/ActionModal';
 import adminService from '../../services/adminService';
+
+const PAGE_SIZE = 6;
 
 export default function GenresPage() {
   const { addToast } = useOutletContext();
@@ -11,6 +13,7 @@ export default function GenresPage() {
   const [genres, setGenres] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
+  const [page, setPage] = useState(0);
 
   // Form modal
   const [modal, setModal] = useState({ open: false, mode: 'create', genre: null });
@@ -136,6 +139,20 @@ export default function GenresPage() {
     },
   ];
 
+  // Client-side pagination
+  const totalPages = Math.ceil(genres.length / PAGE_SIZE);
+  const paginatedGenres = useMemo(() => {
+    const start = page * PAGE_SIZE;
+    return genres.slice(start, start + PAGE_SIZE);
+  }, [genres, page]);
+
+  // Reset page nếu vượt quá totalPages (ví dụ sau khi xoá)
+  useEffect(() => {
+    if (page > 0 && page >= totalPages) {
+      setPage(Math.max(0, totalPages - 1));
+    }
+  }, [genres, page, totalPages]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -160,10 +177,16 @@ export default function GenresPage() {
       {/* Table */}
       <DataTable
         columns={columns}
-        data={genres}
+        data={paginatedGenres}
         isLoading={isLoading}
         isError={isError}
         emptyMessage="Chưa có thể loại nào."
+        pagination={{
+          page,
+          totalPages,
+          totalElements: genres.length,
+          onPageChange: setPage,
+        }}
       />
 
       {/* ===== Create/Edit Modal ===== */}

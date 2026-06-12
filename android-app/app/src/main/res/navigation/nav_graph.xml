@@ -23,12 +23,20 @@
         <action
             android:id="@+id/action_login_to_register"
             app:destination="@id/registerFragment" />
+        <action
+            android:id="@+id/action_login_to_forgotPassword"
+            app:destination="@id/forgotPasswordFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/registerFragment"
         android:name="com.example.comicversev1.presentation.auth.RegisterFragment"
         android:label="Register" />
+
+    <fragment
+        android:id="@+id/forgotPasswordFragment"
+        android:name="com.example.comicversev1.presentation.auth.ForgotPasswordFragment"
+        android:label="Forgot Password" />
 
     <fragment
         android:id="@+id/discoverFragment"
@@ -117,6 +125,11 @@
         android:label="Profile" />
         
     <fragment
+        android:id="@+id/profileDetailFragment"
+        android:name="com.example.comicversev1.presentation.profile.ProfileDetailFragment"
+        android:label="Profile Detail" />
+
+    <fragment
         android:id="@+id/vipCenterFragment"
         android:name="com.example.comicversev1.presentation.vip.VipCenterFragment"
         android:label="VIP Center" />
@@ -126,6 +139,18 @@
         android:name="com.example.comicversev1.presentation.notification.NotificationFragment"
         android:label="Thông báo" />
 
+    <fragment
+        android:id="@+id/favoriteFragment"
+        android:name="com.example.comicversev1.presentation.favorite.FavoriteFragment"
+        android:label="Yêu Thích" />
+
     <action android:id="@+id/action_global_notification" app:destination="@id/notificationFragment" />
+
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.example.comicversev1.presentation.history.HistoryFragment"
+        android:label="Lịch sử đọc" />
+        
+    <action android:id="@+id/action_global_historyFragment" app:destination="@id/historyFragment" />
         
 </navigation>

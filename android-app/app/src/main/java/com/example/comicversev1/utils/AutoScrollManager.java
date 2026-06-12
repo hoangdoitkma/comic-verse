@@ -46,7 +46,7 @@ public class AutoScrollManager {
 
     public AutoScrollManager(Context context, RecyclerView recyclerView) {
         this.recyclerView = recyclerView;
-        this.prefs = context.getSharedPreferences("NovelReaderPrefs", Context.MODE_PRIVATE);
+        this.prefs = context.getSharedPreferences(ReaderSettings.PREF_NOVEL, Context.MODE_PRIVATE);
         loadSettings();
         setupTouchListener();
     }
@@ -56,16 +56,16 @@ public class AutoScrollManager {
     }
 
     public void loadSettings() {
-        this.scrollSpeed = prefs.getInt("scroll_speed", 2);
-        this.conflictMode = prefs.getInt("scroll_conflict_mode", 1);
+        this.scrollSpeed = prefs.getInt(ReaderSettings.KEY_NOVEL_SCROLL_SPEED, ReaderSettings.DEFAULT_NOVEL_SCROLL_SPEED);
+        this.conflictMode = prefs.getInt(ReaderSettings.KEY_NOVEL_SCROLL_CONFLICT_MODE, ReaderSettings.DEFAULT_NOVEL_SCROLL_CONFLICT_MODE);
     }
 
     public void applySettings(int speed, int conflictMode) {
         this.scrollSpeed = speed;
         this.conflictMode = conflictMode;
         prefs.edit()
-             .putInt("scroll_speed", speed)
-             .putInt("scroll_conflict_mode", conflictMode)
+             .putInt(ReaderSettings.KEY_NOVEL_SCROLL_SPEED, speed)
+             .putInt(ReaderSettings.KEY_NOVEL_SCROLL_CONFLICT_MODE, conflictMode)
              .apply();
     }
 

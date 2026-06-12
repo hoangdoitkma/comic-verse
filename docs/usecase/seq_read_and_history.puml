@@ -1,0 +1,67 @@
+@startuml
+skinparam maxMessageSize 150
+skinparam sequenceMessageAlign center
+
+actor "Người dùng\n(Guest/User)" as User
+participant "Android App\n(Retrofit, Room, Glide)" as App
+participant "Backend API\n(Spring Boot)" as API
+database "AWS RDS\n(MySQL)" as DB
+participant "AWS S3\n(Storage)" as S3
+
+User -> App: 1. Bấm chọn Đọc Chương truyện
+activate App
+
+App -> API: 2. Gọi API GET /api/public/chapters/{id}
+activate API
+
+API -> DB: 3. Truy vấn thông tin Chương và URL ảnh
+activate DB
+DB --> API: 4. Trả về mảng Image URLs (S3 URLs)
+deactivate DB
+
+API --> App: 5. Trả về Response JSON (URLs)
+deactivate API
+
+note right of App
+  App sử dụng thư viện Glide 
+  để tải ảnh bất đồng bộ
+end note
+
+App -> S3: 6. Yêu cầu tải ảnh trực tiếp qua URL
+activate S3
+S3 --> App: 7. Trả về luồng byte hình ảnh (Image Stream)
+deactivate S3
+
+App --> User: 8. Hiển thị nội dung truyện lên màn hình
+
+User -> App: 9. Cuộn đọc (Phát sinh tiến độ)
+
+' --- Xử lý Lưu Lịch Sử ---
+note over App
+  <b>Luồng lưu lịch sử (Local)</b>
+  Lưu ngay lập tức để không bị mất
+  khi mất mạng đột ngột
+end note
+
+App -> App: 10. Ghi đè tiến độ vào Local DB (Room Database)
+
+alt Nếu là Thành viên (Đã đăng nhập)
+    note over App, API
+      <b>Luồng đồng bộ (Online)</b>
+      Thường dùng kỹ thuật Debounce (Delay 2-3s) 
+      để tránh spam API khi cuộn liên tục
+    end note
+    App -> API: 11. Gửi API PUT /api/history (cập nhật tiến độ)
+    activate API
+    API -> DB: 12. Cập nhật bảng ReadingHistory
+    activate DB
+    DB --> API: 13. Thành công
+    deactivate DB
+    API --> App: 14. Trả về trạng thái 200 OK
+    deactivate API
+else Nếu là Khách (Guest)
+    App -> App: 11. Bỏ qua luồng đồng bộ Server
+end
+
+deactivate App
+@enduml
